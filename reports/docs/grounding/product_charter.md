@@ -548,6 +548,7 @@ The stack must prioritize reliability, low operational complexity, reusability, 
 | Business Intelligence | Power BI, Power Query, DAX | Reporting and dashboards |
 | Machine Learning | Scikit-learn | Anomaly detection |
 | ML lifecycle | MLflow | Experiment tracking and model versions |
+| Data & pipeline versioning | DVC | Dataset, pipeline, parameter, and artifact versioning |
 | Generative AI | Gemini API / OpenAI API | Classification, extraction, and report generation |
 | AI integration | Provider abstraction layer | Model selection and controlled LLM integration |
 | Containerization | Docker, Docker Compose | Reproducible environments |
@@ -573,6 +574,10 @@ Shared application functionality will remain modular and cohesive. Independently
 **LLM abstraction instead of provider lock-in**
 
 The platform will implement an interface for multiple model providers, avoiding dependencies on a particular API contract.
+
+**DVC for ML data and pipeline reproducibility**
+
+DVC will version datasets, pipeline definitions, parameters, and model artifacts for modules that require predictive or statistical modeling. It complements MLflow by owning dataset and pipeline reproducibility, while MLflow owns experiment comparison and model lifecycle. DVC is an ML engineering dependency, not a mandatory dependency of every business module.
 
 **No unnecessary infrastructure**
 
