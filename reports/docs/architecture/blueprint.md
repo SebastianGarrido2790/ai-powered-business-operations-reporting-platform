@@ -35,6 +35,8 @@ I recommend the following architectural baseline.
 | Workflow orchestration   | n8n                                                               |
 | Business Intelligence    | Power BI                                                          |
 | ML execution             | Python / Scikit-learn                                             |
+| Data & pipeline versioning | DVC (Git-tracked datasets, pipelines, parameters and artifacts)  |
+| Experiment tracking & registry | MLflow (experiments, metrics, model lifecycle)              |
 | Generative AI            | Provider-independent LLM integration                              |
 | Infrastructure           | Docker initially, AWS ECS Fargate for production                  |
 | Deployment automation    | GitHub Actions                                                    |
@@ -53,11 +55,12 @@ The platform must be extensible without becoming overengineered.
 
 ## 2. System architecture
 
-The platform will have four architectural levels:
+The platform will have five architectural levels:
 
 - Platform Foundation: common infrastructure and capabilities.
 - Business Modules: domain-specific business functionality.
 - Integration Layer: external systems, workflow orchestration, and event exchange.
+- ML Engineering & Reproducibility: version-controlled datasets, reproducible pipelines, experiment tracking, and model lifecycle.
 - Presentation & Delivery: dashboards, reports, notifications, and approval interfaces.
 
 ### 2.1 High-level architecture
@@ -100,6 +103,11 @@ flowchart TB
         REPORT["Reporting Engine"]
     end
 
+    subgraph MLENG["ML Engineering & Reproducibility"]
+        DVC["DVC - Data & Pipeline Versioning"]
+        MLF["MLflow - Experiment Tracking & Registry"]
+    end
+
     subgraph ORCH["Workflow & Integration"]
         N8N["n8n Orchestrator"]
     end
@@ -134,6 +142,10 @@ flowchart TB
     DB --> ML
     DB --> LLM
 
+    ML --> DVC
+    DVC --> MLF
+    DVC --> OBJ
+
     ML --> EVT
     LLM --> EVT
     JOB --> EVT
@@ -167,6 +179,8 @@ A critical design decision is establishing which component owns each responsibil
 | Python workers  | Data processing and analytical jobs             | User-facing orchestration             |
 | Power BI        | Business visualization                          | Source-of-truth business calculations |
 | ML services     | Predictive and anomaly signals                  | Final business decisions              |
+| DVC             | Dataset, pipeline and artifact versioning       | Business data storage, orchestration  |
+| MLflow          | Experiment comparison and model lifecycle        | Dataset versioning, production serving |
 | LLM services    | Classification, extraction, explanations        | Authoritative numerical calculations  |
 | Policy engine   | Deterministic decisions and permissions         | Probabilistic interpretation          |
 
@@ -1078,15 +1092,26 @@ Invalid data should be quarantined rather than silently discarded.
 
 ### 9.2 ML reproducibility
 
-MLflow will record:
+Reproducibility requires more than versioned source code. The platform separates two complementary responsibilities.
 
-- Experiment parameters.
-- Training dataset version.
+DVC records:
+
+- Dataset versions and provenance.
+- Preprocessing and feature-engineering pipeline definitions.
+- Training parameters and their resolved values.
+- Generated model artifacts.
+- The dependency graph between pipeline stages.
+
+MLflow records:
+
+- Experiment parameters and runs.
 - Evaluation metrics.
-- Model artifacts.
-- Model versions.
+- Model versions and lifecycle state.
+- Candidate and approved model registration.
 
-The initial anomaly model should have a documented baseline and a reproducible evaluation dataset.
+DVC is the primary record for dataset and pipeline reproducibility. MLflow is the primary record for experiment comparison and model lifecycle management.
+
+The initial anomaly model should have a documented baseline and a reproducible evaluation dataset. A model is not considered reproducible unless its dataset, pipeline stages, parameters, code revision, and generated artifact are traceable.
 
 ### 9.3 LLM reliability
 
@@ -1120,7 +1145,213 @@ Sensitive raw communications should not be copied indiscriminately into tracing 
 
 A provider outage must not cause an endless retry loop.
 
-## 10. Repository Architecture
+## 10. ML Engineering & Reproducibility Layer (DVC + MLflow)
+
+Git versions source code and configuration. It does not adequately version large datasets, pipeline state, or model artifacts. The platform therefore introduces a dedicated ML Engineering & Reproducibility layer.
+
+DVC is part of the ML engineering infrastructure. It is not a mandatory dependency of every business module. It is introduced only in modules that require predictive or statistical modeling.
+
+### 10.1 What DVC adds
+
+DVC uses Git-tracked metadata to associate data versions, pipeline definitions, experiment parameters, metrics, and model artifacts, while storing the actual large files outside Git.
+
+For the Sourcing anomaly detection model, reproducibility requires more than the Python source code. It requires knowing:
+
+- Which historical dataset was used.
+- Which preprocessing logic was applied.
+- Which features were selected.
+- Which hyperparameters were configured.
+- Which training code version executed.
+- Which model artifact was generated.
+- How the model performed against the evaluation dataset.
+
+DVC establishes that relationship between code, data, parameters, executions, and artifacts.
+
+### 10.2 Position within BOPF
+
+```mermaid
+flowchart TB
+    subgraph BOPF["Business Operations Platform Foundation"]
+        CORE["Platform Core"]
+        MOD["Sourcing Module"]
+        JOB["Job Execution Service"]
+    end
+
+    subgraph DATA["Data & ML Engineering"]
+        RAW["Historical Operational Data"]
+        PREP["Data Preparation"]
+        DVC["DVC - Data & Pipeline Versioning"]
+        TRAIN["Model Training"]
+        EVAL["Model Evaluation"]
+        ART["Versioned Model Artifacts"]
+        ML["MLflow - Experiment Tracking & Model Registry"]
+    end
+
+    subgraph PROD["Production Inference"]
+        DEPLOY["Approved Model Deployment"]
+        INF["Anomaly Detection Service"]
+        RESULTS["Anomaly Results"]
+    end
+
+    CORE --> MOD
+    MOD --> RAW
+    RAW --> PREP
+    PREP --> DVC
+    DVC --> TRAIN
+    TRAIN --> EVAL
+    EVAL --> ML
+    DVC --> ART
+    ML --> DEPLOY
+    ART --> DEPLOY
+    JOB --> INF
+    DEPLOY --> INF
+    INF --> RESULTS
+    RESULTS --> MOD
+```
+
+### 10.3 Responsibility boundaries
+
+| Component | Responsibility |
+| --- | --- |
+| Git | Version source code, configuration and DVC metadata |
+| DVC | Version datasets, pipeline dependencies, parameters and artifacts |
+| MLflow | Track experiments, metrics, model versions and model lifecycle |
+| PostgreSQL | Store operational business records and inference results |
+| S3 | Store production artifacts and DVC remote data |
+| Python / Scikit-learn | Predictive modeling |
+| FastAPI / Workers | API and background processing |
+| Job Execution Service | Execute training and inference jobs when requested |
+| n8n | Coordinate business workflows that consume ML results |
+
+DVC and MLflow overlap in some experiment-tracking capabilities. To avoid duplicating every metric and artifact in both systems without a defined reason:
+
+- DVC is the primary record for dataset and pipeline reproducibility.
+- MLflow is the primary record for experiment comparison and model lifecycle management.
+
+### 10.4 Reproducible Sourcing ML pipeline
+
+The pipeline for supplier delivery-time anomaly detection is defined as reproducible DVC stages:
+
+```mermaid
+flowchart TD
+    A["Historical Supplier Deliveries"] --> B["Data Validation"]
+    B --> C["Feature Engineering"]
+    C --> D["Train Anomaly Detection Model"]
+    D --> E["Evaluate Model"]
+    E --> F{"Acceptance Criteria Met?"}
+    F -->|No| G["Review Parameters / Features"]
+    G --> D
+    F -->|Yes| H["Register Candidate in MLflow"]
+    H --> I["Human / Automated Approval"]
+    I --> J["Deploy Approved Model"]
+    J --> K["Production Inference"]
+```
+
+Illustrative `dvc.yaml`:
+
+```yaml
+stages:
+  validate:
+    cmd: python src/ml/validate_data.py
+    deps:
+      - data/raw/deliveries.csv
+      - src/ml/validate_data.py
+    outs:
+      - data/processed/validated.csv
+
+  features:
+    cmd: python src/ml/features.py
+    deps:
+      - data/processed/validated.csv
+      - src/ml/features.py
+    outs:
+      - data/features/features.csv
+
+  train:
+    cmd: python src/ml/train.py
+    deps:
+      - data/features/features.csv
+      - src/ml/train.py
+    params:
+      - model.contamination
+      - model.n_estimators
+    outs:
+      - models/anomaly_detector.pkl
+
+  evaluate:
+    cmd: python src/ml/evaluate.py
+    deps:
+      - models/anomaly_detector.pkl
+      - data/features/features.csv
+      - src/ml/evaluate.py
+    metrics:
+      - reports/metrics.json
+```
+
+DVC detects changed dependencies and determines which downstream stages need to execute again. Pipeline definitions are stored in `dvc.yaml`, with execution state recorded in `dvc.lock`.
+
+Changing the `contamination` parameter reproduces only the affected stages and produces comparable evaluation metrics. DVC experiments allow parameter exploration without a permanent Git commit per experiment.
+
+### 10.5 What DVC must not manage
+
+| Data / artifact | Recommended management |
+| --- | --- |
+| Production supplier records | PostgreSQL |
+| Purchase orders and deliveries | PostgreSQL |
+| Incoming supplier documents | S3 |
+| Historical ML training snapshots | DVC |
+| Curated evaluation datasets | DVC |
+| Feature engineering pipeline outputs | DVC |
+| ML training parameters | Git + DVC |
+| Trained ML artifacts | DVC / MLflow, with clearly assigned ownership |
+| Production inference results | PostgreSQL |
+| LLM evaluation datasets | DVC, where appropriate |
+| n8n execution history | n8n, subject to retention policies |
+
+We do not version every incoming Excel file or every production database change through DVC.
+
+### 10.6 Data governance
+
+Training datasets may contain supplier identities, commercial information, or personal information. DVC versioning does not replace access controls, retention policies, encryption, or data deletion procedures.
+
+DVC stores metadata in Git and content in a remote. Remote access must follow the same least-privilege and encryption requirements as other production storage.
+
+### 10.7 Adoption path
+
+DVC is introduced selectively:
+
+| Phase | DVC integration |
+| --- | --- |
+| 0. Project Foundation | Not required |
+| 1. BOPF Core | Reserve an ML reproducibility integration boundary |
+| 2. Data Foundation | Establish dataset provenance and storage conventions |
+| 3. Sourcing Operations | No mandatory DVC dependency |
+| 4. Business Intelligence | No mandatory DVC dependency |
+| 5. Predictive Analytics | Introduce DVC |
+| 6. AI Intelligence | Extend to selected LLM evaluation datasets |
+| 7. Workflow Automation | Trigger reproducible ML workflows when needed |
+| 8. Production Readiness | Integrate artifact retrieval and deployment traceability |
+
+This avoids introducing tooling before a concrete ML pipeline exists.
+
+### 10.8 Implementation
+
+DVC is a development dependency of the ML engineering layer, not a runtime dependency of the platform API.
+
+```powershell
+uv add --dev "dvc[s3]"
+uv run dvc init
+uv run dvc remote add -d storage s3://your-bucket/dvc
+uv run dvc repro
+```
+
+Local development may use local remote storage until the AWS remote is established. The S3 extra is installed when the remote is provisioned.
+
+DVC supports remote storage such as Amazon S3, Azure Blob Storage, and Google Cloud Storage.
+
+DVC is not an orchestration or production monitoring platform. Its lightweight pipeline execution is distinct from advanced workflow management, error recovery, and execution monitoring. Those responsibilities remain with the Job Execution Service and the orchestration infrastructure.
+
+## 11. Repository Architecture
 
 The initial repository should separate platform infrastructure, domain modules, infrastructure definitions, and BI assets.
 
@@ -1214,6 +1445,10 @@ ai-business-operations-platform/
 ├── pyproject.toml
 ├── uv.lock
 ├── alembic.ini
+├── dvc.yaml
+├── dvc.lock
+├── params.yaml
+├── .dvc/
 ├── .env.example
 ├── .gitignore
 ├── AGENTS.md
@@ -1229,16 +1464,17 @@ ai-business-operations-platform/
 5. Migrations must be independently attributable to their owning schema or module.
 6. n8n workflow exports must be version-controlled.
 7. BI assets and KPI definitions must be documented.
-8. Generated datasets and sensitive credentials must not enter Git.
+8. Generated datasets and sensitive credentials must not enter Git; datasets, pipeline stages and model artifacts are tracked through DVC metadata.
 9. Dependencies must be pinned through the project lockfile.
+10. DVC is an ML engineering dependency, not a platform-wide data store; it is introduced only in modules that require predictive or statistical modeling.
 
 The structure is a target organization. We should create directories when they acquire actual responsibilities, not generate empty packages for every hypothetical feature.
 
-## 11. Deployment Architecture
+## 12. Deployment Architecture
 
 The platform will have three environments.
 
-### 11.1 Local development
+### 12.1 Local development
 
 Docker Compose:
 
@@ -1252,6 +1488,7 @@ Docker Compose:
 Optional development profiles:
 
 - MLflow.
+- DVC with a local remote.
 - Local object storage emulator.
 - Additional test services.
 
@@ -1259,7 +1496,7 @@ Power BI Desktop and GitHub Actions remain external to the local Docker runtime.
 
 Redis is not required for this topology.
 
-### 11.2 Staging
+### 12.2 Staging
 
 Staging should reproduce the production architecture as closely as reasonable.
 
@@ -1274,7 +1511,7 @@ It should contain:
 
 No staging integration should accidentally trigger production emails or modify production business systems.
 
-### 11.3 Production
+### 12.3 Production
 
 Recommended AWS topology:
 
@@ -1310,6 +1547,7 @@ Additional AWS services:
 - IAM.
 - CloudWatch.
 - ECR.
+- S3 as the DVC remote for datasets and model artifacts.
 - CloudWatch Alarms.
 - Backup and recovery infrastructure.
 
@@ -1317,7 +1555,7 @@ Workers and API instances should be independently scalable.
 
 ECS supports service autoscaling through CPU and memory metrics, which provides a straightforward future scaling mechanism without requiring Kubernetes. [AWS ECS Service Auto Scaling](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html?utm_source=chatgpt.com).
 
-### 11.4 Database migrations
+### 12.4 Database migrations
 
 Database migrations must execute as a separate, controlled deployment step.
 
@@ -1351,7 +1589,7 @@ Release
 
 Use backward-compatible database changes where possible: expand, migrate, then contract.
 
-## 12. Security & Governance Requirements
+## 13. Security & Governance Requirements
 
 Security must be embedded into the platform foundation.
 
@@ -1388,7 +1626,7 @@ LLM output should never directly become an executable workflow instruction.
 
 A deterministic policy layer decides which actions are allowed.
 
-## 13. Observability, Reliability & Operational Targets
+## 14. Observability, Reliability & Operational Targets
 
 The platform should make failures diagnosable without requiring developers to manually inspect every service.
 
@@ -1424,7 +1662,7 @@ Every execution must be traceable using a common `correlation_id`.
 
 We should not establish aggressive numerical SLOs before benchmarking the actual application. First measure the baseline, then define service-level targets based on business requirements.
 
-## 14. Testing & Engineering Quality
+## 15. Testing & Engineering Quality
 
 The testing strategy must cover the entire platform, not simply individual functions.
 
@@ -1489,23 +1727,23 @@ Use:
 
 The quality objective is to minimize unnecessary implementation complexity while preserving strong contracts, tests, and operational reliability.
 
-## 15. Implementation Roadmap
+## 16. Implementation Roadmap
 
 The implementation will follow architectural increments.
 
 Each phase must result in an improvement to the same deployable product.
 
-| Phase                    | Deliverable                               | Acceptance condition                   |
-| ------------------------ | ----------------------------------------- | -------------------------------------- |
-| 0. Project Foundation    | Repository, Docker, configuration, CI     | Reproducible local environment         |
-| 1. BOPF Core             | Core services, module registry, bootstrap | Sourcing module registers successfully |
-| 2. Data Foundation       | PostgreSQL, ingestion, validation         | Reproducible and traceable datasets    |
-| 3. Sourcing Operations   | Business entities, APIs, domain logic     | Operational records can be managed     |
-| 4. Business Intelligence | KPI layer and Power BI dashboard          | Verified operational reporting         |
-| 5. Predictive Analytics  | Anomaly detection service                 | Reproducible benchmark and inference   |
-| 6. AI Intelligence       | Classification and report generation      | Validated structured AI outputs        |
-| 7. Workflow Automation   | n8n and approvals                         | End-to-end automated processes         |
-| 8. Production Readiness  | Monitoring, security, deployment          | Tested production topology             |
+| Phase                    | Deliverable                               | DVC / ML Reproducibility                              | Acceptance condition                   |
+| ------------------------ | ----------------------------------------- | ----------------------------------------------------- | -------------------------------------- |
+| 0. Project Foundation    | Repository, Docker, configuration, CI     | Not required                                          | Reproducible local environment         |
+| 1. BOPF Core             | Core services, module registry, bootstrap | Reserve an ML reproducibility integration boundary    | Sourcing module registers successfully |
+| 2. Data Foundation       | PostgreSQL, ingestion, validation         | Establish dataset provenance and storage conventions  | Reproducible and traceable datasets    |
+| 3. Sourcing Operations   | Business entities, APIs, domain logic     | No mandatory DVC dependency                           | Operational records can be managed     |
+| 4. Business Intelligence | KPI layer and Power BI dashboard          | No mandatory DVC dependency                           | Verified operational reporting         |
+| 5. Predictive Analytics  | Anomaly detection service                 | Introduce DVC                                         | Reproducible benchmark and inference   |
+| 6. AI Intelligence       | Classification and report generation      | Extend to selected LLM evaluation datasets            | Validated structured AI outputs        |
+| 7. Workflow Automation   | n8n and approvals                         | Trigger reproducible ML workflows when needed         | End-to-end automated processes         |
+| 8. Production Readiness  | Monitoring, security, deployment          | Integrate artifact retrieval and deployment traceability | Tested production topology          |
 
 ### Delivery rule
 
@@ -1519,7 +1757,7 @@ For example:
 - RAG is unnecessary until a document retrieval problem exists.
 - Multi-agent orchestration is unnecessary until a bounded agentic task is justified.
 
-## 16. Architecture Decision Records (ADRs)
+## 17. Architecture Decision Records (ADRs)
 
 The following decisions should be recorded as permanent engineering references.
 
@@ -1537,6 +1775,8 @@ The following decisions should be recorded as permanent engineering references.
 | ADR-010 | Power BI curated read models           | Separate operational storage from analytical consumption    |
 | ADR-011 | Single-enterprise deployment initially | Avoid premature multi-tenancy                               |
 | ADR-012 | Infrastructure expansion by evidence   | Control cost and maintenance complexity                     |
+| ADR-013 | DVC for data & pipeline versioning     | Establish dataset, pipeline and artifact lineage            |
+| ADR-014 | MLflow for experiment tracking & model registry | Separate experiment comparison from pipeline reproducibility |
 
 Each ADR should document:
 
@@ -1547,7 +1787,7 @@ Each ADR should document:
 - Consequences.
 - Conditions under which the decision should be revisited.
 
-## 17. Blueprint Acceptance Criteria
+## 18. Blueprint Acceptance Criteria
 
 This blueprint is ready to guide implementation when the following architectural conditions are agreed upon.
 
@@ -1572,6 +1812,9 @@ This blueprint is ready to guide implementation when the following architectural
 - Data quality boundaries are explicit.
 - KPI ownership is defined.
 - ML and LLM responsibilities are separated.
+- Dataset, pipeline and artifact versioning ownership is defined (DVC).
+- ML experiment tracking and model lifecycle ownership is defined (MLflow).
+- ML reproducibility boundaries are explicit and limited to modules that require modeling.
 - AI output validation requirements are documented.
 - Human approval requirements are defined.
 
@@ -1583,13 +1826,15 @@ This blueprint is ready to guide implementation when the following architectural
 - Security requirements are documented.
 - Testing and deployment gates are specified.
 
-## 18. Final Architectural Baseline
+## 19. Final Architectural Baseline
 
 The system will be implemented as a domain-oriented modular monolith supported by independently executable workers and external workflow orchestration.
 
 The BOPF will provide the shared foundation, and Sourcing will be its first registered business module.
 
 Future modules will reuse platform services while retaining ownership of their individual domain entities, business logic, KPIs, analytical components, and workflows.
+
+ML-capable modules will use a dedicated ML Engineering & Reproducibility layer. DVC will provide version-controlled datasets, reproducible pipelines, parameter tracking, and model artifact lineage, complemented by MLflow for experiment tracking and model lifecycle management. These tools are introduced selectively and do not impose dependencies on unrelated business functionality.
 
 The platform will initially optimize for one enterprise deployment, manageable operational complexity, controlled AI usage, reproducible execution, and measurable business impact.
 
@@ -1608,12 +1853,14 @@ The following official documentation supports key infrastructure and implementat
 5. [n8n — Execution Data Management](https://docs.n8n.io/hosting/scaling/execution-data/?utm_source=chatgpt.com) — execution retention and pruning.
 6. [Microsoft — Power BI Data Refresh](https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-data?utm_source=chatgpt.com) — refresh behavior and capacity restrictions.
 7. [AWS — ECS Service Auto Scaling](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html?utm_source=chatgpt.com) — scaling application and worker services.
+8. [DVC — User Guide](https://dvc.org/doc/user-guide) — data and pipeline versioning, `dvc.yaml` / `dvc.lock`, experiments, and remote storage.
+9. [DVC — Remote Storage](https://dvc.org/doc/user-guide/data-management/remote-storage) — Amazon S3, Azure Blob Storage, and Google Cloud Storage remotes.
 
 Document status: Proposed engineering baseline. Technology-specific configurations, exact interfaces, and implementation details will be finalized through the corresponding ADRs and tested incrementally during development.
 
-## 19. My architectural review: three decisions to preserve
+## 20. My architectural review: four decisions to preserve
 
-Before implementation, I would particularly protect three decisions in this blueprint.
+Before implementation, I would particularly protect four decisions in this blueprint.
 
 First — The foundation must remain smaller than the business modules.
 
@@ -1628,3 +1875,7 @@ Third — extensibility must be tested, not merely documented.
 We should establish an architectural acceptance test: adding a small second module, such as a minimal Finance module with its own schema, manifest, permission, and API endpoint, should not require changes to the Sourcing Module or its business logic.
 
 That does not mean we need to implement Finance now. It means the architecture must demonstrate that its central promise is real.
+
+Fourth — DVC must remain an ML engineering tool, not a platform-wide dependency.
+
+It version-controls datasets, pipelines and model artifacts for modules that require modeling. It must not become a mechanism for versioning every operational data change or every incoming business file. DVC is not an orchestration or production monitoring platform; those responsibilities remain with the Job Execution Service and the orchestration infrastructure.
