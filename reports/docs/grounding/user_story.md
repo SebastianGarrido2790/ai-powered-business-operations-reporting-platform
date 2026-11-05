@@ -1,7 +1,7 @@
 # User Story & Problem Framing
 ## Business Operations Platform — Sourcing Operations Intelligence
 
-**Document status:** Draft — Baseline for Product Definition  
+**Document status:** Draft — Baseline; discovery decisions resolved for the reference MVP (Section 13)  
 **Product:** Business Operations Platform Foundation (BOPF)  
 **Initial business module:** Sourcing Operations Intelligence  
 **Document purpose:** Define the business problem, target users, operational needs, and expected outcomes that will guide product requirements and system design.
@@ -40,6 +40,14 @@ These activities generate structured and unstructured information across differe
 
 For example, a delivery date may exist in a purchase-order record, while a supplier communicates a delay through email. Understanding the actual operational situation requires reconciling both sources and determining whether the information is consistent and sufficiently reliable.
 
+**Terminology and MVP scope**
+
+- **Sourcing** covers supplier identification, qualification, quotation, and selection.
+- **Procurement / procure-to-pay** covers requisition, purchase order, delivery, and invoice handoff.
+- This MVP covers the operational span from **requisition → quotation → purchase order → delivery monitoring**. Contract award, invoice matching, and payment remain in the ERP or accounting system.
+- **On-time delivery** means actual delivery on or before the committed date in the purchase order, or the latest mutually agreed change. It is not measurable without a committed date.
+- **SLA compliance** means performance against a supplier's contractual service level. It applies only where an SLA exists.
+
 ### 2.2 Current operational challenge
 
 The existing business scenario assumes that relevant information is distributed across multiple sources and that employees must perform some combination of the following activities manually:
@@ -53,7 +61,7 @@ The existing business scenario assumes that relevant information is distributed 
 7. Prepare reports for operational and management stakeholders.
 8. Communicate findings and follow up on pending decisions.
 
-The exact systems, volumes, responsibilities, and current processing times have not yet been validated against a specific organization's operations. These details must be established before making quantified ROI claims.
+The exact systems, volumes, responsibilities, and current processing times have not been measured in a specific organization. Section 13 resolves them as explicit decisions for the reference MVP; they remain subject to validation before quantified ROI claims or production use.
 
 ## 3. Problem Statement
 
@@ -146,6 +154,10 @@ The following personas represent the expected users of the initial solution. The
 | Operations Manager | Performance and exceptions | Better operational control |
 | Executive Viewer | Business performance | Faster management insight |
 | Platform Administrator | Reliability and integrations | Maintainable operations |
+| BI / Data Analyst | KPI definitions and report quality | Trustworthy analytical models |
+| Data Scientist / AI Engineer | Model and AI quality | Reproducible, evaluated models |
+
+BI/Data Analysts and Data Scientists/AI Engineers are supporting roles. They do not use the operational interface daily, but they own KPI definitions, model evaluation, and the quality of AI-assisted outputs.
 
 ## 5. Jobs to Be Done
 
@@ -238,6 +250,8 @@ As an authorized Operations Manager, I want consequential operational exceptions
 **US-15 — Approval traceability**
 
 As an Operations Manager, I want approval decisions and their outcomes to be recorded, so that I can review who authorized an action and when it occurred.
+
+Platform approvals govern platform-originated exceptions and review items. They do not replace contractual, financial, or ERP approval authorities; those remain in the source system.
 
 ### 6.6 Platform Operations
 
@@ -383,14 +397,17 @@ The following indicators establish the initial measurement framework. Baselines 
 | Efficiency | Manual processing time | Employee effort spent on data collection and consolidation |
 | Data quality | Validation failure rate | Proportion of records failing defined data-quality checks |
 | Data quality | Reconciliation discrepancy rate | Frequency of inconsistencies across relevant sources |
-| Visibility | Data freshness | Time elapsed since relevant source information was updated |
+| Visibility | Data freshness | Time between source update and availability in the platform, measured against the per-source target |
 | Operational control | Exception detection coverage | Proportion of defined, detectable exceptions identified |
+| Operational control | Exception precision | Proportion of flagged exceptions confirmed as valid (false-positive control) |
 | Operational control | Exception resolution time | Time between exception identification and resolution |
-| AI quality | Classification performance | Accuracy of supplier communication classification |
-| AI quality | Extraction accuracy | Accuracy of extracted information against validated references |
+| AI quality | Classification performance | Macro-F1 with per-class precision and recall for supplier communication classification |
+| AI quality | Extraction accuracy | Field-level exact-match or F1 against validated references |
+| AI quality | Anomaly precision and recall | Quality of ML-based exception signals against a labeled evaluation dataset |
 | Reporting quality | Report correctness | Agreement between reported indicators and authoritative calculations |
+| Reporting quality | Report correction rate | Reports requiring manual correction before distribution |
 | Reliability | Processing success rate | Proportion of scheduled or requested executions completed successfully |
-| Adoption | Active user adoption | Whether intended users regularly use the product |
+| Adoption | Weekly active users by role | Regular use by each intended persona |
 
 ### Measurement principles
 
@@ -406,7 +423,7 @@ The following indicators establish the initial measurement framework. Baselines 
 
 ## 11. Key Assumptions and Constraints
 
-The following assumptions guide the initial framing and must be validated during product discovery.
+The following assumptions guide the initial framing. Section 13 resolves them provisionally for the reference MVP; they remain validation items before production use.
 
 | ID | Assumption | Validation needed |
 |---|---|---|
@@ -441,39 +458,41 @@ The following assumptions guide the initial framing and must be validated during
 | Low user adoption | Limited business value despite technical delivery | Involve operational users in discovery and validation |
 | Scope expansion | Delayed delivery and unnecessary complexity | Prioritized MVP and explicit non-goals |
 
-## 13. Open Questions for Product Discovery
+## 13. Resolved Discovery Decisions (MVP Baseline)
 
-The following questions should be resolved before finalizing the PRD.
+The product charter defines a reference enterprise scenario using synthetic datasets and simulated integrations unless authorized real data becomes available. The questions below are therefore resolved as explicit MVP decisions so the PRD can proceed. Each decision records its basis and what still requires validation. Decisions are provisional and change-controlled.
 
-### Business process
-1. What is the actual end-to-end sourcing workflow?
-2. Which activities consume the most employee time?
-3. Which operational decisions are currently delayed by fragmented information?
-4. Which exceptions have the greatest financial or operational impact?
+| # | Question | MVP decision | Basis | Remaining validation |
+|---|---|---|---|---|
+| 1 | End-to-end sourcing workflow | Reference flow: demand → requisition → quotation/RFQ → supplier selection → purchase order → delivery → invoice handoff. The MVP covers requisition through delivery monitoring; contract award, invoice matching, and payment remain external. | Product Charter scope and entity model | Confirm against one real organization's process |
+| 2 | Most time-consuming activities | Data collection and reconciliation, KPI preparation, report writing, and supplier-email triage are the initial targets. | Stated pain points; no measured baseline | Time study during Data Foundation |
+| 3 | Decisions delayed by fragmented information | Supplier award or re-award, expedite or corrective action, exception escalation, and report sign-off. The platform supplies evidence; it does not make these decisions. | Problem statement and non-goals | Confirm decision owners and lead times |
+| 4 | Highest-impact exceptions | Initial exception catalog: late delivery, lead-time deviation, price or quote deviation, quantity or price mismatch, SLA breach, and supplier message with missing or ambiguous PO reference. | Operational impact and available data | Validate priority and thresholds with business owner |
+| 5 | Authoritative systems | ERP/procurement system is authoritative for suppliers, requisitions, purchase orders, and deliveries. Quotation files or email are authoritative for quotes. Email is authoritative for supplier communications. | Reference scenario; source-of-truth principle | Confirm system names, APIs, and ownership |
+| 6 | Data sources and mechanisms | CSV/XLSX files, PostgreSQL read access, REST APIs, and a monitored supplier mailbox. The MVP implements file, database, and API ingestion; email is simulated until a real mailbox is authorized. | Product Charter ingestion scope | Confirm credentials, APIs, and mailbox access |
+| 7 | Source change frequency | ERP batch daily (hourly if an API is available); quotations on demand or daily; delivery updates daily; supplier email near-real-time (5–15 minutes). Freshness targets are set per source. | Operational cadence assumption | Measure actual update cadence |
+| 8 | Common data-quality problems | Missing or duplicate supplier and PO identifiers, inconsistent supplier naming, date and currency formats, late or missing delivery updates, and unlinked emails. | Typical procurement data issues | Profile real extracts and finalize validation rules |
+| 9 | Process and KPI ownership | Business owner: Head of Procurement/Sourcing. Operational owner: Operations Manager. KPI definitions: business owner with BI/Data Analyst. Technical owner: Platform Administrator. Model quality: Data Scientist/AI Engineer. | Governance requirement | Confirm named owners |
+| 10 | Exception investigation and approval | Operations Analyst investigates. Operations Manager approves platform exceptions within delegated limits. Anything affecting a financial commitment, contract, or supplier master data remains with existing ERP/source-system authority. The platform records the decision but does not grant fiscal authority. | Separation of duties and non-goals | Confirm delegation limits and approval matrix |
+| 11 | Required reports and frequency | Daily exception digest (Operations), weekly supplier performance report (Operations Manager), monthly executive summary (Executive Viewer), plus on-demand reports. | Persona needs | Confirm with each stakeholder |
+| 12 | Current report preparation time | Not yet measured. Establish a baseline through a time study before any savings claim. No numeric ROI is asserted in this document. | Measurement principle 1 | Baseline measurement |
+| 13 | Improvements that justify adoption | Working adoption thresholds, to be ratified after baseline: at least 30% reduction in recurring report preparation time, at least 50% of routine exceptions identified before manual review, and at least 80% of recurring reports generated without manual correction. | Initial product hypothesis | Ratify or revise after baseline |
+| 14 | Risks or costs reduced by earlier detection | Late-delivery expediting, stockouts, SLA credits or penalties, and management time spent reconciling information. Quantify only where incident and cost data exist. | Business value proposition | Collect incident and cost data |
+| 15 | Activities requiring semantic interpretation | Supplier-email classification (purpose, urgency, intent), extraction of dates, quantities, prices, and document references, and narrative explanation of validated indicators. | AI applicability boundary | Validate against representative messages |
+| 16 | Activities better handled deterministically | KPI calculation, date and price comparisons, SLA checks, deduplication, identifier matching, threshold evaluation, and routing. | Reliability and auditability | None; deterministic by design |
+| 17 | Sufficient historical data for ML | Unknown. Start with deterministic baselines. Introduce ML only if a documented minimum history exists (working threshold: at least 12 months of relevant delivery events per supplier or category) and the model shows measurable lift over the baseline. Otherwise remain deterministic. | Risk mitigation for insufficient data | Assess data history |
+| 18 | AI outputs requiring mandatory human validation | Any AI output that creates or updates a business record, changes exception severity, triggers an external communication, or appears in an executive report. Low-confidence classification or extraction is always reviewed. | AI governance and constraints | Define confidence thresholds |
 
-### Data and integrations
-5. Which systems are authoritative for suppliers, requisitions, quotations, purchase orders, and deliveries?
-6. What data sources and integration mechanisms are available?
-7. How frequently does each source change?
-8. What data-quality problems are most common?
+### Residual validation before production
 
-### Users and responsibilities
-9. Who owns the sourcing process and its operational KPIs?
-10. Who investigates exceptions, and who has authority to approve corrective actions?
-11. Which reports are required by each stakeholder, and at what frequency?
+The following items cannot be closed with the reference scenario and must be validated with an authorized organization:
 
-### Business value
-12. How much time is currently spent preparing operational reports?
-13. Which measurable improvements would justify adoption?
-14. What operational risks or costs could be reduced through earlier exception detection?
-
-### AI applicability
-15. Which activities genuinely require semantic interpretation?
-16. Which can be handled more reliably through deterministic automation?
-17. Is there enough historical data to justify predictive modeling?
-18. Which AI-generated outputs require mandatory human validation?
-
-These questions should be prioritized according to their impact on product scope, feasibility, and expected business value.
+1. Real system access, APIs, credentials, and source-of-truth ownership.
+2. Measured baseline for report preparation and manual processing time.
+3. Signed-off KPI definitions, including on-time delivery and SLA rules.
+4. Validated exception catalog, thresholds, and approval delegation limits.
+5. Sufficient historical data for any proposed ML model.
+6. Legal and data-governance approval for processing supplier communications.
 
 ## 14. Definition of a Successful Product Outcome
 
@@ -484,7 +503,7 @@ The initial product will be considered successful when it demonstrates that:
 3. Users can monitor key sourcing activities through reliable operational indicators.
 4. Relevant operational deviations can be identified and investigated.
 5. Supplier communications can be converted into useful structured information where the use case justifies AI.
-6. Recurring operational reporting requires materially less manual effort without compromising correctness.
+6. Recurring operational reporting requires materially less manual effort without compromising correctness (working thresholds in Section 13, decision 13).
 7. Consequential decisions remain subject to appropriate business authorization and human approval.
 8. Platform operations, processing executions, and failures can be monitored and investigated.
 9. The shared foundation can support the initial sourcing module without creating unnecessary coupling that prevents future expansion.
@@ -504,5 +523,7 @@ The subsequent documents will build on this foundation:
 | **PRD** | Product objectives, functional and non-functional requirements, priorities, workflows, and acceptance criteria |
 | **System Design & ADRs** | Architecture, component boundaries, technology decisions, integrations, data flows, and technical trade-offs |
 | **Implementation Roadmap** | Delivery phases, dependencies, milestones, and completion criteria |
+
+The resolved decisions in Section 13 are the baseline assumptions for the PRD and must be reflected in its requirements, priorities, and acceptance criteria.
 
 **Guiding principle:** Build a platform that solves a real operational problem first. Introduce automation, machine learning, and agentic capabilities only where they provide measurable value beyond simpler alternatives.
