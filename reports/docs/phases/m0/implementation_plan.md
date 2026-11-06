@@ -143,7 +143,7 @@ ai-business-operations-platform/
 | Entrypoints | No `[project.scripts]`, no FastAPI app, no `main` module | Nothing is executable |
 | Documentation | Grounding, architecture, roadmap, M0 plan, and figure are tracked | Documentation baseline is coherent but describes work not yet built |
 | README | Conceptual overview only; no install, environment, or run instructions | Fresh-clone initialization is undocumented |
-| Cross-document identifiers | Blueprint: ADR-013 = DVC, ADR-014 = MLflow. System Design: ADR-013 = Human Validation, ADR-014 = DVC and MLflow | ADR identifier collision must be reconciled |
+| Cross-document identifiers | Blueprint: ADR-013 = Human Validation, ADR-014 = DVC and MLflow Introduced Conditionally. System Design: ADR-013 = Human Validation, ADR-014 = DVC and MLflow Introduced Conditionally | ADR identifiers now aligned |
 
 Governance verification: root `invariants.md` defines INV-001 through INV-018 under an Initial baseline status.
 
@@ -158,7 +158,7 @@ Governance verification: root `invariants.md` defines INV-001 through INV-018 un
 | AUD-05 | Sourcing module contract is absent | No `modules/sourcing` package or module contract | Verified — gap |
 | AUD-06 | CI quality checks are absent | `.github/workflows/` empty; Ruff, mypy, and pytest configured only | Verified — gap |
 | AUD-07 | Configuration and secrets conventions are incomplete | `.env.example` empty; `.env` correctly ignored | Verified — partial |
-| AUD-08 | Documentation is internally consistent except ADR numbering | Blueprint and System Design assign different decisions to ADR-013/014 | Verified — conflict |
+| AUD-08 | Documentation is internally consistent regarding ADR numbering | Blueprint and System Design now assign the same decisions to ADR-013 and ADR-014 | Verified — resolved |
 
 **Audit rule:** findings may change candidate scope. If a capability already exists and satisfies its requirements, retain it rather than recreating it.
 
@@ -187,7 +187,7 @@ Governance verification: root `invariants.md` defines INV-001 through INV-018 un
 | F-06 | No CI workflow | D07 | Implement the approved quality-gate set |
 | F-07 | `.env.example` is empty | D06 | Document required variable names and safe examples |
 | F-08 | README has no initialization instructions | Exit criterion 1 | Add the fresh-clone procedure |
-| F-09 | Blueprint and System Design both use ADR-013/014 | Documentation | Assign unique identifiers before citing them |
+| F-09 | ADR-013/014 aligned between Blueprint and System Design | Documentation | Verify consistent usage in all documents |
 
 ---
 
