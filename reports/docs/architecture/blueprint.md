@@ -1775,8 +1775,8 @@ The following decisions should be recorded as permanent engineering references.
 | ADR-010 | Power BI curated read models           | Separate operational storage from analytical consumption    |
 | ADR-011 | Single-enterprise deployment initially | Avoid premature multi-tenancy                               |
 | ADR-012 | Infrastructure expansion by evidence   | Control cost and maintenance complexity                     |
-| ADR-013 | DVC for data & pipeline versioning     | Establish dataset, pipeline and artifact lineage            |
-| ADR-014 | MLflow for experiment tracking & model registry | Separate experiment comparison from pipeline reproducibility |
+| ADR-013 | Human Validation for Consequential AI Outputs | Enforce human validation for designated consequential AI outputs |
+| ADR-014 | DVC and MLflow Introduced Conditionally | Introduce DVC when predictive modeling is implemented and dataset/pipeline reproducibility becomes a concrete requirement; Use MLflow where experiment tracking and model lifecycle management are needed |
 
 Each ADR should document:
 
