@@ -27,6 +27,10 @@ BOPF distinguishes between two architectural concerns:
 - **Platform Foundation:** reusable infrastructure, integration contracts, and operational mechanisms shared across modules.
 - **Business Modules:** domain-specific functionality implemented using the platform's capabilities.
 
+![BOPF platform foundation: Platform Core capabilities installed once, the Sourcing MVP module, and future Finance, Inventory, and Logistics modules](reports/figures/platform_foundation.png)
+
+*Platform Foundation capabilities are installed once; the Sourcing MVP and future business modules register on top and reuse shared services.*
+
 ```mermaid
 flowchart TB
     subgraph BOPF["BOPF — Platform Bootstrap Kit"]
