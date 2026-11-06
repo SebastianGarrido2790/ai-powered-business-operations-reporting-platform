@@ -7,7 +7,7 @@
 | Document type | Lightweight Implementation Roadmap |
 | Product | Business Operations Platform Foundation |
 | Initial module | Sourcing Operations Intelligence |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Proposed |
 | Upstream documents | User Story & Problem Framing; Product Requirements Document; System Design & ADRs |
 
@@ -30,31 +30,33 @@ Those details belong in the corresponding product and engineering artifacts, suc
 
 ## 2. Roadmap Principles
 
-1. **Dependency-driven delivery:** establish foundational capabilities before building on top of them.
-2. **Progressive validation:** each phase must produce a verifiable improvement to the same deployable product.
-3. **Data before intelligence:** establish reliable data integration and analytical foundations before introducing predictive or generative capabilities.
-4. **Deterministic foundations:** business calculations, validation, and operational rules must remain reliable independently of AI.
-5. **Controlled automation:** workflow automation must operate within established permissions, policies, and human-approval boundaries.
-6. **Incremental governance:** security, traceability, data quality, and operational controls must evolve throughout delivery rather than being postponed until the final phase.
-7. **Evidence-based expansion:** capabilities such as ML and advanced automation are introduced only when their prerequisites and business value are demonstrated.
+1. **Engineering foundation first:** establish the repository, standards, and reproducible development environment before implementing platform capabilities.
+2. **Dependency-driven delivery:** establish foundational capabilities before building on top of them.
+3. **Progressive validation:** each phase must produce a verifiable improvement to the same deployable product.
+4. **Data before intelligence:** establish reliable data integration and analytical foundations before introducing predictive or generative capabilities.
+5. **Deterministic foundations:** business calculations, validation, and operational rules must remain reliable independently of AI.
+6. **Controlled automation:** workflow automation must operate within established permissions, policies, and human-approval boundaries.
+7. **Incremental governance:** security, traceability, data quality, and operational controls must evolve throughout delivery rather than being postponed until the final phase.
+8. **Evidence-based expansion:** capabilities such as ML and advanced automation are introduced only when their prerequisites and business value are demonstrated.
 
 ## 3. Implementation Milestones
 
-### M0 — Platform Foundation
+### M0 — Project Scaffolding & Engineering Standards
 
 **Goal**
 
-Establish a deployable platform foundation capable of supporting the Sourcing module and subsequent implementation phases.
+Establish the project's engineering foundation and a reproducible development environment that supports consistent, secure, and maintainable implementation.
 
 **Major capabilities**
 
-- Reproducible development and deployment environment.
-- Platform bootstrap and explicit module registration.
-- Initial Sourcing module integration.
-- Persistent application data foundation.
-- Independent API and background execution.
-- Initial authentication, configuration, health checks, and operational logging.
-- Basic automated testing and continuous integration.
+- Repository and application structure.
+- Project configuration and dependency management.
+- Engineering conventions and development standards.
+- Environment and secrets-management conventions.
+- Local containerized development environment.
+- Database and migration foundation.
+- Initial CI pipeline and automated quality checks.
+- Executable application skeleton and minimal Sourcing module contract.
 
 **Dependencies**
 
@@ -63,18 +65,54 @@ Establish a deployable platform foundation capable of supporting the Sourcing mo
 
 **Phase exit criteria**
 
-- A clean development environment can initialize and run the platform.
-- The Sourcing module registers and exposes its operational health.
-- The API and worker operate independently.
-- The platform connects successfully to its application database.
-- A basic asynchronous execution can be submitted and tracked.
-- Automated quality checks pass.
+- A fresh clone can initialize the development environment using documented instructions.
+- The project structure and engineering conventions are established.
+- The local environment starts successfully.
+- The application skeleton and minimal Sourcing module are executable.
+- Database connectivity and the initial migration process are verified.
+- Automated quality checks execute successfully through CI.
+- Configuration and secrets conventions are documented and validated.
 
-**Completion evidence:** a reproducible, running platform with a registered Sourcing module and verified foundational services.
+**Completion evidence:** a reproducible repository with an executable project skeleton, established engineering standards, and passing CI checks.
 
 ---
 
-### M1 — Data Integration & Processing
+### M1 — Platform Foundation
+
+**Goal**
+
+Establish the reusable platform capabilities required to host and operate the Sourcing module and future business modules.
+
+**Major capabilities**
+
+- Platform bootstrap and application lifecycle.
+- Explicit module registry and registration.
+- Module compatibility and health validation.
+- Core API foundation.
+- Independent API and background worker execution.
+- Persistent platform metadata and job execution state.
+- Initial authentication and authorization boundaries.
+- Shared logging, correlation, and health checks.
+
+**Dependencies**
+
+- M0 — Project Scaffolding & Engineering Standards.
+
+**Phase exit criteria**
+
+- The platform starts and validates its configuration.
+- The Sourcing module registers through the explicit module registry.
+- The API and worker operate independently.
+- Platform services connect successfully to the application database.
+- A basic asynchronous job can be submitted, processed, and tracked.
+- Module and platform health checks return the expected results.
+- Automated tests verify the principal platform boundaries.
+
+**Completion evidence:** a running platform with a registered Sourcing module, reusable core services, and verified asynchronous execution.
+
+---
+
+### M2 — Data Integration & Processing
 
 **Goal**
 
@@ -93,7 +131,7 @@ Establish a reliable sourcing data foundation by integrating supported sources a
 
 **Dependencies**
 
-- M0 — Platform Foundation.
+- M1 — Platform Foundation.
 
 **Phase exit criteria**
 
@@ -108,7 +146,7 @@ Establish a reliable sourcing data foundation by integrating supported sources a
 
 ---
 
-### M2 — Business Intelligence
+### M3 — Business Intelligence
 
 **Goal**
 
@@ -126,7 +164,7 @@ Transform validated sourcing data into actionable operational and management vis
 
 **Dependencies**
 
-- M1 — Data Integration & Processing.
+- M2 — Data Integration & Processing.
 - Business-owner approval of KPI definitions and applicable SLA rules.
 
 **Phase exit criteria**
@@ -142,7 +180,7 @@ Transform validated sourcing data into actionable operational and management vis
 
 ---
 
-### M3 — Predictive Analytics & Anomaly Detection
+### M4 — Predictive Analytics & Anomaly Detection
 
 **Goal**
 
@@ -160,8 +198,8 @@ Evaluate and introduce predictive capabilities where historical data and measura
 
 **Dependencies**
 
-- M1 — Data Integration & Processing.
-- M2 — Business Intelligence, to establish analytical definitions and operational measurement.
+- M2 — Data Integration & Processing.
+- M3 — Business Intelligence, to establish analytical definitions and operational measurement.
 - Sufficient historical data for each proposed modeling use case.
 
 **Phase exit criteria**
@@ -179,7 +217,7 @@ Evaluate and introduce predictive capabilities where historical data and measura
 
 ---
 
-### M4 — AI Intelligence
+### M5 — AI Intelligence
 
 **Goal**
 
@@ -197,8 +235,8 @@ Introduce controlled LLM capabilities to process supplier communications and imp
 
 **Dependencies**
 
-- M1 — Data Integration & Processing.
-- M2 — Business Intelligence, for validated indicators and report context.
+- M2 — Data Integration & Processing.
+- M3 — Business Intelligence, for validated indicators and report context.
 - Access to representative supplier communication data, initially simulated where necessary.
 - Defined validation and human-review policies.
 
@@ -215,7 +253,7 @@ Introduce controlled LLM capabilities to process supplier communications and imp
 
 ---
 
-### M5 — Workflow Automation
+### M6 — Workflow Automation
 
 **Goal**
 
@@ -233,10 +271,10 @@ Coordinate recurring operations and exception-handling processes through control
 
 **Dependencies**
 
-- M0 — Platform Foundation.
-- M1 — Data Integration & Processing.
-- M2 — Business Intelligence.
-- M3 and/or M4 where predictive or AI-generated outputs are incorporated into automated workflows.
+- M1 — Platform Foundation.
+- M2 — Data Integration & Processing.
+- M3 — Business Intelligence.
+- M4 and/or M5 where predictive or AI-generated outputs are incorporated into automated workflows.
 - Approved notification, escalation, and approval policies.
 
 **Phase exit criteria**
@@ -253,7 +291,7 @@ Coordinate recurring operations and exception-handling processes through control
 
 ---
 
-### M6 — Governance & Monitoring
+### M7 — Governance & Monitoring
 
 **Goal**
 
@@ -273,7 +311,7 @@ Consolidate end-to-end governance, operational visibility, and quality assurance
 
 **Dependencies**
 
-- M0 through M5, with governance controls progressively implemented throughout those phases.
+- M0 through M6, with governance controls progressively implemented throughout those phases.
 
 **Phase exit criteria**
 
@@ -281,7 +319,7 @@ Consolidate end-to-end governance, operational visibility, and quality assurance
 - Audit records support investigation of consequential actions and decisions.
 - Data quality and integration reliability are measurable.
 - Processing jobs and workflows expose operational health and failure conditions.
-- AI and ML capabilities have documented evaluation and monitoring practices.
+- AI and ML capabilities have documented evaluation and monitoring practices where applicable.
 - Human-review and approval controls can be verified.
 - Operational ownership, retention, and governance requirements are documented and validated.
 - The platform meets the agreed operational readiness criteria for its intended deployment.
@@ -294,26 +332,29 @@ Consolidate end-to-end governance, operational visibility, and quality assurance
 
 The preferred delivery sequence is:
 
-**M0 → M1 → M2 → M3 → M4 → M5 → M6**
+**M0 → M1 → M2 → M3 → M4 / M5 → M6 → M7**
 
 This represents the planning order, not an assertion that every phase is strictly dependent on the preceding one.
 
-M3 and M4 have different prerequisites and may progress in parallel once the data foundation is established and their respective dependencies are satisfied. M5 should integrate only capabilities that have passed their relevant validation gates.
+M4 and M5 have different prerequisites and may progress in parallel once the data foundation is established and their respective dependencies are satisfied.
 
-Governance and monitoring are cross-cutting responsibilities: foundational controls begin in M0 and mature as the platform gains additional capabilities, culminating in M6.
+M6 should integrate only capabilities that have passed their relevant validation gates.
+
+Governance and monitoring are cross-cutting responsibilities: foundational controls begin in M0 and mature as the platform gains additional capabilities, culminating in M7.
 
 ## 5. Overall Completion Criteria
 
 The initial BOPF implementation is considered complete when:
 
-1. The platform provides a reliable and reproducible operational foundation.
-2. Sourcing data from the supported sources can be consolidated, validated, and traced.
-3. Business stakeholders can monitor sourcing operations through approved KPIs and dashboards.
-4. Predictive capabilities have been introduced only where supported by sufficient evidence.
-5. LLM capabilities provide measurable value within defined validation and human-review boundaries.
-6. Operational workflows support scheduling, notification, escalation, and platform-level approvals.
-7. Governance and monitoring provide end-to-end visibility and accountability.
-8. The architecture remains suitable for incremental expansion into future business modules.
+1. The project has a reproducible engineering foundation and established development standards.
+2. The platform provides a reliable operational foundation.
+3. Sourcing data from supported sources can be consolidated, validated, and traced.
+4. Business stakeholders can monitor sourcing operations through approved KPIs and dashboards.
+5. Predictive capabilities have been introduced only where supported by sufficient evidence.
+6. LLM capabilities provide measurable value within defined validation and human-review boundaries.
+7. Operational workflows support scheduling, notification, escalation, and platform-level approvals.
+8. Governance and monitoring provide end-to-end visibility and accountability.
+9. The architecture remains suitable for incremental expansion into future business modules.
 
 Completion is based on verified capabilities and evidence, not the number of technologies, models, or automation components implemented.
 
