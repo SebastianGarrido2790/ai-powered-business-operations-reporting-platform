@@ -64,6 +64,32 @@ flowchart TB
 
 The Bootstrap Kit provides the mechanisms required to register, configure, initialize, and operate modules. Each module supplies its own business logic and domain-specific components.
 
+## The Bootstrap Kit, Platform Runtime, and Business Modules
+
+A fundamental architectural distinction in BOPF is that the **Bootstrap Kit and the running platform are related, but they are not the same thing**.
+
+| Architectural element | Definition |
+|---|---|
+| **Platform Bootstrap Kit** | The reusable structure, templates, contracts, and mechanisms used to initialize an enterprise environment. |
+| **Platform Runtime** | The actual operational environment instantiated from the Bootstrap Kit, providing shared services and infrastructure to registered modules. |
+| **Business Modules** | Independently developed domain capabilities registered into the Platform Runtime through standardized integration contracts. |
+
+Conceptually, the relationship is:
+
+```mermaid
+flowchart TD
+    KIT["Platform Bootstrap Kit"]
+    INIT["Environment Initialization"]
+    RUNTIME["Platform Runtime"]
+    MODULES["Registered Business Modules"]
+
+    KIT --> INIT
+    INIT --> RUNTIME
+    RUNTIME --> MODULES
+```
+
+This distinction defines the intended architecture: BOPF is not merely a shared-code package. It is a reusable foundation for initializing and operating an extensible enterprise platform.
+
 ## What the Bootstrap Kit Provides
 
 | Foundation | Responsibility |
