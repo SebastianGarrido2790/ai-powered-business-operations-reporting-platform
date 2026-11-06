@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Proposed — awaiting decisions and repository audit  
+**Status:** Proposed — repository audit complete; decisions pending  
 **Document type:** Living phase decision record
 
 ---
@@ -24,7 +24,7 @@ M0 must leave the project with an executable application skeleton, a minimal Sou
 | `reports/docs/architecture/system_design.md` | Approved architectural baseline and component responsibilities. |
 | `invariants.md` | Standing architectural and engineering constraints. |
 
-**Requirement traceability:** exact PRD requirement IDs and applicable invariant/ADR identifiers must be confirmed against the canonical files during the repository audit. No identifiers are inferred or invented here.
+**Requirement traceability:** PRD requirement IDs and applicable invariant/ADR identifiers are confirmed against the canonical files in §2.5. No identifiers are inferred or invented here.
 
 ### 1.3 Phase boundaries
 
@@ -80,52 +80,114 @@ M0 closes only when:
 
 ### 2.1 Audit status
 
-<escape>**Documentary audit only — repository verification pending.**</escape>
+**Repository verification completed.** Evidence collected on 2026-11-06 against `main` at `b27375b`.
 
-The following is established from approved project context. It must not be interpreted as proof that the corresponding repository artifacts already exist.
+**Method:** tracked-file inventory (`git ls-files`), working-tree inspection including ignored files, review of `pyproject.toml`, validation of Docker Compose syntax, inspection of migration/CI/test directories, and verification of governance documents.
 
-| Area | Established project baseline | Repository evidence |
+**Environment observed:** Python 3.14.0 (host), `uv` 0.8.11, Docker 29.1.3, Git 2.50.1.
+
+The repository contains **41 tracked files**. It is currently a documentation-and-scaffolding repository: there is no application code, no migration, no test, and no CI workflow. The findings below replace the earlier documentary-only baseline.
+
+### 2.2 Verified repository inventory
+
+Tracked content at `b27375b`:
+
+```text
+ai-business-operations-platform/
+├── .dockerignore                  (empty)
+├── .env.example                   (empty)
+├── .gitignore
+├── .pre-commit-config.yaml        (empty)
+├── Dockerfile                     (empty; not used by Compose)
+├── LICENSE.txt
+├── README.md
+├── docker-compose.yml
+├── dvc.yaml                       (empty)
+├── params.yaml                    (comment only)
+├── launch_app.bat                 (empty)
+├── pyproject.toml
+├── invariants.md                  (INV-001 … INV-018)
+├── data/{samples,synthetic}/.gitkeep
+├── database/{migrations,schemas}/.gitkeep
+├── evaluation/{llm,ml}/.gitkeep
+├── infrastructure/docker/.gitkeep
+├── powerbi/dashboards/.gitkeep
+├── workflows/n8n/.gitkeep
+├── src/
+│   ├── __init__.py
+│   ├── py.typed
+│   └── {ai,analytics,api,ingestion,ml,processing,reporting,validation}/__init__.py
+├── tests/.gitkeep
+└── reports/
+    ├── docs/
+    │   ├── architecture/{blueprint.md, system_design.md}
+    │   ├── grounding/{prd.md, product_charter.md, user_story.md}
+    │   ├── implementation_roadmap.md
+    │   └── phases/m0/implementation_plan.md
+    └── figures/platform_foundation.png
+```
+
+### 2.3 Area findings
+
+| Area | Evidence | Finding |
 |---|---|---|
-| Architecture | Modular monolith, domain-oriented modules | Design documented; implementation unverified |
-| Backend | Python and FastAPI | Technology baseline established; project configuration unverified |
-| Contracts | Pydantic and explicit module contracts | Architectural direction established; implementation unverified |
-| Persistence | PostgreSQL, SQLAlchemy where appropriate, Alembic | Baseline established; connection and migrations unverified |
-| Dependency management | `uv` and `pyproject.toml` | Standard established; files and lockfile unverified |
-| Local environment | Docker Compose | Intended approach; actual configuration unverified |
-| CI/CD | GitHub Actions | Established deployment/CI baseline; workflows unverified |
-| Engineering guidance | Root `invariants.md`, specialized guides | Approved by user; repository contents and paths unverified |
-| Sourcing module | First functional business module | Domain and architectural baseline established; executable contract unverified |
+| Repository structure | Eight empty `src/` domain packages; no `main.py`, `bootstrap.py`, `core/`, `modules/sourcing/`, or `workers/` | Scaffolding only; does not implement System Design §3.1 |
+| Python configuration | `pyproject.toml` exists; `requires-python = ">=3.11"`; Ruff and mypy target 3.11 | Declared, not qualified |
+| Reproducibility | No `uv.lock`; `uv lock --check` fails | Dependency set is not locked |
+| Persistence | SQLAlchemy and Alembic declared; no `psycopg`/`asyncpg` driver; no `alembic.ini`; `database/*` holds only `.gitkeep` | No executable database or migration foundation |
+| Docker | Compose defines `api`, `db`, `redis`, `n8n`, `mlflow`; the API builds `infrastructure/docker/Dockerfile`, which does not exist; root `Dockerfile` is empty; `docker compose config --quiet` exits 0 with an obsolete-`version` warning | Compose is syntactically valid but not buildable; composition exceeds M0-D05 |
+| CI | `.github/workflows/` exists but is empty | No automated quality gate |
+| Tests | `tests/` contains only `.gitkeep`; pytest is configured with `--cov=src` | No tests; a default run collects nothing |
+| Configuration | `.env.example` is empty; `.env` is ignored; no settings module | M0-D06 convention is documented but not implemented |
+| Tooling placeholders | `.pre-commit-config.yaml`, `launch_app.bat`, `dvc.yaml`, and `.dockerignore` are empty; `params.yaml` has one comment | Present in name only |
+| Entrypoints | No `[project.scripts]`, no FastAPI app, no `main` module | Nothing is executable |
+| Documentation | Grounding, architecture, roadmap, M0 plan, and figure are tracked | Documentation baseline is coherent but describes work not yet built |
+| README | Conceptual overview only; no install, environment, or run instructions | Fresh-clone initialization is undocumented |
+| Cross-document identifiers | Blueprint: ADR-013 = DVC, ADR-014 = MLflow. System Design: ADR-013 = Human Validation, ADR-014 = DVC and MLflow | ADR identifier collision must be reconciled |
 
-### 2.2 Required repository inspection
+Governance verification: root `invariants.md` defines INV-001 through INV-018 under an Initial baseline status.
 
-Before approving implementation plans, inspect:
+### 2.4 Audit findings register
 
-- Root directory, existing application packages, and module boundaries.
-- `pyproject.toml`, lockfile, Python version constraints, and installed dependencies.
-- Existing API entrypoints, configuration, and environment handling.
-- Existing Dockerfiles and Docker Compose configuration.
-- SQLAlchemy models, database connection configuration, and Alembic setup.
-- Existing CI workflows and configured quality tools.
-- Existing tests, fixtures, and test configuration.
-- `invariants.md`, workflows, and engineering guides.
-- Current README instructions and discrepancies between documentation and executable behavior.
-
-Record actual paths and findings. Do not create replacements before determining whether an existing artifact can be retained or corrected.
-
-### 2.3 Audit findings register
-
-| ID | Finding to establish | Required evidence | Status |
+| ID | Finding | Evidence | Status |
 |---|---|---|---|
-| AUD-01 | Whether repository/application scaffolding exists | Repository tree and entrypoints | Pending |
-| AUD-02 | Whether Python/dependency configuration is reproducible | `pyproject.toml`, lockfile, clean environment test | Pending |
-| AUD-03 | Whether local container environment exists | Docker configuration and startup test | Pending |
-| AUD-04 | Whether database and migrations are configured | Connection test and migration history | Pending |
-| AUD-05 | Whether Sourcing module contract exists | Package, contract, executable behavior | Pending |
-| AUD-06 | Whether CI and quality checks exist | Workflow files and execution results | Pending |
-| AUD-07 | Whether configuration/secrets conventions are safe | Settings, example environment, Git ignore rules | Pending |
-| AUD-08 | Whether project documentation is consistent | Canonical document and implementation comparison | Pending |
+| AUD-01 | Repository scaffolding exists but no application implementation | `src/` contains `__init__.py` placeholders only; no entrypoint or Sourcing package | Verified — gap |
+| AUD-02 | Dependency configuration is not reproducible | `pyproject.toml` present; `uv.lock` absent; `uv lock --check` fails | Verified — gap |
+| AUD-03 | Local container environment is not executable | Compose references missing `infrastructure/docker/Dockerfile`; root `Dockerfile` empty | Verified — gap |
+| AUD-04 | Database and migration foundation is absent | No `alembic.ini`, migration versions, SQLAlchemy configuration, or DB driver | Verified — gap |
+| AUD-05 | Sourcing module contract is absent | No `modules/sourcing` package or module contract | Verified — gap |
+| AUD-06 | CI quality checks are absent | `.github/workflows/` empty; Ruff, mypy, and pytest configured only | Verified — gap |
+| AUD-07 | Configuration and secrets conventions are incomplete | `.env.example` empty; `.env` correctly ignored | Verified — partial |
+| AUD-08 | Documentation is internally consistent except ADR numbering | Blueprint and System Design assign different decisions to ADR-013/014 | Verified — conflict |
 
 **Audit rule:** findings may change candidate scope. If a capability already exists and satisfies its requirements, retain it rather than recreating it.
+
+### 2.5 Confirmed requirement and governance identifiers
+
+| Decision | PRD references | Invariant / ADR references |
+|---|---|---|
+| M0-D01 | PF-01, PF-04 | INV-001, INV-003, INV-005; ADR-001, ADR-002 |
+| M0-D02 | — | Compatibility commitment; no invariant |
+| M0-D03 | PF-01 | INV-004 (full enforcement in M1); ADR-007 |
+| M0-D04 | PF-04 | INV-006, INV-015; ADR-003 |
+| M0-D05 | — | INV-017; ADR-012; ADR-005 (worker deferred) |
+| M0-D06 | PF-03 | INV-016 |
+| M0-D07 | — | System Design §14.3; INV-017 |
+| M0-D08 | Deferred PF-01 … PF-10 | Roadmap M1–M7; INV-017 |
+
+### 2.6 Blocking findings for decision resolution
+
+| ID | Finding | Affects | Required disposition |
+|---|---|---|---|
+| F-01 | Existing `src/{ai,analytics,api,…}` layout conflicts with System Design §3.1 (`app/core`, `app/modules/sourcing`) | D01 | Decide whether to realign the repository or amend System Design |
+| F-02 | No lockfile; declared dependencies are unresolved | D02 | Produce and commit a qualified `uv.lock` |
+| F-03 | Compose cannot build: `infrastructure/docker/Dockerfile` is missing | D05 | Provide the Dockerfile or change the build context |
+| F-04 | Compose includes Redis, n8n, and MLflow, contrary to M0-D05 option B | D05, D08 | Reduce to API + PostgreSQL, or approve expanded scope |
+| F-05 | No migration tooling, migration, or DB driver | D04 | Establish Alembic and a minimal baseline migration |
+| F-06 | No CI workflow | D07 | Implement the approved quality-gate set |
+| F-07 | `.env.example` is empty | D06 | Document required variable names and safe examples |
+| F-08 | README has no initialization instructions | Exit criterion 1 | Add the fresh-clone procedure |
+| F-09 | Blueprint and System Design both use ADR-013/014 | Documentation | Assign unique identifiers before citing them |
 
 ---
 
@@ -169,8 +231,8 @@ M0 establishes only the conventions needed to implement, test, configure, and op
 
 ### 3.3 Assumptions requiring confirmation
 
-- The approved PRD does not impose additional M0 capabilities beyond the roadmap and architecture baseline.
-- No existing repository implementation is assumed absent.
+- The approved PRD does not impose additional M0 capabilities beyond the roadmap and architecture baseline; §2.5 confirms PF-01, PF-03, PF-04 and the M0-relevant platform requirements.
+- The repository audit (§2) confirms that no application implementation exists. Candidates 001–005 must extend or correct existing artifacts rather than recreate them.
 - The initial development environment targets one developer-operated environment, not multi-tenant deployment.
 - Local development may use non-production credentials and synthetic data.
 - Production identity, secret management, and infrastructure integrations are deferred until their respective implementation phases.
@@ -190,6 +252,18 @@ Candidates are planning hypotheses, not implementation authorization. They must 
 | `003-local-development-environment` | Containerized local environment and configuration conventions | Reproducible local development without committed secrets | 001; runtime and configuration decisions | Fresh clone starts required services using documented instructions | Lightweight |
 | `004-database-foundation` | PostgreSQL connection and migration baseline | Verify persistence and schema evolution mechanism | 001; 003 | Database connection and migration upgrade are verified | Lightweight |
 | `005-ci-quality-gates` | Automated repository quality checks | Consistent validation of changes | 001; test/check configuration | CI executes configured checks successfully | No separate feature spec unless audit reveals complexity |
+
+**Audit-adjusted candidate notes**
+
+| Candidate | Audit implication |
+|---|---|
+| `001-project-scaffold` | Partially present. `pyproject.toml` and `src/` placeholders exist, but there is no lockfile or installable entrypoint. Correct and extend rather than recreate; reconcile the layout first (F-01). |
+| `002-application-skeleton` | Absent. No FastAPI entrypoint or Sourcing package exists. |
+| `003-local-development-environment` | Partial and internally inconsistent. Compose exists but references a missing Dockerfile, includes out-of-scope services, and `.env.example` is empty. |
+| `004-database-foundation` | Absent. Only empty `database/*` placeholders; no Alembic configuration, DB driver, or migration. |
+| `005-ci-quality-gates` | Absent. `.github/workflows/` is empty; Ruff, mypy, and pytest are configured but unexecuted. |
+
+These notes do not accept any candidate. All candidates remain Proposed until the applicable decisions are approved.
 
 ### Candidate disposition
 
@@ -226,16 +300,16 @@ Decision status:
 - **Verified:** implementation checked against its acceptance evidence.
 - **Superseded:** replaced by a later approved decision.
 
-| ID | Decision | Approval required | Initial status |
-|---|---|---|---|
-| M0-D01 | Repository and package structure | Yes | Proposed |
-| M0-D02 | Python runtime compatibility | Unresolved qualification, then approval if alternatives remain | Under Review |
-| M0-D03 | Application and minimal Sourcing contract | Yes | Proposed |
-| M0-D04 | Database and migration boundary | Yes | Proposed |
-| M0-D05 | Local development service composition | Yes | Proposed |
-| M0-D06 | Configuration and secrets conventions | No — constrained by security standards | Proposed |
-| M0-D07 | CI quality gates | Yes for the selected quality-gate set | Proposed |
-| M0-D08 | M0 exclusions and implementation boundary | No — determined by approved roadmap and architecture | Proposed |
+| ID | Decision | Approval required | Initial status | Audit evidence |
+|---|---|---|---|---|
+| M0-D01 | Repository and package structure | Yes | Under Review | `src/` placeholders exist but conflict with System Design §3.1 (F-01) |
+| M0-D02 | Python runtime compatibility | Unresolved qualification, then approval if alternatives remain | Under Review | `requires-python >=3.11`; Ruff/mypy target 3.11; uv resolved 3.11.13; host 3.14.0; no qualification test |
+| M0-D03 | Application and minimal Sourcing contract | Yes | Proposed | Absent: no entrypoint, no Sourcing package |
+| M0-D04 | Database and migration boundary | Yes | Proposed | Absent: no Alembic, migration, or DB driver |
+| M0-D05 | Local development service composition | Yes | Proposed | Compose exists but diverges: missing Dockerfile; includes Redis, n8n, MLflow |
+| M0-D06 | Configuration and secrets conventions | No — constrained by security standards | Proposed | `.env` correctly ignored; `.env.example` empty |
+| M0-D07 | CI quality gates | Yes for the selected quality-gate set | Proposed | No workflows; Ruff, mypy, and pytest configured |
+| M0-D08 | M0 exclusions and implementation boundary | No — determined by approved roadmap and architecture | Proposed | Deferred capabilities confirmed absent |
 
 ### Recommended approval batches
 
@@ -292,7 +366,7 @@ Use a `src/` layout if the audit confirms there is no existing structure that sh
 - No microservices or independently installed business modules.
 - Future module registration mechanisms remain M1 work.
 
-**Status:** Proposed.
+**Status:** Under Review — the existing `src/` layout conflicts with System Design §3.1 (F-01).
 
 ---
 
@@ -334,7 +408,7 @@ Do not add multiple supported Python versions unless there is a concrete compati
 - Pin or constrain it consistently across local development and containers.
 - Record the compatibility rationale.
 
-**Status:** Under Review — qualification pending.
+**Status:** Under Review — configuration declares `>=3.11`; Ruff and mypy target 3.11; `uv` resolved 3.11.13; the qualification test has not been executed.
 
 ---
 
@@ -609,7 +683,7 @@ Do not create nested decisions for routine package names, file names, function s
 
 Once approval-required decisions are resolved:
 
-1. Complete the repository audit and update this document with actual evidence.
+1. The repository audit is complete (§2). Reconcile its blocking findings (§2.6) with the decision log.
 2. Reconcile candidate features against the PRD, roadmap, invariants, and accepted ADRs.
 3. Confirm candidate dispositions: accept, defer, merge, split, or reject.
 4. Identify whether any candidate needs a concise feature `spec.md`.
