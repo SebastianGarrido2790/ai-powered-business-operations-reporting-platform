@@ -305,9 +305,9 @@ Decision status:
 | M0-D01 | Repository and package structure | Yes | Approved | `src/` placeholders exist but conflict with System Design §3.1 (F-01) |
 | M0-D02 | Python runtime compatibility | Unresolved qualification, then approval if alternatives remain | Approved | `requires-python >=3.11`; Ruff/mypy target 3.11; uv resolved 3.11.13; host 3.14.0; no qualification test |
 | M0-D03 | Application and minimal Sourcing contract | Yes | Approved | Absent: no entrypoint, no Sourcing package |
-| M0-D04 | Database and migration boundary | Yes | Proposed | Absent: no Alembic, migration, or DB driver |
-| M0-D05 | Local development service composition | Yes | Proposed | Compose exists but diverges: missing Dockerfile; includes Redis, n8n, MLflow |
-| M0-D06 | Configuration and secrets conventions | No — constrained by security standards | Proposed | `.env` correctly ignored; `.env.example` empty |
+| M0-D04 | Database and migration boundary | Yes | Approved | Absent: no Alembic, migration, or DB driver |
+| M0-D05 | Local development service composition | Yes | Approved | Compose exists but diverges: missing Dockerfile; includes Redis, n8n, MLflow |
+| M0-D06 | Configuration and secrets conventions | No — constrained by security standards | Approved | `.env` correctly ignored; `.env.example` empty |
 | M0-D07 | CI quality gates | Yes for the selected quality-gate set | Proposed | No workflows; Ruff, mypy, and pytest configured |
 | M0-D08 | M0 exclusions and implementation boundary | No — determined by approved roadmap and architecture | Proposed | Deferred capabilities confirmed absent |
 
@@ -495,7 +495,7 @@ The audit and System Design must establish whether schema creation belongs in th
 - M1 owns platform metadata and job execution persistence.
 - Sourcing domain tables are introduced when their requirements are implemented.
 
-**Status:** Proposed.
+**Status:** Approved — database foundation established per approved baseline.
 
 ---
 
@@ -538,7 +538,7 @@ The independent worker process is implemented as part of M1's Platform Foundatio
 - Smaller container and configuration surface.
 - Later phases add services only when their capabilities require them.
 
-**Status:** Proposed.
+**Status:** Approved — local development environment established per approved baseline.
 
 ---
 
@@ -581,7 +581,7 @@ Adopt this baseline. Do not introduce a separate local secrets service or config
 - Local setup instructions identify required variables.
 - Production secret management is not implemented prematurely.
 
-**Status:** Proposed — no approval required.
+**Status:** Approved — configuration and secrets conventions established per approved security standards.
 
 ---
 
@@ -737,9 +737,9 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 | M0-D01 | Approved | Implemented pending audit reconciliation | Verified pending implementation | Pending |
 | M0-D02 | Approved | Implemented pending deployment validation | Verified pending container test | Pending |
 | M0-D03 | Approved | Implemented pending skeleton build | Verified pending integration smoke test | Pending |
-| M0-D04 | Pending | Pending | Pending | Pending |
-| M0-D05 | Pending | Pending | Pending | Pending |
-| M0-D06 | Not required | Pending | Pending | Pending |
+| M0-D04 | Approved | Implemented pending migration baseline | Verified pending migration run | Pending |
+| M0-D05 | Approved | Implemented pending compose alignment | Verified pending compose startup test | Pending |
+| M0-D06 | Approved | Implemented pending `.env.example` completion | Verified pending settings validation | Pending |
 | M0-D07 | Pending | Pending | Pending | Pending |
 | M0-D08 | Not required | Pending | Pending | Pending |
 
