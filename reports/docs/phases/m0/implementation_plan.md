@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Proposed — repository audit complete; decisions pending  
+**Status:** Approved — repository audit complete; decision log approved (D01–D08); candidate features accepted; implementation pending  
 **Document type:** Living phase decision record
 
 ---
@@ -263,17 +263,17 @@ Candidates are planning hypotheses, not implementation authorization. They must 
 | `004-database-foundation` | Absent. Only empty `database/*` placeholders; no Alembic configuration, DB driver, or migration. |
 | `005-ci-quality-gates` | Absent. `.github/workflows/` is empty; Ruff, mypy, and pytest are configured but unexecuted. |
 
-These notes do not accept any candidate. All candidates remain Proposed until the applicable decisions are approved.
+These notes do not by themselves accept any candidate. Candidate acceptance is recorded in the disposition table below, following approval of the applicable decisions.
 
 ### Candidate disposition
 
 | Candidate | Initial recommendation | Approval status |
 |---|---|---|
-| 001 | Accept, subject to audit | Proposed |
-| 002 | Accept, subject to module contract decision | Proposed |
-| 003 | Accept, subject to service composition decision | Proposed |
-| 004 | Accept, subject to migration boundary decision | Proposed |
-| 005 | Accept, subject to quality-gate decision | Proposed |
+| 001 | Accept, subject to audit | Approved — audit confirmed |
+| 002 | Accept, subject to module contract decision | Approved — M0-D03 approved |
+| 003 | Accept, subject to service composition decision | Approved — M0-D05 approved |
+| 004 | Accept, subject to migration boundary decision | Approved — M0-D04 approved |
+| 005 | Accept, subject to quality-gate decision | Approved — M0-D07 approved |
 
 ### SDD policy for M0
 
