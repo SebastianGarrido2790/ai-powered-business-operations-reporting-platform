@@ -308,8 +308,8 @@ Decision status:
 | M0-D04 | Database and migration boundary | Yes | Approved | Absent: no Alembic, migration, or DB driver |
 | M0-D05 | Local development service composition | Yes | Approved | Compose exists but diverges: missing Dockerfile; includes Redis, n8n, MLflow |
 | M0-D06 | Configuration and secrets conventions | No — constrained by security standards | Approved | `.env` correctly ignored; `.env.example` empty |
-| M0-D07 | CI quality gates | Yes for the selected quality-gate set | Proposed | No workflows; Ruff, mypy, and pytest configured |
-| M0-D08 | M0 exclusions and implementation boundary | No — determined by approved roadmap and architecture | Proposed | Deferred capabilities confirmed absent |
+| M0-D07 | CI quality gates | Yes for the selected quality-gate set | Approved | No workflows; Ruff, mypy, and pytest configured |
+| M0-D08 | M0 exclusions and implementation boundary | No — determined by approved roadmap and architecture | Approved | Deferred capabilities confirmed absent |
 
 ### Recommended approval batches
 
@@ -624,7 +624,7 @@ CI must execute on the intended repository change events and report failures cle
 - CI remains fast and maintainable.
 - More specialized security, container, and deployment checks can be introduced as the corresponding implementation exists.
 
-**Status:** Proposed.
+**Status:** Approved — initial quality-gate set established per approved baseline.
 
 ---
 
@@ -658,7 +658,7 @@ No. The following remain deferred:
 
 M0 delivers a working foundation, not a partial implementation of every later capability. Any scope expansion must follow change management.
 
-**Status:** Proposed — no approval required.
+**Status:** Approved — phase boundary and deferred capabilities acknowledged; no approval required.
 
 ---
 
@@ -740,8 +740,8 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 | M0-D04 | Approved | Implemented pending migration baseline | Verified pending migration run | Pending |
 | M0-D05 | Approved | Implemented pending compose alignment | Verified pending compose startup test | Pending |
 | M0-D06 | Approved | Implemented pending `.env.example` completion | Verified pending settings validation | Pending |
-| M0-D07 | Pending | Pending | Pending | Pending |
-| M0-D08 | Not required | Pending | Pending | Pending |
+| M0-D07 | Approved | Implemented pending CI workflow creation | Verified pending CI run | Pending |
+| M0-D08 | Approved | Implemented pending boundary confirmation | Verified pending scope review | Pending |
 
 ---
 
