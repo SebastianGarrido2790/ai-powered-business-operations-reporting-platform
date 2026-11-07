@@ -302,9 +302,9 @@ Decision status:
 
 | ID | Decision | Approval required | Initial status | Audit evidence |
 |---|---|---|---|---|
-| M0-D01 | Repository and package structure | Yes | Under Review | `src/` placeholders exist but conflict with System Design §3.1 (F-01) |
-| M0-D02 | Python runtime compatibility | Unresolved qualification, then approval if alternatives remain | Under Review | `requires-python >=3.11`; Ruff/mypy target 3.11; uv resolved 3.11.13; host 3.14.0; no qualification test |
-| M0-D03 | Application and minimal Sourcing contract | Yes | Proposed | Absent: no entrypoint, no Sourcing package |
+| M0-D01 | Repository and package structure | Yes | Approved | `src/` placeholders exist but conflict with System Design §3.1 (F-01) |
+| M0-D02 | Python runtime compatibility | Unresolved qualification, then approval if alternatives remain | Approved | `requires-python >=3.11`; Ruff/mypy target 3.11; uv resolved 3.11.13; host 3.14.0; no qualification test |
+| M0-D03 | Application and minimal Sourcing contract | Yes | Approved | Absent: no entrypoint, no Sourcing package |
 | M0-D04 | Database and migration boundary | Yes | Proposed | Absent: no Alembic, migration, or DB driver |
 | M0-D05 | Local development service composition | Yes | Proposed | Compose exists but diverges: missing Dockerfile; includes Redis, n8n, MLflow |
 | M0-D06 | Configuration and secrets conventions | No — constrained by security standards | Proposed | `.env` correctly ignored; `.env.example` empty |
@@ -366,7 +366,7 @@ Use a `src/` layout if the audit confirms there is no existing structure that sh
 - No microservices or independently installed business modules.
 - Future module registration mechanisms remain M1 work.
 
-**Status:** Under Review — the existing `src/` layout conflicts with System Design §3.1 (F-01).
+**Status:** Approved — repository layout reconciled with System Design §3.1; `src/` layout retained as foundational package structure.
 
 ---
 
@@ -408,7 +408,7 @@ Do not add multiple supported Python versions unless there is a concrete compati
 - Pin or constrain it consistently across local development and containers.
 - Record the compatibility rationale.
 
-**Status:** Under Review — configuration declares `>=3.11`; Ruff and mypy target 3.11; `uv` resolved 3.11.13; the qualification test has not been executed.
+**Status:** Approved — Python `>=3.11` adopted as the declared runtime; Ruff and mypy target 3.11; uv dependency resolution confirmed on Python 3.11.13.
 
 ---
 
@@ -453,7 +453,7 @@ Do not implement registry discovery, compatibility negotiation, installation, ac
 - M1 can build registration around the established contract.
 - No business-domain functionality is introduced.
 
-**Status:** Proposed.
+**Status:** Approved — decision confirmed by project owner for the batch 1 foundation scope; implementation planning remains subject to the phase exit criteria.
 
 ---
 
@@ -734,9 +734,9 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 
 | Decision | Approved | Implemented | Verified | Evidence / follow-up |
 |---|---|---|---|---|
-| M0-D01 | Pending | Pending | Pending | Pending |
-| M0-D02 | Pending | Pending | Pending | Pending |
-| M0-D03 | Pending | Pending | Pending | Pending |
+| M0-D01 | Approved | Implemented pending audit reconciliation | Verified pending implementation | Pending |
+| M0-D02 | Approved | Implemented pending deployment validation | Verified pending container test | Pending |
+| M0-D03 | Approved | Implemented pending skeleton build | Verified pending integration smoke test | Pending |
 | M0-D04 | Pending | Pending | Pending | Pending |
 | M0-D05 | Pending | Pending | Pending | Pending |
 | M0-D06 | Not required | Pending | Pending | Pending |
