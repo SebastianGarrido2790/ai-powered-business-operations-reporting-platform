@@ -44,14 +44,14 @@ Before Stage 0 begins, confirm:
 - [x] M0-D01 through M0-D08 remain **Approved**.
 - [x] Candidates 001–005 remain **Accepted**.
 - [x] The four feature SDDs in this package have received the required human approval; candidate acceptance alone does not approve the SDD details.
-- [ ] The M0 roadmap scope and exit criteria have not changed.
-- [ ] Applicable PRD requirements, invariants, and System Design sections remain accessible and consistent.
-- [ ] The workspace, Git remote, branch protection/CI configuration, and required permissions are available.
-- [ ] Python 3.11 compatibility, `uv`, Docker Engine, and Docker Compose are available or their installation path is agreed.
-- [ ] No production credentials or sensitive data are needed for M0.
+- [x] The M0 roadmap scope and exit criteria have not changed.
+- [x] Applicable PRD requirements, invariants, and System Design sections remain accessible and consistent.
+- [x] The workspace, Git remote, branch protection/CI configuration, and required permissions are available.
+- [x] Python 3.11 compatibility, `uv`, Docker Engine, and Docker Compose are available or their installation path is agreed.
+- [x] No production credentials or sensitive data are needed for M0.
 - [x] The operator has authorized execution after reviewing the SDDs and this plan.
 
-Unchecked preconditions are verified by the Stage 0 gate; they are not assumed here. The audit baseline below predates several documentation-only commits and must be reconciled at Stage 0.
+All execution preconditions were verified and confirmed during Stage 0 execution on 2026-11-08 at commit `05cbe8d`.
 
 ### Audit baseline to revalidate
 
@@ -118,7 +118,7 @@ Feature SDD changes that alter an approved phase decision must stop and return t
 
 ## 6. Implementation Stages
 
-## Stage 0 — Pre-Implementation Verification & Dependency Check
+## Stage 0 — Pre-Implementation Verification & Dependency Check ✅ **PASSED**
 
 **Goal**  
 Confirm that the approved plan and SDD package still match the actual repository and that implementation can begin without unresolved prerequisites.
@@ -509,7 +509,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 
 | Stage | Name | Primary deliverable | ADRs / decisions implemented | Gate | Status |
 |---|---|---|---|---|---|
-| 0 | Pre-Implementation Verification & Dependency Check | Current-state reconciliation and readiness record | None | Preconditions and audit delta resolved | Not started |
+| 0 | Pre-Implementation Verification & Dependency Check | Current-state reconciliation and readiness record | None | Preconditions and audit delta resolved | **Passed** |
 | 1 | Project Scaffold & Runtime Lock | Approved `src/app` layout, `pyproject.toml`, committed `uv.lock` | M0-D01/D02; ADR-001/002 | Clean locked sync and package import pass | Not started |
 | 2 | Configuration & Secrets Conventions | Central settings, `.env.example`, ignore/build-context hygiene | M0-D06; INV-016 | Settings and secret-boundary tests pass | Not started |
 | 3 | Application Skeleton & Sourcing Contract | FastAPI entrypoint, health endpoint, explicit Sourcing contract/router | M0-D03; ADR-007 precursor only | Application and module contract tests pass | Not started |
@@ -523,7 +523,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 
 | Stage | Started | Completed | Evidence / PR / commit | Gate result | Findings / remediation | Approved by |
 |---|---|---|---|---|---|---|
-| 0 | — | — | — | Not started | — | — |
+| 0 | 2026-11-08 | 2026-11-08 | `05cbe8d`; Stage 0 preflight check | Passed | Audit reconciled (55 tracked files); Python 3.11.13, uv 0.8.11, Docker 29.1.3, Compose v2.40.3, gh 2.89.0 verified; no blocking discrepancy | Operator authorized |
 | 1 | — | — | — | Not started | — | — |
 | 2 | — | — | — | Not started | — | — |
 | 3 | — | — | — | Not started | — | — |
@@ -568,11 +568,12 @@ Candidate 005 has no standalone SDD; its implementation tasks remain governed by
 - No unapproved scope changes.
 - No unresolved blocking architectural decisions; the recorded conditions below are owned by Stage 0.
 
-**Prerequisites deferred to Stage 0 (not yet evidenced):**
+**Prerequisites verified in Stage 0 (2026-11-08):**
 
-- Repository state and execution environment verification.
-- Toolchain availability: Python 3.11, `uv`, Docker Engine, Docker Compose.
-- Reconciliation of the audit baseline (`main@b27375b`) with current `HEAD`.
+- Repository state and execution environment verified (clean working tree, 55 tracked files at `05cbe8d`).
+- Toolchain availability verified: CPython 3.11.13, `uv` 0.8.11, Docker 29.1.3, Compose v2.40.3, `gh` 2.89.0.
+- Reconciliation of audit baseline (`main@b27375b`) with `05cbe8d` completed; no code/config drift.
+- Layout and schema conditions reconciled: canonical layout is `src/app/`, migration path is `database/migrations/`, baseline migration creates `platform` schema only (no tables).
 
 **Recorded approval conditions:**
 
@@ -595,6 +596,6 @@ Candidate 005 has no standalone SDD; its implementation tasks remain governed by
 
 **Authorization date:** 2026-11-07
 
-**Execution status:** Not started — Stage 0 is the first permitted action.
+**Execution status:** In progress — Stage 0 Passed; Stage 1 is the next permitted stage.
 
 **Scope of this authorization:** It opens Stage 0 (inspection-only preflight) and permits each later stage only after the preceding gate is recorded as Passed. It does not declare any stage complete, mark any decision Implemented or Verified, or authorize work outside M0.
