@@ -1,18 +1,18 @@
 # 003 — Local Development Environment & Configuration: Tasks
 
-**Status:** Active — approved for execution under the M0 authorization (2026-11-07); tasks not started  
+**Status:** In progress — Stage 2 completed; Stage 4 pending (2026-11-08)  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stages:** M0 Stage 2 and Stage 4
 
 ## Stage 2 — Configuration
 
-- [ ] Confirm the exact M0 environment variables needed by API and PostgreSQL.
-- [ ] Implement centralized, validated application settings.
-- [ ] Complete `.env.example` with safe local-only examples and explanations.
-- [ ] Verify `.env` remains ignored by Git.
-- [ ] Populate `.dockerignore` to exclude secrets and irrelevant local files.
-- [ ] Add settings tests for valid, missing, and invalid values.
-- [ ] Document local configuration and secret-handling conventions.
+- [x] Confirm the exact M0 environment variables needed by API and PostgreSQL.
+- [x] Implement centralized, validated application settings.
+- [x] Complete `.env.example` with safe local-only examples and explanations.
+- [x] Verify `.env` remains ignored by Git.
+- [x] Populate `.dockerignore` to exclude secrets and irrelevant local files.
+- [x] Add settings tests for valid, missing, and invalid values.
+- [x] Document local configuration and secret-handling conventions.
 
 ## Stage 4 — Container environment
 

@@ -237,12 +237,29 @@ The success of BOPF will not be measured by the number of abstractions or hypoth
 ### Environment Initialization
 
 ```bash
-# Synchronize dependencies from the committed lockfile
+# 1. Create local environment file from example template
+# Windows CMD:
+copy .env.example .env
+# PowerShell / Bash:
+cp .env.example .env
+
+# 2. Synchronize dependencies from the committed lockfile
 uv sync --locked --extra dev
 
-# Verify lockfile consistency
+# 3. Verify lockfile consistency
 uv lock --check
 ```
+
+### Configuration & Secret Hygiene
+
+Application configuration is centralized in `src/app/core/config/` using Pydantic Settings.
+
+- **Zero committed secrets (INV-016):** `.env` is ignored by `.gitignore` and `.dockerignore`. Never commit real tokens or credentials.
+- **Local synthetic defaults:** Safe defaults are provided for local development (`DB_HOST=localhost`, `DB_PORT=5432`, `DB_USER=postgres`, `DB_PASSWORD=postgres`, `DB_NAME=operations`).
+- **Database host selection:**
+  - When running migrations, tests, or application processes **on the host machine**, use `DB_HOST=localhost`.
+  - Inside the **Docker Compose bridge network**, use `DB_HOST=db`.
+- **Production safeguards:** In `production` environment (`ENVIRONMENT=production`), debug mode is blocked and default/trivial passwords raise immediate startup errors.
 
 ### Quality Tooling Commands
 

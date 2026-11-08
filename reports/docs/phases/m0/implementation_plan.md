@@ -741,7 +741,7 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 | M0-D03 | Approved | Implemented pending skeleton build | Verified pending integration smoke test | Pending |
 | M0-D04 | Approved | Implemented pending migration baseline | Verified pending migration run | Pending |
 | M0-D05 | Approved | Implemented pending compose alignment | Verified pending compose startup test | Pending |
-| M0-D06 | Approved | Implemented pending `.env.example` completion | Verified pending settings validation | Pending |
+| M0-D06 | Approved | Implemented | Verified | Settings module, `.env.example`, `.dockerignore`, and validation tests verified |
 | M0-D07 | Approved | Implemented pending CI workflow creation | Verified pending CI run | Pending |
 | M0-D08 | Approved | Implemented pending boundary confirmation | Verified pending scope review | Pending |
 

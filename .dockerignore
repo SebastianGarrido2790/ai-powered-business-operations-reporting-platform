@@ -1,0 +1,49 @@
+# ==============================================================================
+# BOPF Docker Build Context Exclusions
+# ==============================================================================
+
+# Secrets and environment configurations
+.env
+.env.*
+!.env.example
+
+# Version control and repository metadata
+.git/
+.gitignore
+.gitattributes
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+tests/
+
+# Linting and type-checking caches
+.mypy_cache/
+.ruff_cache/
+
+# Development tooling and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project governance and reports (documentation not needed in runtime container)
+reports/
+docs/
+
+# Data and models (tracked via DVC/external stores)
+data/

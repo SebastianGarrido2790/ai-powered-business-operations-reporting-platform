@@ -67,7 +67,8 @@ target/
 
 # DotEnv configuration (CRITICAL: Never commit secrets)
 .env
-.env.test
+.env.*
+!.env.example
 
 # IDE & Editors
 .idea
