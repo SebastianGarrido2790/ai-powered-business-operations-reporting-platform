@@ -227,6 +227,42 @@ Sourcing Operations Intelligence, demonstrating that the platform supports real 
 
 The success of BOPF will not be measured by the number of abstractions or hypothetical modules it supports. It will be measured by the reliability of its foundation and its demonstrated ability to incorporate and operate independent business capabilities without duplicating platform infrastructure.
 
+## Development Setup
+
+### Prerequisites
+
+- Python `>=3.11` (Python 3.11 recommended)
+- [`uv`](https://docs.astral.sh/uv/) package manager (`>=0.8`)
+
+### Environment Initialization
+
+```bash
+# Synchronize dependencies from the committed lockfile
+uv sync --locked --extra dev
+
+# Verify lockfile consistency
+uv lock --check
+```
+
+### Quality Tooling Commands
+
+```bash
+# Code formatting check
+uv run ruff format --check .
+
+# Code formatting apply
+uv run ruff format .
+
+# Linting check
+uv run ruff check .
+
+# Static type checking
+uv run mypy src tests
+
+# Automated test execution with coverage
+uv run pytest
+```
+
 ---
 
 **BOPF — A reusable foundation for enterprise business intelligence and automation.**

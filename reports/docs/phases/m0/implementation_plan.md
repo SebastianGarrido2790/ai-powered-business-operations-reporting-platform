@@ -736,8 +736,8 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 
 | Decision | Approved | Implemented | Verified | Evidence / follow-up |
 |---|---|---|---|---|
-| M0-D01 | Approved | Implemented pending audit reconciliation | Verified pending implementation | Pending |
-| M0-D02 | Approved | Implemented pending deployment validation | Verified pending container test | Pending |
+| M0-D01 | Approved | Implemented | Verified | `src/app/` layout established; imports verified |
+| M0-D02 | Approved | Implemented | Verified pending container test | `uv.lock` locked on Python 3.11.13; container/CI qualification pending |
 | M0-D03 | Approved | Implemented pending skeleton build | Verified pending integration smoke test | Pending |
 | M0-D04 | Approved | Implemented pending migration baseline | Verified pending migration run | Pending |
 | M0-D05 | Approved | Implemented pending compose alignment | Verified pending compose startup test | Pending |
