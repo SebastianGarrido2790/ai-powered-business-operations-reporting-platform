@@ -185,7 +185,7 @@ None. Reproducibility is established by clean locked synchronization, not by del
 
 ---
 
-## Stage 2 — Configuration & Secrets Conventions
+## Stage 2 — Configuration & Secrets Conventions ✅ **PASSED**
 
 **Goal**  
 Make application configuration explicit, validated, and safe for local development.
@@ -216,7 +216,7 @@ None. Tests for missing/invalid required configuration are normal acceptance tes
 
 ---
 
-## Stage 3 — Application Skeleton & Sourcing Contract
+## Stage 3 — Application Skeleton & Sourcing Contract ✅ **PASSED**
 
 **Goal**  
 Provide an executable FastAPI application and a minimal, explicit Sourcing module boundary without implementing M1's module registry or lifecycle.
@@ -493,12 +493,12 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | Fresh clone initializes | Clean-clone record; exact documented steps; locked environment synchronization result | 7 | Not started |
 | Project structure and standards established | Repository tree; `pyproject.toml`; `uv.lock`; tool configuration; approved layout comparison | 1 | Verified |
 | Local containerized environment starts | Compose config result; API image build; service health; API response; logs | 4, 7 | Not started |
-| Application skeleton executable | Startup result; platform health response; automated test output | 3, 7 | Not started |
-| Minimal Sourcing contract executable | Explicit route/contract test output; no registry/lifecycle expansion | 3, 7 | Not started |
+| Application skeleton executable | Startup result; platform health response; automated test output | 3, 7 | Verified |
+| Minimal Sourcing contract executable | Explicit route/contract test output; no registry/lifecycle expansion | 3, 7 | Verified |
 | Database connectivity and migration verified | Successful PostgreSQL connection; Alembic revision; expected schema state; clean re-upgrade | 5, 7 | Not started |
 | CI quality checks execute successfully | Green GitHub Actions run; Ruff/mypy-if-applicable/pytest results | 6, 7 | Not started |
 | CI failure detection demonstrated | Temporary failing-test run failed as expected; cleanup/restored run passed | 6 | Not started |
-| Configuration and secrets validated | `.env.example`; `.gitignore`/`.dockerignore`; settings tests; no committed secrets | 2, 5, 7 | Not started |
+| Configuration and secrets validated | `.env.example`; `.gitignore`/`.dockerignore`; settings tests; no committed secrets | 2, 5, 7 | Verified |
 | Governance closure | D01–D08 state, candidate dispositions, ADR reconciliation, completed PIR, human sign-off | 8 | Not started |
 
 ---
@@ -512,7 +512,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 0 | Pre-Implementation Verification & Dependency Check | Current-state reconciliation and readiness record | None | Preconditions and audit delta resolved | **Passed** |
 | 1 | Project Scaffold & Runtime Lock | Approved `src/app` layout, `pyproject.toml`, committed `uv.lock` | M0-D01/D02; ADR-001/002 | Clean locked sync and package import pass | **Passed** |
 | 2 | Configuration & Secrets Conventions | Central settings, `.env.example`, ignore/build-context hygiene | M0-D06; INV-016 | Settings and secret-boundary tests pass | **Passed** |
-| 3 | Application Skeleton & Sourcing Contract | FastAPI entrypoint, health endpoint, explicit Sourcing contract/router | M0-D03; ADR-007 precursor only | Application and module contract tests pass | Not started |
+| 3 | Application Skeleton & Sourcing Contract | FastAPI entrypoint, health endpoint, explicit Sourcing contract/router | M0-D03; ADR-007 precursor only | Application and module contract tests pass | **Passed** |
 | 4 | Local Containerized Environment | Two-service API+PostgreSQL Compose setup | M0-D05; ADR-012; ADR-005 deferred | Compose build, health, and API reachability pass | Not started |
 | 5 | Database & Migration Foundation | SQLAlchemy connection and Alembic baseline | M0-D04; ADR-003 | Compose PostgreSQL migration check passes | Not started |
 | 6 | CI Quality Gates & One-Time Falsification | GitHub Actions checks and falsification evidence | M0-D07 | Green baseline, detected deliberate failure, restored green run | Not started |
@@ -526,14 +526,14 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 0 | 2026-11-08 | 2026-11-08 | `05cbe8d`; Stage 0 preflight check | Passed | Audit reconciled (55 tracked files); Python 3.11.13, uv 0.8.11, Docker 29.1.3, Compose v2.40.3, gh 2.89.0 verified; no blocking discrepancy | Operator authorized |
 | 1 | 2026-11-08 | 2026-11-08 | `uv.lock`, `src/app/`, `tests/test_package.py` | Passed | Clean locked sync under Python 3.11.13; uv lock --check passed; ruff format/check, mypy, pytest (4/4 passed, 100% cov) verified | Operator authorized |
 | 2 | 2026-11-08 | 2026-11-08 | `app/core/config/`, `.env.example`, `.dockerignore`, `tests/test_config.py` | Passed | Central Pydantic Settings validated; .env.example populated; .dockerignore updated; 20/20 unit/config tests passing (100% cov) | Operator authorized |
-| 3 | — | — | — | Not started | — | — |
+| 3 | 2026-11-08 | 2026-11-08 | `src/app/main.py`, `src/app/modules/sourcing/`, `tests/test_app.py` | Passed | FastAPI app starts; /health responds; /api/v1/sourcing/ endpoints & manifest verified; 27/27 tests pass (100% cov) | Operator authorized |
 | 4 | — | — | — | Not started | — | — |
 | 5 | — | — | — | Not started | — | — |
 | 6 | — | — | — | Not started | — | — |
 | 7 | — | — | — | Not started | — | — |
 | 8 | — | — | — | Not started | — | — |
 
-**Phase status:** Authorized — Stage 2 Passed; Stage 3 is the next permitted stage.  
+**Phase status:** Authorized — Stage 3 Passed; Stage 4 is the next permitted stage.  
 **M0 sign-off:** Pending.  
 **Next phase:** M1 — Platform Foundation; entry is blocked until Stage 8 passes and M0 is signed off.
 
@@ -596,6 +596,6 @@ Candidate 005 has no standalone SDD; its implementation tasks remain governed by
 
 **Authorization date:** 2026-11-07
 
-**Execution status:** In progress — Stage 2 Passed; Stage 3 is the next permitted stage.
+**Execution status:** In progress — Stage 3 Passed; Stage 4 is the next permitted stage.
 
 **Scope of this authorization:** It opens Stage 0 (inspection-only preflight) and permits each later stage only after the preceding gate is recorded as Passed. It does not declare any stage complete, mark any decision Implemented or Verified, or authorize work outside M0.

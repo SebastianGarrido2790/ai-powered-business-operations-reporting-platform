@@ -1,0 +1,16 @@
+id: sourcing
+name: Sourcing Operations Intelligence
+version: 0.1.0
+
+platform:
+  minimum_version: 0.1.0
+
+database:
+  schema: sourcing
+  migrations: database/migrations
+
+capabilities:
+  - health
+
+permissions:
+  - sourcing.read
