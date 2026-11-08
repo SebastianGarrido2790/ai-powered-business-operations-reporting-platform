@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Draft — execution not authorized; no implementation started  
+**Status:** Approved — execution authorized 2026-11-07; no implementation started  
 **Governing decision record:** [`implementation_plan.md`](implementation_plan.md)  
 **Execution model:** sequential stages with hard gates
 
@@ -40,16 +40,18 @@ Falsification is used once in M0, at Stage 6, to verify that CI can detect a del
 
 Before Stage 0 begins, confirm:
 
-- [ ] `implementation_plan.md` is approved and its audit/decision record is current.
-- [ ] M0-D01 through M0-D08 remain **Approved**.
-- [ ] Candidates 001–005 remain **Accepted**.
-- [ ] The four feature SDDs in this package have received the required human approval; candidate acceptance alone does not approve the SDD details.
+- [x] `implementation_plan.md` is approved and its audit/decision record is current.
+- [x] M0-D01 through M0-D08 remain **Approved**.
+- [x] Candidates 001–005 remain **Accepted**.
+- [x] The four feature SDDs in this package have received the required human approval; candidate acceptance alone does not approve the SDD details.
 - [ ] The M0 roadmap scope and exit criteria have not changed.
 - [ ] Applicable PRD requirements, invariants, and System Design sections remain accessible and consistent.
 - [ ] The workspace, Git remote, branch protection/CI configuration, and required permissions are available.
 - [ ] Python 3.11 compatibility, `uv`, Docker Engine, and Docker Compose are available or their installation path is agreed.
 - [ ] No production credentials or sensitive data are needed for M0.
-- [ ] The operator has authorized execution after reviewing the SDDs and this plan.
+- [x] The operator has authorized execution after reviewing the SDDs and this plan.
+
+Unchecked preconditions are verified by the Stage 0 gate; they are not assumed here. The audit baseline below predates several documentation-only commits and must be reconciled at Stage 0.
 
 ### Audit baseline to revalidate
 
@@ -65,10 +67,10 @@ Only accepted candidates are executable. Candidate 005 is intentionally handled 
 
 | Feature ID | Accepted feature | SDD location | Required stage(s) | Dependencies | Status |
 |---|---|---|---|---|---|
-| `001-project-scaffold` | Repository/package structure, Python configuration, dependency lock, engineering tooling baseline | `001-project-scaffold/{spec.md,plan.md,tasks.md}` | 1 | Stage 0; D01, D02 | Accepted; SDD draft |
-| `002-application-skeleton` | Minimal FastAPI application and explicit Sourcing module contract | `002-application-skeleton/{spec.md,plan.md,tasks.md}` | 3 | 001; D03 | Accepted; SDD draft |
-| `003-local-development-environment` | Validated configuration/secrets conventions and API+PostgreSQL Compose environment | `003-local-development-environment/{spec.md,plan.md,tasks.md}` | 2, 4 | 001, 002; D05, D06 | Accepted; SDD draft |
-| `004-database-foundation` | PostgreSQL connectivity, SQLAlchemy configuration, Alembic baseline migration | `004-database-foundation/{spec.md,plan.md,tasks.md}` | 5, 7 | 001, 002, 003; D04 | Accepted; SDD draft |
+| `001-project-scaffold` | Repository/package structure, Python configuration, dependency lock, engineering tooling baseline | `001-project-scaffold/{spec.md,plan.md,tasks.md}` | 1 | Stage 0; D01, D02 | Accepted; SDD approved |
+| `002-application-skeleton` | Minimal FastAPI application and explicit Sourcing module contract | `002-application-skeleton/{spec.md,plan.md,tasks.md}` | 3 | 001; D03 | Accepted; SDD approved |
+| `003-local-development-environment` | Validated configuration/secrets conventions and API+PostgreSQL Compose environment | `003-local-development-environment/{spec.md,plan.md,tasks.md}` | 2, 4 | 001, 002; D05, D06 | Accepted; SDD approved |
+| `004-database-foundation` | PostgreSQL connectivity, SQLAlchemy configuration, Alembic baseline migration | `004-database-foundation/{spec.md,plan.md,tasks.md}` | 5, 7 | 001, 002, 003; D04 | Accepted; SDD approved |
 | `005-ci-quality-gates` | Automated format, lint, type-check (where configured), and test checks | No standalone SDD; tasks are defined in Stage 6 | 6, 7 | 001–004 | Accepted; phase-level execution tasks |
 
 A feature may span stages. The stage sequence remains authoritative even when a feature's internal tasks are more granular. Stage 0 is a readiness gate, not a feature implementation stage.
@@ -125,7 +127,7 @@ Confirm that the approved plan and SDD package still match the actual repository
 
 - Approved `implementation_plan.md` and M0-D01–D08.
 - Accepted candidates 001–005.
-- Draft SDD package and this execution plan.
+- Approved SDD package and this execution plan.
 - Repository audit baseline `main@b27375b` from 2026-11-06.
 
 **Actions**
@@ -531,6 +533,68 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 7 | — | — | — | Not started | — | — |
 | 8 | — | — | — | Not started | — | — |
 
-**Phase status:** Draft — execution not authorized.  
+**Phase status:** Authorized — Stages 0–8 gated; execution not started.  
 **M0 sign-off:** Pending.  
 **Next phase:** M1 — Platform Foundation; entry is blocked until Stage 8 passes and M0 is signed off.
+
+---
+
+## 10. Execution Authorization
+
+### 10.1 Approval gates completed
+
+| Order | Approval | Result | Date |
+|---|---|---|---|
+| 1 | Feature SDDs 001–004 (`spec.md`) | Approved — feature boundaries and specifications locked | 2026-11-07 |
+| 2 | Feature plans and tasks (`plan.md`, `tasks.md`) | Approved — implementation work packages authorized | 2026-11-07 |
+| 3 | Phase execution plan | Approved — stage sequence and gates locked | 2026-11-07 |
+| 4 | Execution authorization | Issued — M0 implementation may begin at Stage 0 | 2026-11-07 |
+
+Candidate 005 has no standalone SDD; its implementation tasks remain governed by Stage 6.
+
+### 10.2 Authorization record
+
+**M0 — Execution Authorization**
+
+**Authorization status:** Approved to execute
+
+**Prerequisites confirmed:**
+
+- M0 Implementation Plan approved; D01–D08 remain approved.
+- Candidates 001–005 accepted.
+- Feature SDDs approved (001–004; 005 is phase-level only).
+- Required feature-level plans and tasks approved.
+- Execution Plan approved.
+- No unapproved scope changes.
+- No unresolved blocking architectural decisions; the recorded conditions below are owned by Stage 0.
+
+**Prerequisites deferred to Stage 0 (not yet evidenced):**
+
+- Repository state and execution environment verification.
+- Toolchain availability: Python 3.11, `uv`, Docker Engine, Docker Compose.
+- Reconciliation of the audit baseline (`main@b27375b`) with current `HEAD`.
+
+**Recorded approval conditions:**
+
+- Python `>=3.11` is the approved declared floor. Full deployment qualification (container image and CI on that baseline) is not complete and remains an M0-D02 verification obligation.
+- Stage 0 must record the canonical package layout and migration directory, reconciling System Design §3.1 wording with approved D01 and this plan.
+- The Sourcing `manifest.yaml` must use only System Design §3.2 fields; the `dependencies` field requires reconciliation.
+- The baseline migration creates the `platform` schema only and no tables.
+
+**Execution constraints:**
+
+- Follow the approved stage sequence and hard gates.
+- Do not begin a subsequent stage before its predecessor passes.
+- Do not modify approved architectural decisions without following change management.
+- Do not introduce functionality outside M0.
+- Preserve verification evidence throughout execution.
+
+**Authorization:** Explicit approval by the project owner.
+
+**Authorized phase:** M0 — Project Scaffolding & Engineering Standards
+
+**Authorization date:** 2026-11-07
+
+**Execution status:** Not started — Stage 0 is the first permitted action.
+
+**Scope of this authorization:** It opens Stage 0 (inspection-only preflight) and permits each later stage only after the preceding gate is recorded as Passed. It does not declare any stage complete, mark any decision Implemented or Verified, or authorize work outside M0.

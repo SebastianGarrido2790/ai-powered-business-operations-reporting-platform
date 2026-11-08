@@ -1,6 +1,6 @@
 # 002 — Application Skeleton & Sourcing Module Contract: Plan
 
-**Status:** Draft — implementation not authorized  
+**Status:** Approved — implementation authorized under the M0 execution authorization (2026-11-07)  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** M0 Stage 3
 

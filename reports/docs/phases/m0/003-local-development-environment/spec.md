@@ -1,7 +1,7 @@
 # 003 — Local Development Environment & Configuration
 
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Draft — accepted phase candidate; feature SDD approval pending  
+**Status:** Approved — feature SDD approved for M0 execution; implementation authorized  
 **Parent decision record:** `../implementation_plan.md`  
 **Execution stages:** Stage 2 (configuration) and Stage 4 (Compose environment)
 
@@ -70,4 +70,5 @@ The 2026-11-06 audit at `main@b27375b` found an empty `.env.example`, an ignored
 ## 8. Approval
 
 **Feature scope:** Accepted in the M0 decision record.  
-**Feature SDD:** Draft; requires human approval before its implementation tasks are activated.
+**Feature SDD:** Approved — 2026-11-07 by the project owner for M0 execution.  
+**Environment condition:** Reusing the root `Dockerfile` and reducing Compose to `api` + `db` is approved as the M0 implementation of M0-D05. Stage 0 must confirm that System Design does not require a different Dockerfile path or additional M0 services; any such requirement returns to the decision record.

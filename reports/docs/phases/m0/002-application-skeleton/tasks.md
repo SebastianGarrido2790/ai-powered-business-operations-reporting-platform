@@ -1,6 +1,6 @@
 # 002 — Application Skeleton & Sourcing Module Contract: Tasks
 
-**Status:** Draft — tasks are not active until SDD approval  
+**Status:** Active — approved for execution under the M0 authorization (2026-11-07); tasks not started  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** M0 Stage 3
 

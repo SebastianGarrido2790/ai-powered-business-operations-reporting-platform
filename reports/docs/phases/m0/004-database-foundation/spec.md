@@ -1,7 +1,7 @@
 # 004 — PostgreSQL & Migration Foundation
 
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Draft — accepted phase candidate; feature SDD approval pending  
+**Status:** Approved — feature SDD approved for M0 execution; implementation authorized  
 **Parent decision record:** `../implementation_plan.md`  
 **Execution stage:** Stage 5; reverified in Stage 7
 
@@ -68,4 +68,5 @@ The 2026-11-06 audit at `main@b27375b` found SQLAlchemy and Alembic declared, bu
 ## 8. Approval
 
 **Feature scope:** Accepted in the M0 decision record.  
-**Feature SDD:** Draft; requires human approval before its implementation tasks are activated.
+**Feature SDD:** Approved — 2026-11-07 by the project owner for M0 execution.  
+**Migration condition:** The baseline must create the `platform` schema only, with no tables. Stage 0 must confirm that no accepted ADR defers that schema to M1. The migration directory (`database/migrations/` in the current repository versus `migrations/` in System Design §3.1) must be resolved and recorded in Stage 0 before implementation; do not maintain two migration histories.

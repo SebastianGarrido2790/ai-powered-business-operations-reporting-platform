@@ -1,7 +1,7 @@
 # 001 — Project Scaffold & Runtime Lock
 
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Draft — accepted phase candidate; feature SDD approval pending  
+**Status:** Approved — feature SDD approved for M0 execution; implementation authorized  
 **Parent decision record:** `../implementation_plan.md`  
 **Execution stage:** Stage 1
 
@@ -68,4 +68,6 @@ This feature must reconcile and extend existing files, not recreate the reposito
 ## 8. Approval
 
 **Feature scope:** Accepted in the M0 decision record.  
-**Feature SDD:** Draft; requires human approval before its implementation tasks are activated.
+**Feature SDD:** Approved — 2026-11-07 by the project owner for M0 execution.  
+**Qualification condition (M0-D02):** This approval confirms the declared `>=3.11` runtime floor and the Python 3.11 tool targets. It does **not** certify completed deployment qualification. Stage 1 must prove clean locked synchronization and import under Python 3.11; Stage 4 must build and run the container image on the same baseline; Stage 6 must run CI on it. M0-D02 remains unverified until that evidence is recorded.  
+**Layout condition:** System Design §3.1 depicts a root `app/` tree while M0-D01 and this SDD use `src/app/`. Stage 0 must record the canonical layout (M0-D01 governs) and reconcile the System Design wording; this is a documentation reconciliation, not a reopening of D01.

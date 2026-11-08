@@ -1,6 +1,6 @@
 # M0 SDD & Execution Package
 
-**Status:** Draft — no implementation authorized by this package alone.
+**Status:** Approved — feature SDDs, plans, tasks, and the execution plan are approved; M0 execution authorized 2026-11-07 (see `execution_plan.md` §10).
 
 ## Package contents
 
@@ -15,7 +15,7 @@ Candidate `005-ci-quality-gates` is intentionally not given a separate SDD. Its 
 
 ## SDD details requiring approval
 
-The parent decisions and candidate dispositions are already approved. The feature SDDs still require review of their implementation-level boundaries, particularly:
+The parent decisions and candidate dispositions are already approved. The approved feature SDDs lock the following implementation-level boundaries, particularly:
 
 - **002:** the exact minimal Sourcing contract and the truthful M0 values in the required `manifest.yaml`; no runtime manifest loader or registry is included.
 - **003:** reuse of the existing root `Dockerfile` as the single API image definition and reduction of Compose to API + PostgreSQL.
@@ -32,6 +32,8 @@ These are presented as the recommended implementation of the approved decisions,
 4. Authorize Stage 0 explicitly before implementation begins.
 
 Candidate acceptance and approval of M0-D01–D08 do not automatically approve the detailed feature SDDs or authorize implementation.
+
+Completion record (2026-11-07): steps 1–3 approved; step 4 execution authorization issued in `execution_plan.md` §10. Stage 0 remains the first permitted action.
 
 ## Authority
 
