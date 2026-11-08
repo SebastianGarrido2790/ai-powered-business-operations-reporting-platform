@@ -34,6 +34,10 @@ It does not introduce or silently revise architecture. The authority split is:
 
 Falsification is used once in M0, at Stage 6, to verify that CI can detect a deliberately failing test. It is not repeated mechanically at other stages. Routine negative tests (for invalid configuration, unavailable database, or migration errors) remain ordinary acceptance tests, not additional falsification exercises.
 
+### ADR Implements
+
+List only ADRs whose underlying architectural fact is actually implemented, established or amended by each stage.
+
 ---
 
 ## 2. Execution Preconditions
