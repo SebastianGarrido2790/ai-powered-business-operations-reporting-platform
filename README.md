@@ -231,8 +231,9 @@ The success of BOPF will not be measured by the number of abstractions or hypoth
 
 ### Prerequisites
 
-- Python `>=3.11` (Python 3.11 recommended)
+- Python `>=3.11` (Python 3.11 is used by CI and the API container)
 - [`uv`](https://docs.astral.sh/uv/) package manager (`>=0.8`)
+- Docker Desktop or Docker Engine with Compose v2, for the local containerized environment
 
 ### Environment Initialization
 
@@ -302,6 +303,8 @@ docker compose down -v
 ```
 
 > **Warning on volume reset (INV-017):** Running `docker compose down -v` permanently removes the `postgres_data` volume and destroys all local development database records. Use with intention.
+
+> **Port conflict:** If a local PostgreSQL service already listens on `5432`, set `DB_PORT=5433` in `.env` before starting Compose. The host-published port follows `DB_PORT`, while the API still reaches PostgreSQL at `db:5432` inside the Compose network.
 
 ### Database Migrations (Alembic)
 
