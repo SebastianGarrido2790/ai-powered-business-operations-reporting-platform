@@ -739,7 +739,7 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 | M0-D01 | Approved | Implemented | Verified | `src/app/` layout established; imports verified |
 | M0-D02 | Approved | Implemented | Verified pending CI run | `uv.lock` locked on Python 3.11.13; API image built from locked deps in the container; CI run pending |
 | M0-D03 | Approved | Implemented | Verified | Application entrypoint, Sourcing contract/router, manifest, and tests verified |
-| M0-D04 | Approved | Implemented pending migration baseline | Verified pending migration run | Pending |
+| M0-D04 | Approved | Implemented | Verified | Synchronous psycopg engine boundary, Alembic baseline creating `platform` schema only, disposable-DB upgrade/downgrade/re-upgrade verified |
 | M0-D05 | Approved | Implemented | Verified | Two-service Compose stack builds, starts healthy, and serves API/Sourcing endpoints; obsolete services removed |
 | M0-D06 | Approved | Implemented | Verified | Settings module, `.env.example`, `.dockerignore`, and validation tests verified |
 | M0-D07 | Approved | Implemented pending CI workflow creation | Verified pending CI run | Pending |

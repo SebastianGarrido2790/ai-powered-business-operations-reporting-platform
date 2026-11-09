@@ -303,6 +303,38 @@ docker compose down -v
 
 > **Warning on volume reset (INV-017):** Running `docker compose down -v` permanently removes the `postgres_data` volume and destroys all local development database records. Use with intention.
 
+### Database Migrations (Alembic)
+
+Migration history lives in `database/migrations/` and is version-controlled. Migrations are **operator-invoked only**: FastAPI startup never creates or alters schema (INV-015).
+
+```bash
+# Apply all pending migrations (run against the Docker PostgreSQL service)
+docker compose exec -T api alembic upgrade head
+
+# Show the current revision applied to the database
+docker compose exec -T api alembic current
+
+# Show the revision history
+docker compose exec -T api alembic history
+
+# Roll back one revision (destructive: disposable databases only)
+docker compose exec -T api alembic downgrade -1
+```
+
+The database URL is never stored in `alembic.ini`; it is resolved from the same validated settings used by the API (`src/app/core/config/`).
+
+To migrate a **disposable** database instead of the development one, override the URL for that single command:
+
+```bash
+docker compose exec -T \
+  -e DATABASE_URL="postgresql+psycopg://postgres:postgres@db:5432/bopf_migration_check" \
+  api alembic upgrade head
+```
+
+Running Alembic from the host machine is also supported (`uv run alembic upgrade head`) when `DB_HOST` points at the published port. On Windows, if `localhost` resolves to IPv6 first, connections can stall; use `DB_HOST=127.0.0.1`.
+
+Every future platform or module schema change is introduced through a new revision in this single history; do not create parallel migration directories or ad-hoc DDL scripts.
+
 ---
 
 **BOPF — A reusable foundation for enterprise business intelligence and automation.**

@@ -26,8 +26,12 @@ COPY pyproject.toml uv.lock README.md /app/
 # Synchronize runtime dependencies in locked mode without installing root project yet
 RUN uv sync --locked --no-dev --no-install-project
 
-# Copy application source code
+# Copy application source, migration environment, and Alembic configuration.
+# Migrations run only through explicit operator commands, never at startup
+# (INV-015), but the files must be present for an operator to invoke them.
 COPY src/ /app/src/
+COPY alembic.ini /app/alembic.ini
+COPY database/ /app/database/
 
 # Install application package itself in locked mode
 RUN uv sync --locked --no-dev

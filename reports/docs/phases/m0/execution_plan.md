@@ -283,7 +283,7 @@ None. Container build/startup and health-check failures are directly observable 
 
 ---
 
-## Stage 5 — Database & Migration Foundation
+## Stage 5 — Database & Migration Foundation ✅ **PASSED**
 
 **Goal**  
 Establish a verified PostgreSQL connection and a minimal Alembic migration baseline using the PostgreSQL service from Stage 4, without implementing business tables.
@@ -499,7 +499,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | Local containerized environment starts | Compose config result; API image build; service health; API response; logs | 4, 7 | Verified |
 | Application skeleton executable | Startup result; platform health response; automated test output | 3, 7 | Verified |
 | Minimal Sourcing contract executable | Explicit route/contract test output; no registry/lifecycle expansion | 3, 7 | Verified |
-| Database connectivity and migration verified | Successful PostgreSQL connection; Alembic revision; expected schema state; clean re-upgrade | 5, 7 | Not started |
+| Database connectivity and migration verified | Successful PostgreSQL connection; Alembic revision; expected schema state; clean re-upgrade | 5, 7 | Verified |
 | CI quality checks execute successfully | Green GitHub Actions run; Ruff/mypy-if-applicable/pytest results | 6, 7 | Not started |
 | CI failure detection demonstrated | Temporary failing-test run failed as expected; cleanup/restored run passed | 6 | Not started |
 | Configuration and secrets validated | `.env.example`; `.gitignore`/`.dockerignore`; settings tests; no committed secrets | 2, 5, 7 | Verified |
@@ -518,7 +518,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 2 | Configuration & Secrets Conventions | Central settings, `.env.example`, ignore/build-context hygiene | M0-D06; INV-016 | Settings and secret-boundary tests pass | **Passed** |
 | 3 | Application Skeleton & Sourcing Contract | FastAPI entrypoint, health endpoint, explicit Sourcing contract/router | M0-D03; ADR-007 precursor only | Application and module contract tests pass | **Passed** |
 | 4 | Local Containerized Environment | Two-service API+PostgreSQL Compose setup | M0-D05; ADR-012; ADR-005 deferred | Compose build, health, and API reachability pass | **Passed** |
-| 5 | Database & Migration Foundation | SQLAlchemy connection and Alembic baseline | M0-D04; ADR-003 | Compose PostgreSQL migration check passes | Not started |
+| 5 | Database & Migration Foundation | SQLAlchemy connection and Alembic baseline | M0-D04; ADR-003 | Compose PostgreSQL migration check passes | **Passed** |
 | 6 | CI Quality Gates & One-Time Falsification | GitHub Actions checks and falsification evidence | M0-D07 | Green baseline, detected deliberate failure, restored green run | Not started |
 | 7 | Fresh-Clone Acceptance & Phase Evidence | Clean-clone verification and completed PIR evidence | All M0 decisions verified where applicable | All M0 exit criteria pass | Not started |
 | 8 | ADR Consolidation & Phase Sign-Off | Consolidated records and signed-off M0 | Existing ADRs reconciled; any new ADR separately approved | Human sign-off and M1 entry approval | Not started |
@@ -532,12 +532,12 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 2 | 2026-11-08 | 2026-11-08 | `app/core/config/`, `.env.example`, `.dockerignore`, `tests/test_config.py` | Passed | Central Pydantic Settings validated; .env.example populated; .dockerignore updated; 20/20 unit/config tests passing (100% cov) | Operator authorized |
 | 3 | 2026-11-08 | 2026-11-08 | `src/app/main.py`, `src/app/modules/sourcing/`, `tests/test_app.py` | Passed | FastAPI app starts; /health responds; /api/v1/sourcing/ endpoints & manifest verified; 27/27 tests pass (100% cov) | Operator authorized |
 | 4 | 2026-11-08 | 2026-11-08 | `Dockerfile`, `docker-compose.yml`, `.env.example`, `README.md`, `tests/conftest.py` | Passed | Compose config valid (no obsolete-version warning); API image built from locked deps; PostgreSQL 16 healthy; API container healthy; /health and /api/v1/sourcing/ endpoints returned 200 with expected JSON; logs inspected. Finding: a local `.env` leaked into `Settings()` and broke `test_default_settings`; remediated with an autouse test fixture isolating env vars and disabling env-file loading. Host `DB_PORT` now parameterizes the published port to avoid collision with a host PostgreSQL service | Operator authorized |
-| 5 | — | — | — | Not started | — | — |
+| 5 | 2026-11-08 | 2026-11-08 | `alembic.ini`, `database/migrations/`, `src/app/core/database.py`, `tests/test_database.py` | Passed | Disposable DB upgraded to `0001_platform_schema`; `platform` schema present with 0 tables; only `alembic_version` in `public`; downgrade-to-base then clean DB recreate and re-upgrade succeeded; `operations` DB untouched by API restarts (no implicit startup migration); 34 passed, 1 skipped in default suite, opt-in PostgreSQL check 8 passed | Operator authorized |
 | 6 | — | — | — | Not started | — | — |
 | 7 | — | — | — | Not started | — | — |
 | 8 | — | — | — | Not started | — | — |
 
-**Phase status:** Authorized — Stage 4 Passed; Stage 5 is the next permitted stage.  
+**Phase status:** Authorized — Stage 5 Passed; Stage 6 is the next permitted stage.  
 **M0 sign-off:** Pending.  
 **Next phase:** M1 — Platform Foundation; entry is blocked until Stage 8 passes and M0 is signed off.
 
@@ -600,6 +600,6 @@ Candidate 005 has no standalone SDD; its implementation tasks remain governed by
 
 **Authorization date:** 2026-11-07
 
-**Execution status:** In progress - Stage 4 Passed; Stage 5 is the next permitted stage.
+**Execution status:** In progress — Stage 5 Passed; Stage 6 is the next permitted stage.
 
 **Scope of this authorization:** It opens Stage 0 (inspection-only preflight) and permits each later stage only after the preceding gate is recorded as Passed. It does not declare any stage complete, mark any decision Implemented or Verified, or authorize work outside M0.
