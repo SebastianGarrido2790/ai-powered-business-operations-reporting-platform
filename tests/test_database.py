@@ -5,7 +5,9 @@ import os
 from pathlib import Path
 
 import pytest
-from sqlalchemy import create_engine
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine, text
 
 from app.core.config import Settings
 from app.core.database import create_engine_from_settings, verify_connection
@@ -106,10 +108,13 @@ def test_application_startup_does_not_run_migrations() -> None:
     assert "upgrade" not in lowered
 
 
-@pytest.mark.skipif(
+requires_database = pytest.mark.skipif(
     not os.environ.get("BOPF_TEST_DATABASE_URL"),
-    reason="Set BOPF_TEST_DATABASE_URL to run PostgreSQL connectivity checks.",
+    reason="Set BOPF_TEST_DATABASE_URL to run PostgreSQL integration checks.",
 )
+
+
+@requires_database
 def test_postgres_connection_succeeds() -> None:
     """Verify a live PostgreSQL connection using validated settings."""
     engine = create_engine_from_settings(
@@ -118,5 +123,67 @@ def test_postgres_connection_succeeds() -> None:
 
     try:
         verify_connection(engine)
+    finally:
+        engine.dispose()
+
+
+@requires_database
+def test_alembic_upgrade_produces_expected_schema_state() -> None:
+    """Verify upgrade/current/schema state and repeatability against PostgreSQL.
+
+    Runs in CI against a disposable PostgreSQL service container. The explicit
+    URL is supplied to Alembic so the check cannot silently target another
+    database.
+    """
+    database_url = os.environ["BOPF_TEST_DATABASE_URL"]
+
+    alembic_config = Config(str(ALEMBIC_INI))
+    alembic_config.set_main_option("script_location", str(MIGRATIONS_DIR))
+    alembic_config.set_main_option("sqlalchemy.url", database_url)
+
+    engine = create_engine_from_settings(Settings(DATABASE_URL=database_url))
+
+    def schema_snapshot() -> tuple[list[str], list[str], str]:
+        with engine.connect() as connection:
+            schemas = (
+                connection.execute(
+                    text(
+                        "SELECT nspname FROM pg_namespace "
+                        "WHERE nspname NOT LIKE 'pg_%' AND nspname <> 'information_schema'"
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            tables = (
+                connection.execute(
+                    text(
+                        "SELECT table_name FROM information_schema.tables "
+                        "WHERE table_schema = 'platform'"
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            revision = connection.execute(
+                text("SELECT version_num FROM public.alembic_version")
+            ).scalar_one()
+        return list(schemas), list(tables), str(revision)
+
+    try:
+        command.upgrade(alembic_config, "head")
+        schemas, platform_tables, revision = schema_snapshot()
+
+        assert "platform" in schemas
+        assert platform_tables == []
+        assert revision == "0001_platform_schema"
+
+        # Repeatability: a clean re-upgrade must succeed without manual repair.
+        command.downgrade(alembic_config, "base")
+        command.upgrade(alembic_config, "head")
+
+        _, platform_tables, revision = schema_snapshot()
+        assert platform_tables == []
+        assert revision == "0001_platform_schema"
     finally:
         engine.dispose()

@@ -22,11 +22,15 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-settings = get_settings()
-
-# ConfigParser interprets '%' as interpolation, so escape it for URL-safe values
-# such as percent-encoded passwords.
-config.set_main_option("sqlalchemy.url", settings.sync_database_uri.replace("%", "%%"))
+# An explicitly supplied URL (for example from a test harness or a targeted
+# operator invocation) wins; otherwise resolve it from validated settings so
+# Alembic and the API share one configuration boundary.
+database_url = config.get_main_option("sqlalchemy.url")
+if not database_url:
+    database_url = get_settings().sync_database_uri
+    # ConfigParser interprets '%' as interpolation, so escape it for URL-safe
+    # values such as percent-encoded passwords.
+    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 # No declarative metadata exists in M0: the baseline migration is hand-written
 # and no autogeneration target is defined.
@@ -36,7 +40,7 @@ target_metadata = None
 def run_migrations_offline() -> None:
     """Run migrations without a DBAPI connection (emit SQL only)."""
     context.configure(
-        url=settings.sync_database_uri,
+        url=database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},

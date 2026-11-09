@@ -1,0 +1,78 @@
+# ==============================================================================
+# BOPF CI — baseline quality gates (M0 Stage 6)
+#
+# Governed by:
+# - M0-D07: small, repeatable quality-gate set (format, lint, types, tests).
+# - System Design §14.3: Ruff, pytest, and static typing in CI.
+# - Stage 6 action 6: PostgreSQL integration checks against a service container.
+#
+# Deliberately excluded until justified by the codebase or risk: coverage
+# thresholds, dependency/container scanning, and multi-version matrices.
+# ==============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    name: Quality gates (Python 3.11)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bopf_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d bopf_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Enables the opt-in PostgreSQL integration checks; never used locally by default.
+      BOPF_TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/bopf_test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install uv and Python 3.11
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.8.11"
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Synchronize locked dependencies
+        run: |
+          uv lock --check
+          uv sync --locked --extra dev
+
+      - name: Formatting check (Ruff)
+        run: uv run ruff format --check .
+
+      - name: Lint check (Ruff)
+        run: uv run ruff check --output-format=github .
+
+      - name: Static type check (mypy)
+        run: uv run mypy src tests
+
+      - name: Tests (pytest, includes PostgreSQL connectivity and migration)
+        run: uv run pytest

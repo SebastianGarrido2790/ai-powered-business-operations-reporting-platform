@@ -335,6 +335,20 @@ Running Alembic from the host machine is also supported (`uv run alembic upgrade
 
 Every future platform or module schema change is introduced through a new revision in this single history; do not create parallel migration directories or ad-hoc DDL scripts.
 
+### Continuous Integration
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`. The single quality job uses Python 3.11 and the committed lockfile:
+
+| Gate | Command |
+|---|---|
+| Lockfile currency + locked sync | `uv lock --check` then `uv sync --locked --extra dev` |
+| Formatting | `uv run ruff format --check .` |
+| Linting | `uv run ruff check .` |
+| Static typing | `uv run mypy src tests` |
+| Tests | `uv run pytest` |
+
+A disposable `postgres:16-alpine` service container is provisioned for the PostgreSQL connectivity and migration integration checks; those checks are skipped locally unless `BOPF_TEST_DATABASE_URL` is set. CI fails when the lockfile is stale, any gate fails, or an integration check fails.
+
 ---
 
 **BOPF — A reusable foundation for enterprise business intelligence and automation.**
