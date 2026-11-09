@@ -18,7 +18,8 @@ from app.modules.sourcing import (
 
 def test_platform_health_endpoint() -> None:
     """Verify platform health endpoint returns non-sensitive liveness payload."""
-    with TestClient(app) as client:
+    hermetic_app = create_app(Settings())
+    with TestClient(hermetic_app) as client:
         response = client.get("/health")
 
         assert response.status_code == 200

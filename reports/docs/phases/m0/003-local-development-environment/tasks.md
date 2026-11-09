@@ -1,6 +1,6 @@
 # 003 — Local Development Environment & Configuration: Tasks
 
-**Status:** In progress — Stage 2 completed; Stage 4 pending (2026-11-08)  
+**Status:** Completed — Stage 2 and Stage 4 implementation and verification complete (2026-11-08)  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stages:** M0 Stage 2 and Stage 4
 
@@ -16,15 +16,15 @@
 
 ## Stage 4 — Container environment
 
-- [ ] Remove Redis, n8n, and MLflow from the M0 Compose service set.
-- [ ] Reconcile Compose's missing Dockerfile path and establish one canonical API Dockerfile.
-- [ ] Build the API image from the locked project dependencies.
-- [ ] Configure PostgreSQL, named volume, credentials via environment, and health check.
-- [ ] Configure API environment and health check.
-- [ ] Bind development ports to loopback where host access is needed.
-- [ ] Validate Compose syntax and absence of obsolete configuration warnings.
-- [ ] Start API and PostgreSQL; inspect health and logs; call the API health endpoint.
-- [ ] Document startup, stop, logs, and volume-reset consequences in README.
+- [x] Remove Redis, n8n, and MLflow from the M0 Compose service set.
+- [x] Reconcile Compose's missing Dockerfile path and establish one canonical API Dockerfile.
+- [x] Build the API image from the locked project dependencies.
+- [x] Configure PostgreSQL, named volume, credentials via environment, and health check.
+- [x] Configure API environment and health check.
+- [x] Bind development ports to loopback where host access is needed.
+- [x] Validate Compose syntax and absence of obsolete configuration warnings.
+- [x] Start API and PostgreSQL; inspect health and logs; call the API health endpoint.
+- [x] Document startup, stop, logs, and volume-reset consequences in README.
 
 ## Completion evidence
 

@@ -280,6 +280,29 @@ uv run mypy src tests
 uv run pytest
 ```
 
+### Local Containerized Environment (Docker Compose)
+
+The local development environment provisions exactly the two approved M0 services: the FastAPI API service and PostgreSQL.
+
+```bash
+# 1. Start containers in background (builds API image if not present)
+docker compose up -d
+
+# 2. Check service status and health
+docker compose ps
+
+# 3. View streaming logs
+docker compose logs -f
+
+# 4. Stop containers while preserving database volume
+docker compose down
+
+# 5. Stop containers AND remove database volume (DESTRUCTIVE: deletes all local DB data)
+docker compose down -v
+```
+
+> **Warning on volume reset (INV-017):** Running `docker compose down -v` permanently removes the `postgres_data` volume and destroys all local development database records. Use with intention.
+
 ---
 
 **BOPF — A reusable foundation for enterprise business intelligence and automation.**
