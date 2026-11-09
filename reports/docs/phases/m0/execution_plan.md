@@ -361,7 +361,7 @@ Do not inject the failure into `main`, disable branch protection, or leave a kno
 
 ---
 
-## Stage 7 — Fresh-Clone Acceptance & Phase Evidence
+## Stage 7 — Fresh-Clone Acceptance & Phase Evidence ✅ **PASSED**
 
 **Goal**  
 Verify the complete M0 outcome from a clean clone using only documented setup instructions.
@@ -494,7 +494,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 
 | M0 outcome | Minimum evidence | Owning stage | Status |
 |---|---|---|---|
-| Fresh clone initializes | Clean-clone record; exact documented steps; locked environment synchronization result | 7 | Not started |
+| Fresh clone initializes | Clean-clone record; exact documented steps; locked environment synchronization result | 7 | Verified |
 | Project structure and standards established | Repository tree; `pyproject.toml`; `uv.lock`; tool configuration; approved layout comparison | 1 | Verified |
 | Local containerized environment starts | Compose config result; API image build; service health; API response; logs | 4, 7 | Verified |
 | Application skeleton executable | Startup result; platform health response; automated test output | 3, 7 | Verified |
@@ -520,7 +520,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 4 | Local Containerized Environment | Two-service API+PostgreSQL Compose setup | M0-D05; ADR-012; ADR-005 deferred | Compose build, health, and API reachability pass | **Passed** |
 | 5 | Database & Migration Foundation | SQLAlchemy connection and Alembic baseline | M0-D04; ADR-003 | Compose PostgreSQL migration check passes | **Passed** |
 | 6 | CI Quality Gates & One-Time Falsification | GitHub Actions checks and falsification evidence | M0-D07 | Green baseline, detected deliberate failure, restored green run | **Passed** |
-| 7 | Fresh-Clone Acceptance & Phase Evidence | Clean-clone verification and completed PIR evidence | All M0 decisions verified where applicable | All M0 exit criteria pass | Not started |
+| 7 | Fresh-Clone Acceptance & Phase Evidence | Clean-clone verification and completed PIR evidence | All M0 decisions verified where applicable | All M0 exit criteria pass | **Passed** |
 | 8 | ADR Consolidation & Phase Sign-Off | Consolidated records and signed-off M0 | Existing ADRs reconciled; any new ADR separately approved | Human sign-off and M1 entry approval | Not started |
 
 ### 9.2 Stage execution record
@@ -534,10 +534,10 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 4 | 2026-11-08 | 2026-11-08 | `Dockerfile`, `docker-compose.yml`, `.env.example`, `README.md`, `tests/conftest.py` | Passed | Compose config valid (no obsolete-version warning); API image built from locked deps; PostgreSQL 16 healthy; API container healthy; /health and /api/v1/sourcing/ endpoints returned 200 with expected JSON; logs inspected. Finding: a local `.env` leaked into `Settings()` and broke `test_default_settings`; remediated with an autouse test fixture isolating env vars and disabling env-file loading. Host `DB_PORT` now parameterizes the published port to avoid collision with a host PostgreSQL service | Operator authorized |
 | 5 | 2026-11-08 | 2026-11-08 | `alembic.ini`, `database/migrations/`, `src/app/core/database.py`, `tests/test_database.py` | Passed | Disposable DB upgraded to `0001_platform_schema`; `platform` schema present with 0 tables; only `alembic_version` in `public`; downgrade-to-base then clean DB recreate and re-upgrade succeeded; `operations` DB untouched by API restarts (no implicit startup migration); 34 passed, 1 skipped in default suite, opt-in PostgreSQL check 8 passed | Operator authorized |
 | 6 | 2026-11-09 | 2026-11-09 | `.github/workflows/ci.yml`, `tests/test_database.py`, `database/migrations/env.py`; runs `42630534372`, `42630660799`, `42630940532`, `42631107696` | Passed | Baseline green (36 passed incl. PostgreSQL connectivity + migration); falsification run 42630940532 failed at pytest with the deliberate assertion and non-zero job result; revert run 42631107696 green; PR #1 closed, branch deleted. Finding: first baseline attempt 42630534372 failed on unresolvable `astral-sh/setup-uv@v10`; pinned to `v10.3.3` in `b75caa9` | Operator authorized |
-| 7 | — | — | — | Not started | — | — |
+| 7 | 2026-11-09 | 2026-11-09 | Fresh clones of `1d9067e` and `df3e2a1`; CI run `42631404007` | Passed | Clean clone: `.env` from example ignored by Git; 136 locked packages on Python 3.11.13; Ruff/mypy clean; 34 passed/2 skipped; Compose api+db healthy; `/health`, `/api/v1/sourcing/health`, `/api/v1/sourcing/status`, `/docs` = 200; Alembic head `0001_platform_schema` with `platform` schema and 0 tables; 36 passed with database checks; no `.env`/`.git`/`tests` in image; no credential material in history, image, or logs. README gap (Docker prerequisite, port fallback) fixed in `df3e2a1` and re-verified | Operator authorized |
 | 8 | — | — | — | Not started | — | — |
 
-**Phase status:** Authorized — Stage 6 Passed; Stage 7 is the next permitted stage.  
+**Phase status:** Authorized — Stage 7 Passed; Stage 8 is the next permitted stage.  
 **M0 sign-off:** Pending.  
 **Next phase:** M1 — Platform Foundation; entry is blocked until Stage 8 passes and M0 is signed off.
 
@@ -600,6 +600,6 @@ Candidate 005 has no standalone SDD; its implementation tasks remain governed by
 
 **Authorization date:** 2026-11-07
 
-**Execution status:** In progress — Stage 6 Passed; Stage 7 is the next permitted stage.
+**Execution status:** In progress — Stage 7 Passed; Stage 8 is the next permitted stage.
 
 **Scope of this authorization:** It opens Stage 0 (inspection-only preflight) and permits each later stage only after the preceding gate is recorded as Passed. It does not declare any stage complete, mark any decision Implemented or Verified, or authorize work outside M0.

@@ -722,13 +722,23 @@ Compare:
 
 | ID | Expectation | Actual evidence | Finding / severity | Remediation | Status |
 |---|---|---|---|---|---|
-| PIR-01 | Fresh clone initializes successfully | Pending | Pending | Pending | Open |
-| PIR-02 | Project structure and conventions are established | Pending | Pending | Pending | Open |
-| PIR-03 | Local environment starts | Pending | Pending | Pending | Open |
-| PIR-04 | Application and Sourcing contract execute | Pending | Pending | Pending | Open |
-| PIR-05 | Database connectivity and migrations work | Pending | Pending | Pending | Open |
-| PIR-06 | CI quality checks pass | Pending | Pending | Pending | Open |
-| PIR-07 | Configuration and secrets conventions are validated | Pending | Pending | Pending | Open |
+| PIR-01 | Fresh clone initializes successfully | Clean clones of `1d9067e` and `df3e2a1`; `.env` copied from example is ignored; `uv sync --locked --extra dev` resolved 136 packages on Python 3.11.13; `uv lock --check` clean | README omitted Docker/Compose prerequisite and the 5432→5433 host-port fallback; Low | Prerequisites and port-conflict note added in `df3e2a1`; clone re-verified | Resolved |
+| PIR-02 | Project structure and conventions are established | Approved `src/app/` layout with `core/` and `modules/sourcing/`; single migration history under `database/migrations/`; Ruff format/lint clean (40 files); mypy clean (15 files) | None | — | Met |
+| PIR-03 | Local environment starts | `docker compose up -d` → `api` and `db` both `healthy` (ports 8000 and 5433); logs show clean startup | Default host port 5432 can be occupied by a local PostgreSQL service; environment-specific, Low | Documented `DB_PORT=5433` fallback (README + `.env.example`) | Resolved |
+| PIR-04 | Application and Sourcing contract execute | `/health`, `/api/v1/sourcing/health`, `/api/v1/sourcing/status`, and `/docs` returned 200 with expected JSON from the fresh clone; contract, router, and manifest tests pass | None | — | Met |
+| PIR-05 | Database connectivity and migrations work | Disposable database upgraded to `0001_platform_schema`; `platform` schema present with 0 tables; only `alembic_version` in `public`; CI run executes downgrade-to-base and clean re-upgrade | None | — | Met |
+| PIR-06 | CI quality checks pass | Runs `42630660799`, `42631107696`, `42631404007` green with 36 tests including PostgreSQL checks; run `42630940532` confirmed the deliberate failure is rejected | First baseline run failed on an unresolvable action tag; Medium | Pinned `astral-sh/setup-uv@v10.3.3` in `b75caa9` | Resolved |
+| PIR-07 | Configuration and secrets conventions are validated | `.env` never tracked; image contains no `.env`, `.git`, `tests`, or `reports`; build context 921 B; history scan found only synthetic `postgres`/`local_only`/test placeholders; log scan found 0 credential matches; production guards tested | Tests initially read a developer `.env`; Medium | Autouse test fixture isolates environment and disables env-file loading | Resolved |
+
+#### Findings and dispositions
+
+| ID | Finding | Disposition |
+|---|---|---|
+| F-10 | `astral-sh/setup-uv@v10` is not a valid ref; the action publishes exact release tags only | Fixed in `b75caa9`; verified by green run `42630660799` |
+| F-11 | README prerequisites omitted Docker/Compose; host-port fallback documented only in `.env.example` | Fixed in `df3e2a1`; fresh clone re-verified |
+| F-12 | On Windows, `localhost` resolves to IPv6 first and stalled connections ~5 s in host-run checks | Operational guidance added to README (`127.0.0.1`); no code change; Low |
+| F-13 | Settings tests depended on the developer's local `.env` | Autouse isolation fixture in `tests/conftest.py`; suite green with `.env` present |
+| F-14 | The approved CI trigger set (`push: [main]` + `pull_request`) produces no run for a plain branch push | Falsification executed through a draft PR, closed unmerged; branch deleted; no change required |
 
 Material findings must be resolved, explicitly accepted by the appropriate decision authority, or escalated before sign-off.
 
