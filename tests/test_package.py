@@ -24,3 +24,11 @@ def test_modules_package_import() -> None:
 def test_sourcing_module_import() -> None:
     """Verify sourcing module package is importable."""
     assert app.modules.sourcing.__doc__ is not None
+
+
+def test_temporary_ci_falsification_probe() -> None:
+    """TEMPORARY: deliberate failure proving CI rejects a failing change.
+
+    Removed immediately after the Stage 6 falsification run; never merged.
+    """
+    assert app.__version__ == "99.99.99", "deliberate CI falsification failure"
