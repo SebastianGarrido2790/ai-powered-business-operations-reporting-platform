@@ -7,11 +7,34 @@
 | Document type | System Design & Architecture Decision Records |
 | Product | Business Operations Platform Foundation |
 | Initial module | Sourcing Operations Intelligence |
-| Version | 1.0 |
-| Status | Proposed Architecture Baseline |
+| Version | 1.1 |
+| Status | Accepted architecture baseline — Part I is realized incrementally; M0 scaffolding implemented |
 | Upstream documents | User Story & Problem Framing; Product Requirements Document |
 | Architecture style | Domain-oriented modular monolith with independent workers |
 | Initial deployment model | Single-enterprise deployment |
+| Last reconciled with implementation | 2026-11-10 (M0 phase sign-off, commit `28b4ea6`) |
+
+---
+
+## Implementation Status (M0 Baseline)
+
+**Reconciled:** 2026-11-10.
+
+Part I describes the architecture the platform is being built toward. It is not a description of a complete system. As of M0, only the scaffolding baseline exists: every capability of later milestones is a design target, not implemented behavior.
+
+| Area | M0 state |
+|---|---|
+| Application | FastAPI app exposing `GET /health`; the Sourcing module is mounted explicitly at `/api/v1/sourcing` with `/health` and `/status` |
+| Platform Core | Configuration boundary (`src/app/core/config/`) and a SQLAlchemy engine factory (`src/app/core/database.py`); no registry, jobs, events, audit, security, or observability package |
+| Persistence | Baseline migration `0001_platform_schema` creates the empty `platform` schema only; no tables, and no `sourcing` or `analytics_sourcing` schema |
+| Local environment | Docker Compose with two services: `api` and `db` (PostgreSQL 16) |
+| CI | GitHub Actions: Ruff format check, Ruff lint, mypy, pytest against a PostgreSQL service container |
+| Quality tooling | Ruff, mypy, and pytest configured in `pyproject.toml`; locked dependencies in `uv.lock` |
+| Not implemented | Module registry and lifecycle, workers, durable jobs, transactional outbox, n8n, LLM/ML integration, Power BI read models, authentication and authorization, observability instrumentation |
+
+ADRs 001, 002, 003, 005, 007, and 012 are the decisions M0 touches; each carries an implementation-status note in Part II. ADRs 004, 006, 008, 009, 010, 011, 013, and 014 remain accepted decisions with no M0 implementation.
+
+Sections 5 through 9 (job execution, events, connectors, AI/ML, reporting) describe capabilities with no implementation yet, as do §§11.1–11.5 (identity, authorization, audit) and §13 (observability). Where a partially implemented section could otherwise be misread, it carries an `M0 status:` note. Those notes describe the repository; they do not revise the design.
 
 ---
 
@@ -130,6 +153,8 @@ Initial responsibilities:
 
 Platform Core must not contain supplier-specific rules, procurement calculations, or Sourcing-specific workflows.
 
+**M0 status:** only the first two items exist, in reduced form — application configuration (`src/app/core/config/`) and an explicitly constructed FastAPI app (`create_app()`), plus a SQLAlchemy engine factory. There is no registry, compatibility validation, shared API composition, identity integration, job lifecycle, event contract, audit interface, or shared health-check mechanism. The `/health` endpoint is defined directly in the application entrypoint.
+
 ### 2.3 Sourcing Module
 
 The Sourcing module owns the initial business domain.
@@ -226,63 +251,69 @@ Business KPI definitions and calculations remain owned by the Sourcing domain. P
 
 ## 3. Application Structure and Module Boundaries
 
-### 3.1 Proposed Repository Structure
+### 3.1 Repository Structure
+
+Paths are relative to the repository root. This is the structure realized at M0 (2026-11-10), showing the significant paths; per-package `__init__.py` files and utility scripts are omitted.
 
 ```text
-bopf/
-├── app/
-│   ├── main.py
-│   ├── bootstrap.py
-│   ├── api/
-│   │   ├── dependencies.py
-│   │   └── v1/
-│   │       └── router.py
-│   ├── core/
-│   │   ├── config/
-│   │   ├── registry/
-│   │   ├── security/
-│   │   ├── jobs/
-│   │   ├── events/
-│   │   ├── audit/
-│   │   └── observability/
-│   ├── modules/
-│   │   └── sourcing/
-│   │       ├── manifest.yaml
-│   │       ├── module.py
-│   │       ├── api/
-│   │       ├── domain/
-│   │       ├── application/
-│   │       ├── infrastructure/
-│   │       ├── analytics/
-│   │       ├── ai/
-│   │       ├── ml/
-│   │       ├── workflows/
-│   │       └── tests/
-│   └── workers/
-│       ├── runner.py
-│       └── handlers/
-├── migrations/
+├── src/
+│   └── app/
+│       ├── __init__.py
+│       ├── main.py                 # create_app(), platform liveness endpoint
+│       ├── py.typed
+│       ├── core/
+│       │   ├── config/             # validated settings boundary
+│       │   └── database.py         # engine factory and connection check
+│       └── modules/
+│           └── sourcing/
+│               ├── manifest.yaml
+│               ├── module.py       # typed module contract (M0 precursor)
+│               └── router.py       # /api/v1/sourcing routes
+├── database/
+│   ├── migrations/
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions/
+│   │       └── 0001_platform_schema.py
+│   └── schemas/
 ├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── architecture/
-├── infra/
-│   ├── docker/
-│   └── deployment/
-├── docs/
-│   ├── product/
-│   ├── architecture/
-│   └── operations/
-├── scripts/
-├── pyproject.toml
-├── docker-compose.yml
+│   ├── conftest.py
+│   ├── test_app.py
+│   ├── test_config.py
+│   ├── test_database.py
+│   └── test_package.py
+├── reports/
+│   ├── docs/                       # grounding, architecture, roadmap, phase records
+│   └── figures/
+├── data/                           # sample and synthetic datasets
+├── evaluation/                     # LLM and ML evaluation scaffolding
+├── infrastructure/docker/
+├── powerbi/dashboards/
+├── workflows/n8n/
+├── .github/workflows/ci.yml
 ├── alembic.ini
+├── docker-compose.yml
+├── Dockerfile
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
+├── .pre-commit-config.yaml
+├── dvc.yaml
+├── params.yaml
+├── pyproject.toml
+├── uv.lock
+├── invariants.md
 └── README.md
 ```
 
-This is a target structural proposal, not a requirement to create every directory immediately. Directories and abstractions should be introduced when the corresponding functionality is implemented.
+The realized tree is a subset of the target structure. The following are introduced by their owning milestone, not created as placeholders:
+
+- `src/app/bootstrap.py` and `src/app/api/` — platform API foundation (M1).
+- `src/app/core/{registry,security,jobs,events,audit,observability}/` — platform capabilities (M1).
+- `src/app/workers/` — independent worker execution (M1).
+- Module subpackages `api/`, `domain/`, `application/`, `infrastructure/`, `analytics/`, `ai/`, `ml/`, `workflows/`, `tests/` — introduced as the Sourcing features they serve are implemented (M1 onward).
+
+Directories and abstractions are created when the corresponding functionality is implemented, not in advance.
 
 ### 3.2 Module Manifest
 
@@ -300,7 +331,7 @@ platform:
 
 database:
   schema: sourcing
-  migrations: migrations
+  migrations: database/migrations
 
 capabilities:
   - suppliers
@@ -319,6 +350,8 @@ permissions:
 
 The manifest describes module capabilities and requirements. It does not authorize arbitrary code execution or unrestricted dynamic imports.
 
+**M0 status:** the committed manifest (`src/app/modules/sourcing/manifest.yaml`) declares version `0.1.0`, `platform.minimum_version: 0.1.0`, `database.migrations: database/migrations`, the single capability `health`, and the single permission `sourcing.read`. The capability and permission lists above are the target set, introduced capability by capability as their features are implemented. No manifest validation is performed yet.
+
 ### 3.3 Module Contract
 
 Every registered module must implement a typed contract that supports:
@@ -332,6 +365,8 @@ Every registered module must implement a typed contract that supports:
 - Relevant integration or event-handler registration.
 
 Registration must be explicit and validated during application bootstrap.
+
+**M0 status:** the Sourcing contract implements module identity, name, version, and a health status interface, and `create_app()` mounts the module router explicitly. Compatibility validation, permission declaration and enforcement, lifecycle operations, and event-handler registration do not exist yet.
 
 ### 3.4 Module Lifecycle
 
@@ -351,6 +386,8 @@ Deactivation must not delete business data.
 
 Database migrations must be executed through a controlled deployment process rather than automatically by every API or worker startup.
 
+**M0 status:** no lifecycle stage is implemented. The application mounts the Sourcing router directly; there is no discovery, manifest validation, compatibility check, or activation/deactivation. Migrations are operator-invoked through Alembic only, and API startup never creates or alters schema (INV-015). The registry and lifecycle are M1 scope (ADR-007).
+
 ---
 
 ## 4. Data Architecture
@@ -365,6 +402,8 @@ The initial system uses PostgreSQL with logical schema separation.
 | `sourcing` | Sourcing domain entities and operational state. |
 | `analytics_sourcing` | Curated read models and reporting-oriented data. |
 | Future schemas | `finance`, `inventory`, `logistics`, and other business domains. |
+
+**M0 status:** only the `platform` schema exists. Baseline migration `0001_platform_schema` creates it empty — no tables. `sourcing` and `analytics_sourcing` do not exist yet: `platform` tables arrive in M1, and module schemas arrive with their modules' own migrations (INV-015).
 
 n8n should use a separate database and credentials. It may share the same PostgreSQL server initially, but must not share application tables or write access.
 
@@ -797,27 +836,34 @@ Initial API namespace:
 
 Versioning applies to externally consumed contracts.
 
+**M0 status:** `GET /health` is served at the application root, not under `/api/v1/platform/`; the versioned platform namespace is introduced with the M1 platform API. `/api/v1/sourcing/` is mounted at the designed prefix.
+
 ### 10.2 Initial Endpoint Inventory
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/v1/platform/health` | Platform health. |
-| `GET /api/v1/platform/modules` | Registered module information. |
-| `GET /api/v1/platform/jobs/{job_id}` | Job status and result reference. |
-| `POST /api/v1/sourcing/ingestions` | Initiate data ingestion. |
-| `GET /api/v1/sourcing/ingestions/{job_id}` | Retrieve ingestion status. |
-| `GET /api/v1/sourcing/suppliers` | Retrieve suppliers. |
-| `GET /api/v1/sourcing/requisitions` | Retrieve requisitions. |
-| `GET /api/v1/sourcing/quotes` | Retrieve quotations. |
-| `GET /api/v1/sourcing/purchase-orders` | Retrieve purchase orders. |
-| `GET /api/v1/sourcing/deliveries` | Retrieve deliveries. |
-| `GET /api/v1/sourcing/exceptions` | Retrieve operational exceptions. |
-| `GET /api/v1/sourcing/exceptions/{id}` | Retrieve exception details. |
-| `POST /api/v1/sourcing/exceptions/{id}/decisions` | Record an authorized exception decision. |
-| `POST /api/v1/sourcing/reports` | Initiate report generation. |
-| `GET /api/v1/sourcing/reports/{job_id}` | Retrieve report-generation status. |
+This is the target contract inventory. The `M0 state` column records what exists in the repository today.
 
-This is an initial contract inventory. Request schemas, response schemas, pagination, filtering, and error formats will be specified during implementation.
+| Endpoint | Purpose | M0 state |
+|---|---|---|
+| `GET /health` | Platform liveness. | Implemented (root path) |
+| `GET /api/v1/sourcing/health` | Sourcing module liveness. | Implemented |
+| `GET /api/v1/sourcing/status` | Sourcing module operational status. | Implemented |
+| `GET /api/v1/platform/health` | Platform health under the versioned namespace. | Not implemented (M1) |
+| `GET /api/v1/platform/modules` | Registered module information. | Not implemented (M1) |
+| `GET /api/v1/platform/jobs/{job_id}` | Job status and result reference. | Not implemented (M1) |
+| `POST /api/v1/sourcing/ingestions` | Initiate data ingestion. | Not implemented (M2) |
+| `GET /api/v1/sourcing/ingestions/{job_id}` | Retrieve ingestion status. | Not implemented (M2) |
+| `GET /api/v1/sourcing/suppliers` | Retrieve suppliers. | Not implemented (M2) |
+| `GET /api/v1/sourcing/requisitions` | Retrieve requisitions. | Not implemented (M2) |
+| `GET /api/v1/sourcing/quotes` | Retrieve quotations. | Not implemented (M2) |
+| `GET /api/v1/sourcing/purchase-orders` | Retrieve purchase orders. | Not implemented (M2) |
+| `GET /api/v1/sourcing/deliveries` | Retrieve deliveries. | Not implemented (M2) |
+| `GET /api/v1/sourcing/exceptions` | Retrieve operational exceptions. | Not implemented (M2) |
+| `GET /api/v1/sourcing/exceptions/{id}` | Retrieve exception details. | Not implemented (M2) |
+| `POST /api/v1/sourcing/exceptions/{id}/decisions` | Record an authorized exception decision. | Not implemented (M2+) |
+| `POST /api/v1/sourcing/reports` | Initiate report generation. | Not implemented (M3) |
+| `GET /api/v1/sourcing/reports/{job_id}` | Retrieve report-generation status. | Not implemented (M3) |
+
+Request schemas, response schemas, pagination, filtering, and error formats will be specified during implementation.
 
 ### 10.3 API Behavior
 
@@ -922,12 +968,14 @@ flowchart TB
 
 n8n must use a separate database and restricted credentials. Its connection to the application database is limited to approved integration mechanisms; direct business-table writes are prohibited.
 
-Initial services:
+Target services:
 
 - API.
 - Worker.
 - PostgreSQL.
 - n8n.
+
+**M0 status:** the implemented stack is `api` and `db` only, defined in `docker-compose.yml`. The worker, n8n, and the LLM provider shown in the diagram are targets introduced in later milestones; no container or configuration exists for them.
 
 Optional services should be introduced only when required.
 
@@ -1052,15 +1100,19 @@ The initial system should test:
 
 ### 14.3 Engineering Quality Gates
 
-The CI pipeline should include:
+The CI pipeline should include the following. The `M0 state` column records what runs today.
 
-- Ruff linting and formatting checks.
-- Pytest.
-- Static typing checks.
-- Schema and data validation tests.
-- Dependency vulnerability scanning.
-- Container image scanning where applicable.
-- Architecture boundary tests.
+| Gate | M0 state |
+|---|---|
+| Ruff linting and formatting checks | Implemented |
+| Pytest | Implemented, including PostgreSQL connectivity and migration checks |
+| Static typing checks (`mypy`, strict) | Implemented |
+| Schema and data validation tests | Not in CI |
+| Dependency vulnerability scanning | Deferred |
+| Container image scanning where applicable | Deferred |
+| Architecture boundary tests | Not implemented |
+
+**M0 status:** `.github/workflows/ci.yml` runs Ruff format check, Ruff lint, `mypy src tests`, and `pytest` on Python 3.11 with a PostgreSQL 16 service container. Coverage thresholds, dependency and container scanning, and multi-version matrices are deliberately excluded under M0-D07 until the codebase or risk justifies them.
 
 The objective is to prevent regressions and detect unsafe or incomplete implementations before deployment.
 
@@ -1096,6 +1148,8 @@ Adopt a domain-oriented modular monolith with explicit module boundaries.
 - Individual modules cannot be independently deployed initially.
 - Future extraction into services remains possible if justified.
 
+**Implementation status (M0, 2026-11-10):** realized. One FastAPI deployable under `src/app/`, with `core` and `modules` separated in code and a single module mounted. No worker process exists, so the "with independent workers" half of the style is not yet in operation.
+
 ---
 
 ## ADR-002 — Domain-Oriented Business Modules
@@ -1124,6 +1178,8 @@ Each module owns its domain entities, business rules, APIs, analytical definitio
 - Improved maintainability and extensibility.
 - Shared capabilities remain in Platform Core.
 - Cross-module interactions require explicit contracts.
+
+**Implementation status (M0, 2026-11-10):** realized for one module. `src/app/modules/sourcing/` owns its manifest, contract, and router; Platform Core holds only configuration and database concerns. No second module exists to test the boundary.
 
 ---
 
@@ -1159,6 +1215,8 @@ n8n uses a separate database and credentials.
 - Transactional consistency across relevant application operations.
 - Database ownership must be enforced through schemas and permissions.
 - Scaling and storage decisions can evolve as workload evidence accumulates.
+
+**Implementation status (M0, 2026-11-10):** partially realized. One PostgreSQL 16 instance is used for local development and CI. The baseline migration creates only the empty `platform` schema; `sourcing` and `analytics_sourcing` are not created until the features that own them are implemented. Schema separation is therefore a design intent, not yet an enforced boundary. Migrations are operator-invoked and version-controlled (INV-015).
 
 ---
 
@@ -1223,6 +1281,8 @@ Workers claim and execute jobs independently.
 - Job state and recovery must be designed explicitly.
 - PostgreSQL is sufficient for the initial queue implementation.
 
+**Implementation status (M0, 2026-11-10):** not implemented. There is no worker process, no job table, and no claim or retry mechanism. M0 delivers an API-only composition; this decision becomes actionable in M1, where worker execution and durable job state are introduced.
+
 ---
 
 ## ADR-006 — Transactional Outbox for Event Publication
@@ -1282,6 +1342,8 @@ Only modules included in the approved registry may be activated.
 - Predictable startup behavior.
 - Compatibility can be validated before registration.
 - New modules require explicit registration and review.
+
+**Implementation status (M0, 2026-11-10):** precursor only. `create_app()` mounts the Sourcing router explicitly, and the module exposes a frozen dataclass contract with identity and health status. There is no registry, no manifest loading or validation, no compatibility check, and no activation lifecycle. The M0 implementation deliberately stops short of the registry to avoid pre-implementing M1.
 
 ---
 
@@ -1437,6 +1499,8 @@ Examples:
 - Infrastructure decisions must be revisited when evidence changes.
 - Simplicity must not compromise required security, reliability, or data integrity.
 
+**Implementation status (M0, 2026-11-10):** realized. The local stack is two containers (API plus PostgreSQL). No Redis, message broker, n8n instance, Kubernetes, or analytical warehouse was introduced. CI uses one Python version and no service beyond PostgreSQL.
+
 ---
 
 ## ADR-013 — Human Validation for Consequential AI Outputs
@@ -1509,77 +1573,6 @@ Use object storage, such as S3, for versioned datasets and model artifacts in th
 
 ---
 
-# Part III — Architecture Governance
+**M0 status:** criteria 1, 6, and 11 are met. Criterion 2 is partially met — the module is mounted explicitly, but no registry exists. Criterion 4 is partially met — a PostgreSQL connection boundary and a controlled migration process exist, but no platform or Sourcing tables. Criterion 10 is partially met — tests cover configuration, application, and database behavior, but no architecture boundary test exists. Criterion 12 holds structurally: M0 introduced nothing that reporting, AI, or ML would require reworking. Criteria 3, 5, 7, 8, and 9 are not met and belong to M1 and later phases.
 
-## 15. Architecture Principles
-
-The following principles govern implementation and future architectural changes.
-
-1. **Domain ownership:** business rules and data belong to the domain that owns them.
-2. **Explicit boundaries:** module dependencies and integrations must be intentional.
-3. **Deterministic authority:** calculations, permissions, thresholds, and approvals remain deterministic.
-4. **AI as a bounded capability:** LLMs interpret and explain; they do not independently authorize business actions.
-5. **Human accountability:** consequential decisions remain under authorized human control.
-6. **Operational traceability:** important operations must be observable and auditable.
-7. **Idempotent execution:** retries and duplicate delivery must not create unintended business effects.
-8. **Minimal sufficient infrastructure:** new components require a demonstrated need.
-9. **Progressive delivery:** each release must improve the same deployable product.
-10. **Production-oriented design:** security, failure handling, and data governance are considered from the beginning.
-
-## 16. Architecture Change Process
-
-Material architecture changes should be documented through an ADR.
-
-An ADR must contain:
-
-- Identifier and title.
-- Status.
-- Context and problem.
-- Decision.
-- Alternatives considered.
-- Consequences and trade-offs.
-
-Possible statuses:
-
-- Proposed.
-- Accepted.
-- Rejected.
-- Superseded.
-- Deprecated.
-
-An accepted ADR should not be silently overwritten. A new ADR must document a material change and reference the decision it supersedes.
-
-## 17. Known Constraints and Validation Requirements
-
-The architecture is designed against the reference scenario, not a fully validated enterprise deployment.
-
-Before production, the following must be confirmed:
-
-| Area | Required validation |
-|---|---|
-| Source integrations | Real system interfaces, access credentials, and source ownership. |
-| Data architecture | Actual schemas, volumes, data quality, and retention. |
-| KPI implementation | Business-approved definitions and calculations. |
-| Exception management | Catalog, thresholds, and escalation policies. |
-| Authorization | Identity provider, roles, and approval delegation. |
-| AI | Representative communication datasets and governance approval. |
-| ML | Historical data sufficiency and baseline comparison. |
-| Operations | Performance targets, recovery requirements, and service expectations. |
-| Deployment | Security, network, backup, and infrastructure configuration. |
-
-## 18. Architecture Success Criteria
-
-The architecture is considered successfully established when:
-
-1. The platform starts and validates its configuration.
-2. The Sourcing module registers through the explicit module registry.
-3. The API and worker run independently.
-4. PostgreSQL persists platform and Sourcing data using the defined boundaries.
-5. A job can be created, claimed, processed, and tracked.
-6. Database migrations run through a controlled process.
-7. Domain operations can persist corresponding outbox events transactionally.
-8. External workflow orchestration uses approved interfaces.
-9. Core operations are traceable through logs and correlation identifiers.
-10. Automated tests enforce important domain and architecture boundaries.
-11. A clean development environment can reproduce the deployment.
-12. The design supports incremental introduction of reporting, AI, and ML without restructuring the initial platform.
+These are architecture completion criteria, not M0 phase exit criteria. M0 exit criteria and their evidence are recorded in `reports/docs/implementation_roadmap.md` and `reports/docs/phases/m0/implementation_plan.md`.
