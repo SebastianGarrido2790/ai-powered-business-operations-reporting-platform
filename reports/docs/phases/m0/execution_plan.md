@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Approved — execution authorized 2026-11-07; no implementation started  
+**Status:** Complete — Stages 0–8 executed and passed; M0 signed off 2026-11-10  
 **Governing decision record:** [`implementation_plan.md`](implementation_plan.md)  
 **Execution model:** sequential stages with hard gates
 
@@ -395,7 +395,7 @@ None. The one-time CI falsification was completed in Stage 6. Do not repeat it h
 
 ---
 
-## Stage 8 — ADR Consolidation & Phase Sign-Off
+## Stage 8 — ADR Consolidation & Phase Sign-Off ✅ **PASSED**
 
 **Goal**  
 Close the loop between **decided → built → verified → recorded** and formally establish whether M0 is complete.
@@ -503,7 +503,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | CI quality checks execute successfully | Green GitHub Actions run; Ruff/mypy-if-applicable/pytest results | 6, 7 | Verified |
 | CI failure detection demonstrated | Temporary failing-test run failed as expected; cleanup/restored run passed | 6 | Verified |
 | Configuration and secrets validated | `.env.example`; `.gitignore`/`.dockerignore`; settings tests; no committed secrets | 2, 5, 7 | Verified |
-| Governance closure | D01–D08 state, candidate dispositions, ADR reconciliation, completed PIR, human sign-off | 8 | Not started |
+| Governance closure | D01–D08 state, candidate dispositions, ADR reconciliation, completed PIR, human sign-off | 8 | Verified |
 
 ---
 
@@ -521,7 +521,7 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 5 | Database & Migration Foundation | SQLAlchemy connection and Alembic baseline | M0-D04; ADR-003 | Compose PostgreSQL migration check passes | **Passed** |
 | 6 | CI Quality Gates & One-Time Falsification | GitHub Actions checks and falsification evidence | M0-D07 | Green baseline, detected deliberate failure, restored green run | **Passed** |
 | 7 | Fresh-Clone Acceptance & Phase Evidence | Clean-clone verification and completed PIR evidence | All M0 decisions verified where applicable | All M0 exit criteria pass | **Passed** |
-| 8 | ADR Consolidation & Phase Sign-Off | Consolidated records and signed-off M0 | Existing ADRs reconciled; any new ADR separately approved | Human sign-off and M1 entry approval | Not started |
+| 8 | ADR Consolidation & Phase Sign-Off | Consolidated records and signed-off M0 | Existing ADRs reconciled; any new ADR separately approved | Human sign-off recorded and M1 entry conditions verified | **Passed** |
 
 ### 9.2 Stage execution record
 
@@ -535,11 +535,11 @@ Evidence must be linked or recorded in the stage record. A checked item without 
 | 5 | 2026-11-08 | 2026-11-08 | `alembic.ini`, `database/migrations/`, `src/app/core/database.py`, `tests/test_database.py` | Passed | Disposable DB upgraded to `0001_platform_schema`; `platform` schema present with 0 tables; only `alembic_version` in `public`; downgrade-to-base then clean DB recreate and re-upgrade succeeded; `operations` DB untouched by API restarts (no implicit startup migration); 34 passed, 1 skipped in default suite, opt-in PostgreSQL check 8 passed | Operator authorized |
 | 6 | 2026-11-09 | 2026-11-09 | `.github/workflows/ci.yml`, `tests/test_database.py`, `database/migrations/env.py`; runs `42630534372`, `42630660799`, `42630940532`, `42631107696` | Passed | Baseline green (36 passed incl. PostgreSQL connectivity + migration); falsification run 42630940532 failed at pytest with the deliberate assertion and non-zero job result; revert run 42631107696 green; PR #1 closed, branch deleted. Finding: first baseline attempt 42630534372 failed on unresolvable `astral-sh/setup-uv@v10`; pinned to `v10.3.3` in `b75caa9` | Operator authorized |
 | 7 | 2026-11-10 | 2026-11-10 | Fresh clones of `1d9067e` and `df3e2a1`; CI run `42673071005` green (36 passed, 4 warnings); run `42672707042` failed due to GitHub Actions outage; run `42631404007` green | Passed | Clean clone: `.env` from example ignored by Git; 136 locked packages on Python 3.11.13; Ruff/mypy clean; 34 passed/2 skipped; Compose api+db healthy; `/health`, `/api/v1/sourcing/health`, `/api/v1/sourcing/status`, `/docs` = 200; Alembic head `0001_platform_schema` with `platform` schema and 0 tables; 36 passed with database checks; no `.env`/`.git`/`tests` in image; no credential material in history, image, or logs. README gap (Docker prerequisite, port fallback) fixed in `df3e2a1` and re-verified | Operator authorized |
-| 8 | — | — | — | Not started | — | — |
+| 8 | 2026-11-10 | 2026-11-10 | `implementation_plan.md` §8 and §10, `execution_plan.md` §9; final CI runs `42875213803` and `42673071005` green at HEAD | M0 complete: all decisions reconciled, implementation and verification evidence-backed, PIR complete, seven exit criteria satisfied, material findings resolved, ADRs consolidated with none created or amended, M1 entry conditions met except separate M1 authorization, human sign-off recorded | Operator authorized |
 
-**Phase status:** Authorized — Stage 7 Passed; Stage 8 is the next permitted stage.  
-**M0 sign-off:** Pending.  
-**Next phase:** M1 — Platform Foundation; entry is blocked until Stage 8 passes and M0 is signed off.
+**Phase status:** Complete — all eight stages passed; M0 signed off 2026-11-10.  
+**M0 sign-off:** Obtained 2026-11-10; recorded in `implementation_plan.md` §10.  
+**Next phase:** M1 — Platform Foundation; not started and not authorized by this plan.
 
 ---
 
@@ -600,6 +600,6 @@ Candidate 005 has no standalone SDD; its implementation tasks remain governed by
 
 **Authorization date:** 2026-11-07
 
-**Execution status:** In progress — Stage 7 Passed; Stage 8 is the next permitted stage.
+**Execution status:** Complete — all eight stages passed; M0 signed off. M1 requires separate phase authorization.
 
 **Scope of this authorization:** It opens Stage 0 (inspection-only preflight) and permits each later stage only after the preceding gate is recorded as Passed. It does not declare any stage complete, mark any decision Implemented or Verified, or authorize work outside M0.

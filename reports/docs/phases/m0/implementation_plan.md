@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M0 — Project Scaffolding & Engineering Standards  
-**Status:** Approved — repository audit complete; decision log approved (D01–D08); candidate features accepted; implementation pending  
+**Status:** Complete — Stages 0–8 executed and passed; M0 signed off 2026-11-10  
 **Document type:** Living phase decision record
 
 ---
@@ -271,11 +271,11 @@ These notes do not by themselves accept any candidate. Candidate acceptance is r
 
 | Candidate | Initial recommendation | Approval status |
 |---|---|---|
-| 001 | Accept, subject to audit | Approved — audit confirmed |
-| 002 | Accept, subject to module contract decision | Approved — M0-D03 approved |
-| 003 | Accept, subject to service composition decision | Approved — M0-D05 approved |
-| 004 | Accept, subject to migration boundary decision | Approved — M0-D04 approved |
-| 005 | Accept, subject to quality-gate decision | Approved — M0-D07 approved |
+| 001 | Accept, subject to audit | Approved — audit confirmed; repository layout reconciled, `src/app/` present, `uv.lock` committed, D01 implemented |
+| 002 | Accept, subject to module contract decision | Approved — M0-D03 approved; entrypoint, Sourcing contract, manifest, and tests all verified |
+| 003 | Accept, subject to service composition decision | Approved — M0-D05 approved; two-service Compose stack builds, starts healthy, endpoints verified |
+| 004 | Accept, subject to migration boundary decision | Approved — M0-D04 verified; database connection, Alembic baseline, disposable-DB upgrade/re-upgrade all pass |
+| 005 | Accept, subject to quality-gate decision | Approved — M0-D07 verified; CI green with Ruff/lint/mypy/pytest including PostgreSQL checks |
 
 ### SDD policy for M0
 
@@ -753,7 +753,7 @@ Material findings must be resolved, explicitly accepted by the appropriate decis
 | M0-D05 | Approved | Implemented | Verified | Two-service Compose stack builds, starts healthy, and serves API/Sourcing endpoints; obsolete services removed |
 | M0-D06 | Approved | Implemented | Verified | Settings module, `.env.example`, `.dockerignore`, and validation tests verified |
 | M0-D07 | Approved | Implemented | Verified | CI workflow (Ruff format/lint, mypy, pytest with PostgreSQL service); green baseline, detected deliberate failure, restored green run |
-| M0-D08 | Approved | Implemented pending boundary confirmation | Verified pending scope review | Pending |
+| M0-D08 | Approved | Implemented | Verified | Phase boundary maintained; no M1–M7 capabilities (module registry/lifecycle, worker, platform metadata persistence, ingestion, BI, ML/AI, n8n/Power BI) implemented in M0; all confirmed absent in repository |
 
 ---
 
@@ -785,3 +785,101 @@ Final phase reporting must distinguish:
 These states are not interchangeable.
 
 **M0 completion outcome:** a reproducible, executable, and verifiable engineering foundation ready for M1 — Platform Foundation.
+
+---
+
+## 10. M0 Sign-Off Record (Stage 8)
+
+**Purpose:** close the loop between *decided → built → verified → recorded* and record the phase outcome. This section reports evidence already captured in §2–§9 and in `execution_plan.md` §9; it introduces no new decision.
+
+### 10.1 Decision reconciliation
+
+| Decision | Approved | Implemented | Verified | Evidence |
+|---|---|---|---|---|
+| M0-D01 | 2026-11-08 | Yes | Yes | `src/app/` package layout; imports and tests resolve; prior layout removed |
+| M0-D02 | 2026-11-08 | Yes | Yes | Committed `uv.lock`; 136 locked packages on Python 3.11.13; API image built from locked sync; CI green on Python 3.11 |
+| M0-D03 | 2026-11-08 | Yes | Yes | `create_app()`, `/health`, explicit Sourcing router mount, module manifest, contract and router tests |
+| M0-D04 | 2026-11-08 | Yes | Yes | `app/core/database.py` synchronous psycopg engine boundary; Alembic baseline `0001_platform_schema`; disposable-DB upgrade/downgrade/re-upgrade verified |
+| M0-D05 | 2026-11-08 | Yes | Yes | Two-service Compose stack (api + PostgreSQL 16) builds, starts healthy, serves endpoints; Redis/n8n/MLflow absent |
+| M0-D06 | 2026-11-08 | Yes | Yes | Central Pydantic Settings boundary; populated `.env.example`; `.env` ignored; `.dockerignore`; production safeguards tested |
+| M0-D07 | 2026-11-08 | Yes | Yes | `.github/workflows/ci.yml` with Ruff format, Ruff lint, mypy, pytest + PostgreSQL service; green baseline, detected deliberate failure, restored green run |
+| M0-D08 | 2026-11-08 | Yes | Yes | No M1–M7 capability present: no module registry/lifecycle, no worker, no platform metadata persistence, no ingestion, BI, ML/AI, or orchestration code in the repository |
+
+No decision required amendment, and no decision was implemented beyond its approved scope.
+
+### 10.2 ADR reconciliation
+
+ADRs are defined in `reports/docs/architecture/system_design.md` (§ADR-001–ADR-014). M0 references the following; each was checked against the implementation.
+
+| ADR | Title | Relationship to M0 | Consistency |
+|---|---|---|---|
+| ADR-001 | Modular Monolith | Realized: one deployable API plus worker-free composition | Accurate |
+| ADR-002 | Domain-Oriented Business Modules | Realized: `src/app/modules/sourcing/` behind an explicit contract | Accurate |
+| ADR-003 | PostgreSQL as Primary Application Database | Realized: psycopg engine boundary and Alembic migration history | Accurate |
+| ADR-005 | Independent Python Worker Process | Deferred to M1; no worker exists in M0 | Accurate — absence is the approved state |
+| ADR-007 | Explicit Module Registry | Precursor only: the Sourcing router is mounted explicitly; no registry | Accurate — full registry is M1 scope |
+| ADR-012 | Infrastructure Expansion by Evidence | Realized: two services only; no Redis, n8n, or MLflow | Accurate |
+
+ADR-004, 006, 008, 009, 010, 011, 013, and 014 are outside M0 scope and were neither implemented nor contradicted.
+
+**No ADR was created or amended.** M0 produced no architectural decision that is difficult to reverse, non-obvious to a future maintainer, and supported by evaluated alternatives beyond those already recorded.
+
+### 10.3 Candidate closure
+
+| Candidate | Status | Closure basis |
+|---|---|---|
+| `001-project-scaffold` | Implemented and verified | Layout, lockfile, tooling configuration, CI |
+| `002-application-skeleton` | Implemented and verified | Entrypoint, Sourcing contract, manifest, tests |
+| `003-local-development-environment` | Implemented and verified | Compose stack, configuration conventions, fresh-clone startup |
+| `004-database-foundation` | Implemented and verified | Connection boundary, Alembic baseline, migration checks |
+| `005-ci-quality-gates` | Implemented and verified | CI workflow and falsification evidence (no separate SDD required) |
+
+### 10.4 Exit criteria verification
+
+| Exit criterion | Evidence | Result |
+|---|---|---|
+| Fresh clone initializes via documented instructions | Clones of `1d9067e` and `df3e2a1`; `uv sync --locked --extra dev`; 136 packages on Python 3.11.13 | Met |
+| Project structure and conventions established | `src/app/` layout; Ruff and mypy clean; `database/migrations/` single history | Met |
+| Local environment starts | `docker compose up -d` → api and db healthy; documented `DB_PORT` fallback | Met |
+| Application skeleton and Sourcing module executable | `/health`, `/api/v1/sourcing/health`, `/api/v1/sourcing/status`, `/docs` all 200 | Met |
+| Database connectivity and initial migration verified | Alembic head `0001_platform_schema`; `platform` schema with 0 tables; only `alembic_version` in `public` | Met |
+| Automated quality checks execute through CI | Runs `42630660799`, `42631107696`, `42631404007`, `42673071005`, `42875213803` green with 36 tests | Met |
+| Configuration and secrets conventions documented and validated | `.env` never tracked; image/log/history scans clean; production safeguards tested | Met |
+
+Completion evidence required by the roadmap — a reproducible repository, an executable project skeleton, established engineering standards, and passing CI checks — is present.
+
+### 10.5 Scope and hygiene review
+
+- No functionality outside M0 was implemented.
+- No dependency, service, agent, or infrastructure component was added without a recorded requirement.
+- No committed secret exists; all credentials in the repository are synthetic local placeholders.
+- The §2.6 blocking findings F-01–F-09 were resolved through the corresponding approved decisions (D01–D07) and their verified implementations; PIR findings F-10–F-14 are resolved or explicitly dispositioned in §8.2; no material finding remains open.
+- The diff for M0 consists of scaffolding, configuration, CI, migrations, tests, and their governing documentation only.
+
+### 10.6 M1 entry conditions
+
+| Condition | Status |
+|---|---|
+| M0 exit criteria satisfied and evidenced | Met |
+| Engineering foundation available to build on (layout, settings, database, CI) | Met |
+| Architectural boundaries recorded and consistent (invariants, ADRs, decisions) | Met |
+| Deferred capabilities recorded rather than partially implemented | Met |
+| Separate M1 authorization obtained | **Not yet requested** |
+
+M1 work is not authorized by this record. Phase M1 requires its own approved plan and explicit authorization.
+
+### 10.7 Sign-off
+
+| Field | Value |
+|---|---|
+| Phase | M0 — Project Scaffolding & Engineering Standards |
+| Stages executed | 0–8, each gated and recorded |
+| Final verified commit | `11fe8c9` (plus Stage 8 records) |
+| Final CI evidence | Run `42875213803` green |
+| Final review commit | `df3e2a1` (README prerequisite and port-fallback gap fixed) |
+| Open material findings | None |
+| Sign-off basis | Project owner authorized Stage 8 execution and phase closure |
+| Date | 2026-11-10 |
+| Outcome | M0 complete — foundation ready for M1 |
+
+**Recording note:** this sign-off is recorded on the basis of the project owner's authorization to execute and close Stage 8. If a separate explicit sign-off statement is required by governance, record it here rather than treating this row as a substitute.
