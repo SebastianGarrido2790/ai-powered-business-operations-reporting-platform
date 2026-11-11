@@ -514,11 +514,13 @@ Do not automatically create all three files for every candidate. If a capability
 | M1-D02 | Module registry and registration semantics | Yes | **✅ Approved — Batch 1 (2026-11-11)** |
 | M1-D02.1 | Module metadata authority (nested in D02) | Yes (as part of D02) | **✅ Approved — Batch 1 (2026-11-11)** |
 | M1-D03 | Module compatibility and health semantics | Yes | **✅ Approved — Batch 1 (2026-11-11)** |
-| M1-D04 | Core API surface and contracts | Yes | Proposed |
+| M1-D04 | Core API surface and contracts | Yes | **✅ Approved — Batch 3 (2026-11-11)** |
 | M1-D05 | Worker and job execution model | Yes | **✅ Approved — Batch 2 (2026-11-11)** |
 | M1-D05.1 | Job delivery and retry semantics (nested in D05) | Yes (as part of D05) | **✅ Approved — Batch 2 (2026-11-11)** |
 | M1-D06 | Platform metadata and job persistence | Yes | **✅ Approved — Batch 2 (2026-11-11)** |
-| M1-D07 | Authentication and authorization boundary | Yes | Proposed |
+| M1-D07 | Authentication and authorization boundary | Yes | **✅ Approved — Batch 3 (2026-11-11)** |
+| M1-D07.1 | Identity-provider integration scope (nested in D07) | Yes (as part of D07) | **✅ Approved — Batch 3 (2026-11-11)** |
+| M1-D07.2 | Initial authorization model (nested in D07) | Yes (as part of D07) | **✅ Approved — Batch 3 (2026-11-11)** |
 | M1-D08 | Logging, correlation, and health architecture | Yes for material operational choices | Proposed |
 | M1-D09 | M1 scope exclusions and implementation boundaries | No — determined by approved roadmap and architecture | Constrained |
 
@@ -528,7 +530,7 @@ Do not automatically create all three files for every candidate. If a capability
 |---|---|---|---|
 | 1 — Platform structure | D01, D02 (incl. D02.1), D03 | Establishes startup, module registration, and validation | **✅ Approved 2026-11-11** |
 | 2 — Runtime and persistence | D05 (incl. D05.1), D06 | Establishes durable asynchronous execution | **✅ Approved 2026-11-11** |
-| 3 — API and security | D04, D07 | Establishes external application boundaries and access control | Pending review |
+| 3 — API and security | D04, D07 (incl. D07.1, D07.2) | Establishes external application boundaries and access control | **✅ Approved 2026-11-11** |
 | 4 — Operations | D08 | Establishes operational visibility and health semantics | Pending review |
 | Baseline | D09 | Records scope constraints; no new architectural choice | Constrained |
 
@@ -537,6 +539,8 @@ Batching is intended to reduce fragmented approval requests. It does not remove 
 **Batch 1 approval note (2026-11-11):** D01, D02 (including nested decision D02.1), and D03 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 **Batch 2 approval note (2026-11-11):** D05 (including nested decision D05.1) and D06 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+
+**Batch 3 approval note (2026-11-11):** D04 and D07 (including nested decisions D07.1 and D07.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ---
 
@@ -724,7 +728,7 @@ The System Design establishes versioned platform and module APIs. M1 must expose
 | B. Introduce a minimal versioned platform API for health, modules, and job status | Satisfies platform needs without exposing unnecessary administration endpoints |
 | C. Build a comprehensive platform administration API | Prematurely expands the API surface |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 3; alternatives A and C retained above for traceability)*
 
 Establish the minimum platform API required by M1:
 
@@ -736,7 +740,7 @@ The job-submission contract must also be defined so that a basic asynchronous jo
 
 Use consistent response and error semantics. Do not expose module internals or unrestricted job payloads through status endpoints.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D04, option B.**
 
 **Consequences**
 
@@ -895,7 +899,7 @@ M1 requires initial boundaries, not necessarily a complete enterprise identity r
 | B. Establish a standards-based authentication interface and explicit permission enforcement, using controlled local/test identity where appropriate | Establishes enforceable boundaries while keeping provider-specific integration bounded |
 | C. Implement a complete enterprise identity and policy-management platform | Exceeds the stated M1 requirement and increases operational scope |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 3; alternatives A and C retained above for traceability)*
 
 Implement a clear authentication boundary and permission checks that can be exercised in tests. Use the accepted role and permission model, including module-specific permissions.
 
@@ -903,7 +907,7 @@ The implementation must distinguish authenticated identity from authorization de
 
 Provider-specific production integration should follow the qualification decision below rather than being invented during implementation.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D07, option B.**
 
 **Nested decision M1-D07.1 — Identity-provider integration scope**
 
@@ -913,11 +917,11 @@ Options:
 - B. Implement a provider-neutral OIDC-compatible boundary and use controlled local/test identity; select the production provider when deployment requirements are known.
 - C. Implement a custom authentication mechanism.
 
-**Recommendation — B.**
+**Recommendation — B.** *(✅ Approved 2026-11-11 — Batch 3; alternatives A and C retained above for traceability)*
 
 Do not select a production provider without evidence that the current deployment requirements justify it. Do not build custom cryptographic or token-validation mechanisms.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D07.1, option B.**
 
 **Nested decision M1-D07.2 — Initial authorization model**
 
@@ -927,11 +931,11 @@ Options:
 - B. Central permission evaluation using explicit role-to-permission mappings and module-declared permissions.
 - C. A generalized attribute-based policy engine.
 
-**Recommendation — B.**
+**Recommendation — B.** *(✅ Approved 2026-11-11 — Batch 3; alternatives A and C retained above for traceability)*
 
 Keep authorization checks centralized and explicit. Start with the accepted roles and permissions; avoid a generalized policy engine.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D07.2, option B.**
 
 **Consequences**
 
@@ -1033,7 +1037,7 @@ Approval of this document does not itself authorize implementation. It establish
 The next steps are:
 
 1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs. *(Completed: audited and reconciled on 2026-11-10 at commit `4de5c76`; recorded in §2).*
-2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(In progress: Batch 1 [D01, D02 incl. D02.1, D03] and Batch 2 [D05 incl. D05.1, D06] approved 2026-11-11; Batches 3–4 pending.)*
+2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(In progress: Batch 1 [D01, D02 incl. D02.1, D03], Batch 2 [D05 incl. D05.1, D06], and Batch 3 [D04, D07 incl. D07.1, D07.2] approved 2026-11-11; Batch 4 pending.)*
 3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
 4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
 5. **Obtain SDD approval.** Candidate acceptance does not approve the detailed feature specification.
@@ -1132,19 +1136,19 @@ At phase closure:
 | M1-D02 | B — Explicit code-defined registry using validated manifests and typed contracts | **Approved (Batch 1)** | 2026-11-11 | Project-owner approval; §6 M1-D02 |
 | M1-D02.1 | B — Code and manifests define available modules; database records observed registration state | **Approved (Batch 1)** | 2026-11-11 | Approved as part of D02; §6 M1-D02.1 |
 | M1-D03 | B — Validate manifest fields, platform compatibility, contract conformance, and module health | **Approved (Batch 1)** | 2026-11-11 | Project-owner approval; §6 M1-D03 |
-| M1-D04 | Pending | Proposed | — | — |
+| M1-D04 | B — Minimal versioned platform API for health, modules, and job status | **Approved (Batch 3)** | 2026-11-11 | Project-owner approval; §6 M1-D04 |
 | M1-D05 | B — Independent Python worker using PostgreSQL-backed job claiming (`SKIP LOCKED`) | **Approved (Batch 2)** | 2026-11-11 | Project-owner approval; §6 M1-D05 |
 | M1-D05.1 | B — At-least-once execution with idempotent processing and bounded retries | **Approved (Batch 2)** | 2026-11-11 | Approved as part of D05; §6 M1-D05.1 |
 | M1-D06 | B — Persist the minimum required module and job metadata in the `platform` schema | **Approved (Batch 2)** | 2026-11-11 | Project-owner approval; §6 M1-D06 |
-| M1-D07 | Pending | Proposed | — | — |
-| M1-D07.1 | Pending | Proposed | — | — |
-| M1-D07.2 | Pending | Proposed | — | — |
+| M1-D07 | B — Standards-based authentication boundary & explicit permission enforcement (controlled local/test ID) | **Approved (Batch 3)** | 2026-11-11 | Project-owner approval; §6 M1-D07 |
+| M1-D07.1 | B — Provider-neutral OIDC-compatible boundary; select production provider when requirements known | **Approved (Batch 3)** | 2026-11-11 | Approved as part of D07; §6 M1-D07.1 |
+| M1-D07.2 | B — Central permission evaluation using role-to-permission mappings & module permissions | **Approved (Batch 3)** | 2026-11-11 | Approved as part of D07; §6 M1-D07.2 |
 | M1-D08 | Pending | Proposed | — | — |
 | M1-D09 | Constrained by approved scope | Proposed | — | — |
 
 ### Phase authorization
 
-**Implementation Plan status:** Partially approved — Batches 1 & 2 approved 2026-11-11; Batches 3–4 pending decision approval.  
+**Implementation Plan status:** Partially approved — Batches 1, 2 & 3 approved 2026-11-11; Batch 4 pending decision approval.  
 **Feature SDD status:** Not yet approved.  
 **Execution Plan status:** Not yet drafted.  
 **Execution authorization:** Not granted.  
