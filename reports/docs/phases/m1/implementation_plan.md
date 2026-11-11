@@ -83,49 +83,297 @@ M1 is complete only when:
 
 ## 2. Current State Audit
 
-### 2.1 Audit baseline
+### 2.1 Audit status & baseline reconciliation
 
-**Known baseline:** M0 was signed off on 2026-11-10. Its System Design implementation-status record describes the repository at the M0 baseline.
+**Repository verification completed.** Evidence collected on 2026-11-10 against `main` at `HEAD` commit `4de5c76`.
 
-The M1 audit must revalidate the actual repository state before implementation. The M0 record is a historical baseline, not proof that the current working tree remains unchanged.
+**Method:** Tracked-file inventory (`git ls-files`), working-tree status (`git status --ignored`), commit history comparison against M0 sign-off (`git diff 28b4ea6 HEAD`), configuration review (`pyproject.toml`, `alembic.ini`, `.env.example`), migration inspection (`database/migrations/`), CI pipeline review (`.github/workflows/ci.yml`), test suite execution (`pytest`), static analysis (`ruff`, `mypy`), and governance authority inspection (`invariants.md`).
 
-The following is the expected starting state based on M0 evidence.
+**Observed environment:**
+- Host OS: Windows 11 (win32)
+- Host Python: Python 3.14.0
+- Managed Python environment: CPython 3.11.13 via `.venv` managed by `uv`
+- Tooling versions: `uv` 0.8.11, Docker 29.1.3, Docker Compose v2.40.3-desktop.1, Git 2.50.1
+- Quality status: 36 collected tests (34 passed, 2 skipped live PostgreSQL tests), 100% test coverage across `src/app/`, Ruff format clean (41 files), Ruff lint clean (all rules pass), mypy clean (strict mode, 15 files).
 
-| Area | M0 state | M1 implication |
-|---|---|---|
-| Application | FastAPI application with `create_app()` and `GET /health` | Extend the application lifecycle and introduce platform API composition |
-| Sourcing module | Explicitly mounted router, typed precursor contract, and manifest | Integrate it through the actual module registry |
-| Platform Core | Configuration boundary and SQLAlchemy engine factory | Introduce only the required reusable core services |
-| Module registry | Not implemented | Implement explicit registration and validation |
-| Module lifecycle | Not implemented | Establish the lifecycle required for registration and health |
-| Database | PostgreSQL 16; empty `platform` schema | Introduce platform-owned metadata and job tables |
-| Migrations | Alembic baseline `0001_platform_schema` | Add versioned migrations; preserve controlled migration execution |
-| Worker | Not implemented | Introduce an independent Python worker process |
-| Job execution | No job table, queue, or execution lifecycle | Establish durable job state and basic asynchronous processing |
-| API | Minimal application and Sourcing routes | Introduce shared, versioned platform API capabilities |
-| Authentication | Not implemented | Establish an explicit authentication boundary |
-| Authorization | Not implemented | Enforce initial permissions at application boundaries |
-| Logging and correlation | No shared observability implementation | Introduce consistent logging and correlation across processes |
-| Health checks | Basic application and Sourcing endpoints | Add platform, dependency, and module health semantics |
-| Local environment | API and PostgreSQL Compose services | Add the worker as an independent process |
-| CI | Ruff, mypy, pytest, and PostgreSQL-backed checks | Extend verification to runtime, registry, security, and worker behavior |
+**Baseline reconciliation:**
+M0 was signed off on 2026-11-10 at commit `28b4ea6`. Inspection of git history shows three documentation commits since sign-off:
+1. `f3f97e6`: Reconciled System Design with actual M0 implementation baseline.
+2. `585649d`: Updated README with M0 completion status and scope boundaries.
+3. `4de5c76`: Added M1 Implementation Plan & Decisions draft.
 
-### 2.2 Repository verification required
+No application code, test suites, database migrations, CI configurations, or infrastructure files have changed or regressed since M0 sign-off. The working tree is clean.
 
-Before finalizing the feature register, inspect:
+| Area | M0 baseline state | Verified M1 starting state (at `4de5c76`) | M1 implication |
+|---|---|---|---|
+| Application | FastAPI application with `create_app()` and `GET /health` | Unchanged; factory in `src/app/main.py`, lifespan context manager, root liveness | Extend application lifecycle; implement shared bootstrap and platform API composition |
+| Sourcing module | Explicitly mounted router, typed precursor contract, and manifest | Unchanged; frozen dataclass contract (`module.py`), `manifest.yaml` (v0.1.0), routes at `/api/v1/sourcing` | Replace hardcoded router mounting with explicit module registry and contract validation |
+| Platform Core | Configuration boundary and SQLAlchemy engine factory | Unchanged; `app/core/config/` (Settings) and `app/core/database.py` (engine factory) | Introduce only required reusable platform services (registry, jobs, security, logging) |
+| Module registry | Not implemented | Absent (`src/app/core/registry/` not yet created) | Implement explicit registration, allowlisting, and manifest validation |
+| Module lifecycle | Not implemented | Absent (no discovery, compatibility check, activation/deactivation) | Establish the lifecycle required for registration and health reporting |
+| Database | PostgreSQL 16; empty `platform` schema | Unchanged; PostgreSQL 16 via Compose/CI; schema `platform` exists with 0 tables | Introduce platform-owned metadata and durable job execution tables |
+| Migrations | Alembic baseline `0001_platform_schema` | Unchanged; single revision in `database/migrations/versions/`; Alembic configured | Add versioned platform migrations; preserve controlled operator execution (INV-015) |
+| Worker | Not implemented | Absent (no `src/app/workers/`, no worker process in Compose) | Introduce an independent Python worker process for asynchronous execution |
+| Job execution | No job table, queue, or execution lifecycle | Absent (no job models, no queue mechanism, no claim queries) | Establish durable PostgreSQL job state (`FOR UPDATE SKIP LOCKED`) and deterministic handler |
+| API | Minimal application and Sourcing routes | Unchanged; root `/health`, `/docs`, `/redoc`, and `/api/v1/sourcing/{health,status}` | Introduce versioned platform API (`/api/v1/platform/...`) for health, modules, and jobs |
+| Authentication | Not implemented | Absent (no auth dependencies, no token validation, no request identity) | Establish provider-neutral authentication boundary and authenticated request context |
+| Authorization | Not implemented | Absent (no permission checks, no role evaluation) | Enforce initial permissions at application boundaries |
+| Logging and correlation | No shared observability implementation | Unchanged; standard library logging; `structlog` declared in dependencies but unconfigured | Introduce consistent structured logging and correlation propagation across API and worker |
+| Health checks | Basic application and Sourcing endpoints | Unchanged; root `/health` and sourcing `/health`/`/status` return liveness only | Add readiness, dependency checks, and platform/module health distinction |
+| Local environment | API and PostgreSQL Compose services | Unchanged; `docker-compose.yml` runs `api` (port 8000) and `db` (port 5432) | Add the worker as an independent process/container in Compose |
+| CI | Ruff, mypy, pytest, and PostgreSQL-backed checks | Unchanged; `.github/workflows/ci.yml` runs 7 quality steps against PostgreSQL 16 | Extend verification to runtime, registry, security, and worker behavior |
 
-- Current branch, `HEAD`, working tree, and changes since the M0 sign-off.
-- Existing application bootstrap and configuration behavior.
-- Current Sourcing module contract and `manifest.yaml` fields.
-- SQLAlchemy engine/session configuration and Alembic migration history.
-- PostgreSQL schema and existing database objects.
-- Current Compose services and Docker build configuration.
-- Existing CI commands, test fixtures, and integration-test setup.
-- Accepted ADRs and invariants relevant to module registration, workers, job execution, identity, and persistence.
+### 2.2 Verified repository inventory
 
-Do not assume that a capability is absent simply because it was absent at M0. Do not recreate existing functionality.
+The repository currently contains **68 tracked files** across 12 primary directory groups.
 
-### 2.3 Architectural constraints carried into M1
+```text
+ai-business-operations-platform/
+├── .dockerignore                            # Build exclusion rules
+├── .env.example                             # Safe local development environment template
+├── .github/
+│   └── workflows/
+│       └── ci.yml                           # GitHub Actions CI quality gates (Python 3.11 + PG 16)
+├── .gitignore                               # Git ignore rules (includes data, .env, .venv)
+├── .pre-commit-config.yaml                  # Pre-commit hook definitions
+├── Dockerfile                               # Hardened multi-layer API image (Python 3.11, non-root)
+├── LICENSE.txt                              # MIT license
+├── README.md                                # Project identity, Bootstrap Kit concept, and setup guide
+├── alembic.ini                              # Alembic migration configuration (zero hardcoded secrets)
+├── data/                                    # Data storage placeholders (Git-ignored content)
+│   ├── samples/
+│   │   └── .gitkeep
+│   └── synthetic/
+│       └── .gitkeep
+├── database/                                # Persistence foundation
+│   ├── migrations/
+│   │   ├── env.py                           # Migration runtime environment (uses Settings URI)
+│   │   ├── script.py.mako                   # Migration template
+│   │   └── versions/
+│   │       └── 0001_platform_schema.py      # Baseline revision (creates empty `platform` schema)
+│   └── schemas/
+│       └── .gitkeep
+├── docker-compose.yml                       # Minimal local stack (api + db services)
+├── dvc.yaml                                 # DVC pipeline placeholder (Phase 5 ML boundary)
+├── evaluation/                              # Quality evaluation scaffolding
+│   ├── llm/
+│   │   └── .gitkeep
+│   └── ml/
+│       └── .gitkeep
+├── infrastructure/
+│   └── docker/
+│       └── .gitkeep
+├── invariants.md                            # 18 standing architectural constraints (INV-001 … INV-018)
+├── launch_app.bat                           # Convenience launch script
+├── params.yaml                              # DVC parameter placeholder
+├── powerbi/
+│   └── dashboards/
+│       └── .gitkeep
+├── pyproject.toml                           # Project metadata, dependencies, tool configurations
+├── reports/                                 # Authoritative documentation and phase records
+│   ├── docs/
+│   │   ├── architecture/
+│   │   │   ├── blueprint.md                 # Architecture & Engineering Blueprint (MVP baseline)
+│   │   │   └── system_design.md             # System Design & ADRs (ADR-001 … ADR-014)
+│   │   ├── grounding/
+│   │   │   ├── prd.md                       # Product Requirements Document (BOPF + Sourcing)
+│   │   │   ├── product_charter.md           # Strategic Product Definition & Foundation
+│   │   │   └── user_story.md                # Business context, pain points, problem framing
+│   │   ├── implementation_roadmap.md        # Milestones M0–M8 scope, dependencies, exit criteria
+│   │   └── phases/
+│   │       ├── m0/                          # M0 phase artifacts (completed, signed off)
+│   │       │   ├── 001-project-scaffold/    # Scaffold feature SDD (plan, spec, tasks)
+│   │       │   ├── 002-application-skeleton/# App skeleton feature SDD (plan, spec, tasks)
+│   │       │   ├── 003-local-development-environment/ # Compose feature SDD (plan, spec, tasks)
+│   │       │   ├── 004-database-foundation/ # Database feature SDD (plan, spec, tasks)
+│   │       │   ├── README.md                # Phase index and summary
+│   │       │   ├── execution_plan.md        # M0 execution plan and stage gates
+│   │       │   └── implementation_plan.md   # M0 living phase decision record
+│   │       └── m1/
+│   │           └── implementation_plan.md   # M1 living phase decision record (this document)
+│   └── figures/
+│       └── platform_foundation.png          # High-level architecture diagram
+├── src/
+│   └── app/                                 # Application package root
+│       ├── __init__.py                      # Package initialization and __version__ ("0.1.0")
+│       ├── core/                            # Platform Core (shared capabilities)
+│       │   ├── __init__.py
+│       │   ├── config/                      # Validated application settings boundary
+│       │   │   ├── __init__.py              # Exports Settings, AppEnvironment, get_settings
+│       │   │   └── settings.py              # Pydantic BaseSettings with production safeguards
+│       │   └── database.py                  # SQLAlchemy engine factory and connectivity verification
+│       ├── main.py                          # FastAPI application factory and root liveness route
+│       ├── modules/                         # Business Domain Modules
+│       │   ├── __init__.py
+│       │   └── sourcing/                    # Sourcing Operations Intelligence (initial module)
+│       │       ├── __init__.py              # Exports contract, router, and identity constants
+│       │       ├── manifest.yaml            # Module declarative manifest (v0.1.0)
+│       │       ├── module.py                # Typed module contract precursor (frozen dataclass)
+│       │       └── router.py                # Module API routes (/health, /status)
+│       └── py.typed                         # PEP 561 typing marker
+├── tests/                                   # Automated test suite
+│   ├── .gitkeep
+│   ├── conftest.py                          # Hermetic test isolation fixtures (settings monkeypatch)
+│   ├── test_app.py                          # Application factory, endpoints, and manifest tests
+│   ├── test_config.py                       # Settings validation and production safeguard tests
+│   ├── test_database.py                     # Database engine, URI resolution, and migration tests
+│   └── test_package.py                      # Package import and version tests
+├── uv.lock                                  # Locked dependency graph (fully resolved and verified)
+└── workflows/
+    └── n8n/
+        └── .gitkeep
+```
+
+**Git-ignored local and agent governance files:**
+- Intentionally git-ignored via `.gitignore` line 108 along with `.agents/` and `.opencode/` to protect local agent harness customization while maintaining governance documentation authority.
+- `.agents/` (engineering workflows: `decision-making.md`, `implementation-plan.md`, `change-management.md`, `validation.md`, `git_ops.md`; and engineering guides).
+- `.opencode/` (project-specific multi-agent role definitions).
+- `.venv/` (Python virtual environment containing CPython 3.11.13 and locked dependencies).
+- `.env` (local host configuration file created from `.env.example`).
+- Tool caches: `.pytest_cache/`, `.mypy_cache/`, `.ruff_cache/`, `database/migrations/__pycache__/`, `src/app/**/__pycache__/`.
+
+### 2.3 Detailed verification findings by area
+
+#### 1. Current branch, git history, and working tree
+- **Branch:** `main` (up to date with `origin/main`).
+- **HEAD:** Commit `4de5c76` ("docs(M1): M1 — Platform Foundation should be treated as...").
+- **Working tree:** Clean; 0 untracked modifications, 0 staged files.
+- **Diff against M0 sign-off (`28b4ea6`):** Exactly three documentation files modified (`README.md`, `reports/docs/architecture/system_design.md`, and `reports/docs/phases/m1/implementation_plan.md`). No regressions, no code changes, no configuration drifts.
+
+#### 2. Python environment & dependency management (`pyproject.toml`, `uv.lock`)
+- **Package name & version:** `ai-business-operations-platform` version `0.1.0`.
+- **Target runtime:** Python `>=3.11` (`requires-python = ">=3.11"`). Verified running CPython 3.11.13 in active virtualenv.
+- **Declared runtime dependencies:**
+  - `fastapi>=0.115`, `uvicorn>=0.30` (API framework and ASGI server)
+  - `pydantic>=2.9`, `pydantic-settings>=2.5` (data validation and settings)
+  - `sqlalchemy>=2.0`, `alembic>=1.13` (persistence and schema migrations)
+  - `psycopg[binary]>=3.2` (PostgreSQL driver)
+  - `httpx>=0.27` (HTTP client)
+  - `pyyaml>=6.0` (YAML parser for module manifests)
+  - `python-dotenv>=1.0` (environment file parsing)
+  - `structlog>=24.0` (structured logging)
+- **Optional dependency groups:**
+  - `dev`: `pytest>=8.0`, `pytest-asyncio>=0.23`, `pytest-cov>=5.0`, `ruff>=0.6`, `mypy>=1.10`, `pre-commit>=3.5`
+  - `ml`: `numpy>=1.26`, `pandas>=2.2`, `scikit-learn>=1.5`, `scipy>=1.14`, `torch>=2.4`, `transformers>=4.40`, `xgboost>=2.1`
+  - `llm`: `openai>=1.50`, `langchain>=0.3`, `langgraph>=0.2`
+  - `observability`: `prometheus-client>=0.20`, `opentelemetry-api>=1.25`
+- **Tool configurations:**
+  - `pytest`: `asyncio_mode = "auto"`, `asyncio_default_fixture_loop_scope = "function"`, `addopts = "-v --cov=app --cov-report=term-missing"`
+  - `ruff`: target `py311`, line-length 100, lint selection `["E", "F", "W", "I", "B", "UP", "C4"]`
+  - `mypy`: target `3.11`, `strict = true`, `warn_unused_ignores = true`, `mypy_path = "src"`
+  - `coverage`: `source = ["app"]`
+- **Lockfile status:** `uv.lock` is fully resolved and committed. `uv lock --check` exits with code 0.
+- **M1 implication:** Runtime dependencies are sufficient for M1 core capabilities without introducing external brokers. `structlog` is already available for logging/correlation; `psycopg` and `sqlalchemy` support PostgreSQL job queueing (`FOR UPDATE SKIP LOCKED`). If token validation (JWT) is introduced for authentication (M1-D07), lightweight standard library or small crypto packages may be evaluated.
+
+#### 3. Database foundation, engine configuration, and Alembic migrations
+- **Alembic configuration:** `alembic.ini` defines `script_location = database/migrations`. Contains zero hardcoded credentials or database URLs; completely clean of secrets.
+- **Migration environment:** `database/migrations/env.py` dynamically resolves its connection URL from validated application settings via `app.core.config.get_settings().sync_database_uri`. Test harnesses can override this via `config.set_main_option("sqlalchemy.url", ...)`.
+- **Migration history:** Single baseline revision `0001_platform_schema.py` (`down_revision = None`). Its `upgrade()` executes `CREATE SCHEMA platform`; its `downgrade()` executes `DROP SCHEMA platform`.
+- **Database state:** PostgreSQL 16 is used in both Docker Compose and GitHub Actions CI. The `platform` schema exists in the migration history but contains zero tables. The `sourcing` and `analytics_sourcing` schemas do not exist yet (they will be created by module-owned migrations when domain persistence is introduced).
+- **Engine factory & connection probe:** `src/app/core/database.py` defines `create_engine_from_settings(settings)` with `pool_pre_ping=True` and `verify_connection(engine)` executing `SELECT 1`. No process-wide singleton or ORM repository exists.
+- **Migration execution policy (INV-015):** Database migrations are strictly operator-invoked and version-controlled. Application startup (`main.py`) never runs migrations or mutates database schema. Automated test `test_application_startup_does_not_run_migrations` verifies this invariant.
+- **M1 implication:** M1 must add versioned migrations creating platform-owned tables (`platform.module_registrations`, `platform.jobs`, `platform.job_attempts`, `platform.idempotency_keys`) inside the `platform` schema without creating business domain tables.
+
+#### 4. Application skeleton, bootstrap, and configuration
+- **Entrypoint:** `src/app/main.py` provides `create_app(settings: Settings | None = None) -> FastAPI`.
+- **Lifespan management:** `@asynccontextmanager async def lifespan(app: FastAPI)` is currently an empty generator with a simple `yield` (no startup/shutdown side effects or database queries).
+- **Root endpoints:** Root `/health` returns non-sensitive JSON: `{"status": "ok", "app": "bopf", "version": "0.1.0", "environment": "local"}`. Interactive API documentation is available at `/docs` and `/redoc` in non-production/debug environments.
+- **Router inclusion:** The Sourcing router is included directly: `app.include_router(sourcing_router, prefix="/api/v1/sourcing", tags=["sourcing"])`.
+- **Settings boundary:** `src/app/core/config/settings.py` defines `Settings(BaseSettings)` reading `.env`. Validates `APP_NAME`, `APP_VERSION`, `ENVIRONMENT` (case-insensitive enum), `DEBUG`, `HOST`, `PORT` (1–65535), `LOG_LEVEL` (DEBUG, INFO, WARNING, ERROR, CRITICAL), and database connection parameters (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DATABASE_URL`).
+- **Production safeguards:** Strict model validator rejects trivial/default passwords (`postgres`, `password`, `admin`, `root`, `""`) and active `DEBUG=True` when `ENVIRONMENT=production`.
+- **M1 implication:** M1 must establish a shared platform bootstrap (`src/app/bootstrap.py`) shared by API and worker entrypoints, initialize the module registry, and replace hardcoded router inclusion with registry-driven route composition.
+
+#### 5. Sourcing module contract, manifest, and router
+- **Manifest:** `src/app/modules/sourcing/manifest.yaml` specifies:
+  - `id: sourcing`
+  - `name: Sourcing Operations Intelligence`
+  - `version: 0.1.0`
+  - `platform.minimum_version: 0.1.0`
+  - `database.schema: sourcing`, `database.migrations: database/migrations`
+  - `capabilities: [health]`
+  - `permissions: [sourcing.read]`
+- **Precursor contract:** `src/app/modules/sourcing/module.py` defines `SourcingModuleContract` (frozen dataclass) with `module_id`, `name`, `version`, and `get_status() -> dict[str, str]`.
+- **Router:** `src/app/modules/sourcing/router.py` exposes:
+  - `GET /api/v1/sourcing/health` -> returns `sourcing_contract.get_status()`
+  - `GET /api/v1/sourcing/status` -> returns `sourcing_contract.get_status()`
+- **Manifest validation test:** `test_sourcing_manifest_conformance` in `tests/test_app.py` verifies required fields (`id`, `name`, `version`, `platform`, `database`, `capabilities`, `permissions`).
+- **M1 implication:** The contract is an M0 precursor. M1 must implement the complete `BusinessModule` contract (typed interface for route registration, permission declaration, event handler registration, and health checks) and an explicit module registry that loads and validates `manifest.yaml` against compatibility criteria.
+
+#### 6. Local development environment & container build
+- **Compose configuration:** `docker-compose.yml` defines two services:
+  - `db`: `postgres:16-alpine`, port `127.0.0.1:5432`, health check `pg_isready -U postgres -d operations`, named volume `postgres_data`.
+  - `api`: builds `./Dockerfile`, port `127.0.0.1:8000`, depends on `db: service_healthy`, health check probing `http://127.0.0.1:8000/health`.
+- **Dockerfile:** Hardened container build using `python:3.11-slim`:
+  - Multi-layer caching with `uv` (binary copied from `ghcr.io/astral-sh/uv:0.8.11`).
+  - Dependencies synchronized in locked mode with `--no-dev`.
+  - Non-root system user `appuser` (`uid 10001`).
+  - Container health check via standard library `urllib`.
+  - CMD starts uvicorn: `["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]`.
+- **Environment template:** `.env.example` documents all runtime and database variables with clear explanations and instructions to copy to `.env`.
+- **M1 implication:** `docker-compose.yml` must be extended to include an independent `worker` service running the background job processor from the same codebase, validating process isolation.
+
+#### 7. CI workflows & automated quality gates
+- **Workflow definition:** `.github/workflows/ci.yml` triggers on `push` to `main` and on all pull requests.
+- **Permissions & concurrency:** Least-privilege `contents: read`; concurrency group with `cancel-in-progress: true` on PRs.
+- **Service container:** `postgres:16-alpine` service with health checks; exposes `BOPF_TEST_DATABASE_URL` to enable integration tests.
+- **Executed quality gates:**
+  1. `uv lock --check` (dependency lock integrity)
+  2. `uv sync --locked --extra dev` (deterministic virtual environment)
+  3. `uv run ruff format --check .` (code style and formatting)
+  4. `uv run ruff check --output-format=github .` (lint rules: E, F, W, I, B, UP, C4)
+  5. `uv run mypy src tests` (strict static typing)
+  6. `uv run pytest` (unit tests and PostgreSQL integration/migration tests)
+- **Local verification results:**
+  - `uv run ruff format --check .`: 41 files checked, 100% compliant.
+  - `uv run ruff check .`: All checks passed.
+  - `uv run mypy src tests`: Success: no issues found in 15 source files.
+  - `uv run pytest`: 36 items collected, 34 passed, 2 skipped (PostgreSQL tests require live DB), 100% coverage on `src/app/`.
+- **M1 implication:** CI gates are working and strict. M1 additions (registry, worker, jobs, security) will automatically be verified against format, lint, strict mypy typing, and pytest coverage.
+
+#### 8. Governance, standing constraints, and agent operating instructions
+- **Invariants (`invariants.md`):** Version 1.0 defines 18 active standing constraints (INV-001 through INV-018). No invariants have been superseded or modified.
+- **Agent operating protocol:** Defines the canonical protocol: **Analyze → Challenge → Recommend → Human decision → Plan → Approval → Implement → Validate → Report**. Mandates explicit human authorization for git commits and pushes. Authority hierarchy is firmly established: Legal/Security → Invariants → PRD → ADRs/Human Decisions → Engineering Standards → Task Instructions → Advisory.
+- **ADR status (from `system_design.md`):**
+  - Realized/Partially realized at M0: ADR-001 (Modular monolith), ADR-002 (Domain-oriented modules), ADR-003 (PostgreSQL primary DB), ADR-005 (Independent worker - architecture accepted, implementation pending M1), ADR-007 (Module registry - precursor only), ADR-012 (Infrastructure expansion by evidence).
+  - Accepted design targets (pending M1 and later phases): ADR-004 (n8n), ADR-006 (Transactional outbox), ADR-008 (Provider-independent LLM), ADR-009 (Deterministic business decisions), ADR-010 (Curated read models), ADR-011 (Single enterprise), ADR-013 (Human validation for AI), ADR-014 (DVC/MLflow introduced conditionally).
+- **M1 implication:** M1 implementation decisions (M1-D01 to M1-D09) must strictly honor all 18 invariants, especially INV-001, INV-004, INV-005, INV-006, INV-008, INV-010, INV-014, INV-015, INV-016, and INV-017.
+
+### 2.4 Audit findings register
+
+| ID | Capability / Area | Verified current state | Evidence | M1 disposition |
+|---|---|---|---|---|
+| AUD-M1-01 | Application bootstrap | FastAPI factory `create_app()` in `src/app/main.py`; empty lifespan; hardcoded router mount | `src/app/main.py` lines 18-58 | Replace with shared bootstrap (`src/app/bootstrap.py`) supporting both API and worker (M1-D01) |
+| AUD-M1-02 | Module registry | Hardcoded router mount in `main.py`; minimal `SourcingModuleContract` dataclass; manifest unparsed at runtime | `src/app/modules/sourcing/module.py` | Implement explicit module registry, manifest loader, contract validator, and registry-driven route composition (M1-D02) |
+| AUD-M1-03 | Module compatibility & health | Manifest contains `platform.minimum_version: 0.1.0`; `/health` returns static status; no compatibility validation | `src/app/modules/sourcing/manifest.yaml` | Define typed compatibility check, validate manifest fields, distinguish module health from platform health (M1-D03) |
+| AUD-M1-04 | Platform API surface | Root `/health` exists; no `/api/v1/platform/` namespace exists | `src/app/main.py` line 41 | Implement versioned platform API routes: `/api/v1/platform/health`, `/modules`, `/jobs/{id}` (M1-D04) |
+| AUD-M1-05 | Worker & asynchronous execution | No worker process, no worker module, no runner entrypoint | Repository inspection; `src/app/workers/` absent | Implement independent Python worker process (`src/app/workers/runner.py`) using PostgreSQL `SKIP LOCKED` (M1-D05) |
+| AUD-M1-06 | Persistent platform metadata & jobs | Database has empty `platform` schema; no tables; no models | `database/migrations/versions/0001_platform_schema.py` | Add versioned Alembic migration creating `platform.module_registrations`, `platform.jobs`, `platform.job_attempts` (M1-D06) |
+| AUD-M1-07 | Authentication & authorization | All routes publicly accessible; no security dependencies or middleware | `src/app/main.py`, `pyproject.toml` | Implement provider-neutral authentication boundary, request context, and role/permission enforcement (M1-D07) |
+| AUD-M1-08 | Logging, correlation & health | Standard library logging; `structlog` present in `pyproject.toml` but unconfigured; no correlation ID | `pyproject.toml` line 24; `src/app/main.py` | Configure structured JSON logging with correlation ID propagation across API, jobs, and worker (M1-D08) |
+| AUD-M1-09 | Local environment composition | `docker-compose.yml` runs `api` and `db`; no worker container | `docker-compose.yml` lines 10-56 | Add `worker` service to Docker Compose sharing configuration with `api` (M1-D01, M1-D05) |
+| AUD-M1-10 | Dependency suitability | Core dependencies (`fastapi`, `pydantic`, `sqlalchemy`, `alembic`, `psycopg`, `structlog`) locked and verified | `pyproject.toml`, `uv.lock` | Dependencies sufficient for M1 without adding broker infrastructure (INV-017, M1-D09) |
+| AUD-M1-11 | CI quality gate readiness | GitHub Actions runs lint, format, strict mypy, and pytest against PostgreSQL 16 | `.github/workflows/ci.yml` | Existing CI setup fully capable of enforcing M1 platform gates without structural overhaul |
+| AUD-M1-12 | Governance & invariant integrity | 18 invariants active; git approval required | `invariants.md` | All M1 candidates and feature specifications must conform to governing invariants |
+
+### 2.5 Confirmed requirement and governance mapping
+
+| Decision ID | Roadmap / PRD requirements | Governing invariants | Governing ADRs |
+|---|---|---|---|
+| M1-D01 | Roadmap §1.3 (Platform bootstrap); PRD PF-01, PF-04 | INV-001, INV-005, INV-008 | ADR-001, ADR-005 |
+| M1-D02 | Roadmap §1.3 (Explicit module registry); PRD PF-01 | INV-001, INV-003, INV-004 | ADR-002, ADR-007 |
+| M1-D02.1 | PRD PF-01, FR-OPS-08 | INV-004, INV-006 | ADR-003, ADR-007 |
+| M1-D03 | PRD PF-01, FR-OPS-01, FR-OPS-08 | INV-004, INV-010 | ADR-007 |
+| M1-D04 | Roadmap §1.3 (Core API foundation); PRD FR-OPS-01, FR-OPS-03 | INV-001, INV-005 | ADR-001 |
+| M1-D05 | Roadmap §1.3 (Independent worker); PRD PF-05, FR-OPS-02..05, NFR-REL-01..03 | INV-008, INV-009, INV-017 | ADR-005, ADR-012 |
+| M1-D05.1 | PRD PF-05, FR-OPS-04, FR-OPS-05, NFR-REL-03 | INV-008, INV-009 | ADR-005 |
+| M1-D06 | Roadmap §1.3 (Persistent platform metadata); PRD PF-04, NFR-REL-02 | INV-006, INV-015 | ADR-003 |
+| M1-D07 | Roadmap §1.3 (Security boundaries); PRD PF-02, NFR-SEC-01..04 | INV-016 | ADR-002 |
+| M1-D07.1 | PRD PF-02, NFR-SEC-01 | INV-016, INV-018 | ADR-011 |
+| M1-D07.2 | PRD PF-02, NFR-SEC-02 | INV-016 | ADR-002 |
+| M1-D08 | Roadmap §1.3 (Shared logging & health); PRD PF-09, FR-OPS-01, FR-OPS-06 | INV-014 | ADR-001 |
+| M1-D09 | Roadmap §1.3 (Phase exclusions); PRD §2.2 Non-Goals | INV-002, INV-017 | ADR-012 |
+
+### 2.6 Architectural constraints carried into M1
 
 The following constraints are already established and are not reopened by this document:
 
@@ -778,7 +1026,7 @@ Approval of this document does not itself authorize implementation. It establish
 
 The next steps are:
 
-1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs.
+1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs. *(Completed: audited and reconciled on 2026-11-10 at commit `4de5c76`; recorded in §2).*
 2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals.
 3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
 4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
