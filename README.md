@@ -20,6 +20,24 @@ Its central architectural principle is:
 
 > **Build the platform once. Incorporate business capabilities as independent modules. Validate extensibility through real implementations.**
 
+## Project Status
+
+| Phase | Scope | State |
+|---|---|---|
+| **M0 — Project Scaffolding & Engineering Standards** | Repository structure, runtime lock, configuration/secrets conventions, application skeleton and minimal Sourcing contract, local containerized environment, database/migration baseline, CI quality gates | ✅ **Complete** — signed off 2026-11-10 (`reports/docs/phases/m0/`) |
+| **M1 — Platform Foundation** | Module registry/lifecycle, workers, durable jobs, platform metadata persistence, API foundation, authentication/authorization, observability | Not started — requires separate phase authorization |
+
+**M0 delivered:**
+
+- Executable application skeleton: FastAPI application with platform liveness endpoint and minimal Sourcing module contract (`/api/v1/sourcing/health`, `/api/v1/sourcing/status`).
+- Centralized, validated configuration and database engine boundary.
+- Local containerized environment: Docker Compose with the FastAPI API and PostgreSQL 16 services.
+- Database and migration foundation: Alembic baseline creating the empty `platform` schema (no tables) — operator-invoked only (INV-015).
+- Automated quality checks via GitHub Actions: Ruff format, Ruff lint, mypy, pytest (including PostgreSQL connectivity and migration checks) — M0-D07.
+- Documented engineering conventions, configuration/secrets hygiene, locked dependencies, and reproducibility via `uv.lock`.
+
+**M0 did not deliver:** module registry and lifecycle, independent workers, durable job execution, transactional outbox, n8n integration, LLM/ML/AI capabilities, Power BI read models, authentication and authorization, or observability instrumentation. These are deliberate M1+ scope, subject to future architectural decisions.
+
 ## Architecture at a Glance
 
 BOPF distinguishes between two architectural concerns:
@@ -67,6 +85,8 @@ flowchart TB
 ```
 
 The Bootstrap Kit provides the mechanisms required to register, configure, initialize, and operate modules. Each module supplies its own business logic and domain-specific components.
+
+**M0 state (2026-11-10):** of the eight foundations listed here, only **Platform Core** (configuration and an explicit application entrypoint) and **Module Configuration** (the Sourcing `manifest.yaml`) exist. Module Registry, Database Bootstrap, Connector Framework, Workflow Templates, Observability Foundation, and Deployment Templates are design targets delivered by later milestones. The diagram is the intended architecture, not the current implementation.
 
 ## The Bootstrap Kit, Platform Runtime, and Business Modules
 
