@@ -508,11 +508,12 @@ Do not automatically create all three files for every candidate. If a capability
 
 ### 5.2 Decision register
 
-| ID | Decision | Approval requirement | Initial status |
+| ID | Decision | Approval requirement | Status |
 |---|---|---|---|
-| M1-D01 | Platform bootstrap and process composition | Yes | Proposed |
-| M1-D02 | Module registry and registration semantics | Yes | Proposed |
-| M1-D03 | Module compatibility and health semantics | Yes | Proposed |
+| M1-D01 | Platform bootstrap and process composition | Yes | **✅ Approved — Batch 1 (2026-11-11)** |
+| M1-D02 | Module registry and registration semantics | Yes | **✅ Approved — Batch 1 (2026-11-11)** |
+| M1-D02.1 | Module metadata authority (nested in D02) | Yes (as part of D02) | **✅ Approved — Batch 1 (2026-11-11)** |
+| M1-D03 | Module compatibility and health semantics | Yes | **✅ Approved — Batch 1 (2026-11-11)** |
 | M1-D04 | Core API surface and contracts | Yes | Proposed |
 | M1-D05 | Worker and job execution model | Yes | Proposed |
 | M1-D06 | Platform metadata and job persistence | Yes | Proposed |
@@ -522,15 +523,17 @@ Do not automatically create all three files for every candidate. If a capability
 
 ### 5.3 Approval batching
 
-| Batch | Decisions | Reason |
-|---|---|---|
-| 1 — Platform structure | D01, D02, D03 | Establishes startup, module registration, and validation |
-| 2 — Runtime and persistence | D05, D06 | Establishes durable asynchronous execution |
-| 3 — API and security | D04, D07 | Establishes external application boundaries and access control |
-| 4 — Operations | D08 | Establishes operational visibility and health semantics |
-| Baseline | D09 | Records scope constraints; no new architectural choice |
+| Batch | Decisions | Reason | Status |
+|---|---|---|---|
+| 1 — Platform structure | D01, D02 (incl. D02.1), D03 | Establishes startup, module registration, and validation | **✅ Approved 2026-11-11** |
+| 2 — Runtime and persistence | D05, D06 | Establishes durable asynchronous execution | Pending review |
+| 3 — API and security | D04, D07 | Establishes external application boundaries and access control | Pending review |
+| 4 — Operations | D08 | Establishes operational visibility and health semantics | Pending review |
+| Baseline | D09 | Records scope constraints; no new architectural choice | Constrained |
 
 Batching is intended to reduce fragmented approval requests. It does not remove the requirement to approve each material decision.
+
+**Batch 1 approval note (2026-11-11):** D01, D02 (including nested decision D02.1), and D03 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ---
 
@@ -562,13 +565,13 @@ M0 provides `create_app()` and a minimal application configuration boundary. M1 
 | B. Introduce a shared platform bootstrap used by API and worker entrypoints | Reuses initialization and configuration while preserving independent process lifecycles |
 | C. Introduce a generalized runtime/container framework | Flexible, but adds abstraction and operational complexity not justified by M1 |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 1; alternatives A and C retained below for traceability)*
 
 Introduce a small shared bootstrap boundary. API and worker entrypoints should compose only the services they need from shared platform initialization.
 
 The API must not start or supervise the worker as a child process. Each process should have an explicit entrypoint and independent shutdown behavior.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D01, option B.**
 
 **Consequences**
 
@@ -605,7 +608,7 @@ M0 mounts Sourcing explicitly but does not implement a registry. The accepted ar
 | B. Explicit code-defined registry using validated manifests and typed contracts | Controlled, deterministic, and consistent with the accepted architecture |
 | C. Filesystem discovery or unrestricted dynamic plugin loading | Flexible, but expands the code-execution and security surface |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 1; alternatives A and C retained below for traceability)*
 
 Use an explicit registry of approved module implementations. Each registered implementation must satisfy the typed module contract and provide validated metadata.
 
@@ -613,7 +616,7 @@ The registry should validate the manifest and module compatibility before regist
 
 The Sourcing module must be registered through the same mechanism intended for future modules.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D02, option B.**
 
 **Consequences**
 
@@ -632,11 +635,11 @@ Options:
 - B. Approved code and manifests define available modules; the database records validated registration and operational metadata.
 - C. Maintain independent configuration, manifest, and database definitions.
 
-**Recommendation — B.**
+**Recommendation — B.** *(✅ Approved 2026-11-11 — Batch 1; alternatives A and C retained above for traceability)*
 
 The approved registry and manifest should define which module implementations are available. Persistent records should describe the platform's observed registration state and relevant metadata, not authorize arbitrary code loading.
 
-**Approval required:** Yes, as part of D02. This is a meaningful ownership decision, not an implementation detail.
+**Approval required:** Yes, as part of D02. This is a meaningful ownership decision, not an implementation detail. **Approved 2026-11-11 — M1-D02.1, option B.**
 
 ---
 
@@ -666,7 +669,7 @@ The accepted module contract includes identity, version, compatibility, route re
 | B. Validate required manifest fields, platform compatibility, contract conformance, and module health | Establishes the necessary safety boundary |
 | C. Implement a generalized capability negotiation and dependency-resolution engine | More flexible, but unnecessary for the initial single-platform deployment |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 1; alternatives A and C retained above for traceability)*
 
 Define a small, explicit compatibility contract using the existing manifest and module interface.
 
@@ -681,7 +684,7 @@ At minimum, validate:
 
 Do not implement speculative dependency graphs or dynamic capability negotiation.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D03, option B.**
 
 **Consequences**
 
@@ -1027,7 +1030,7 @@ Approval of this document does not itself authorize implementation. It establish
 The next steps are:
 
 1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs. *(Completed: audited and reconciled on 2026-11-10 at commit `4de5c76`; recorded in §2).*
-2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals.
+2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(In progress: Batch 1 — D01, D02 including D02.1, D03 — approved 2026-11-11; Batches 2–4 pending.)*
 3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
 4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
 5. **Obtain SDD approval.** Candidate acceptance does not approve the detailed feature specification.
@@ -1122,10 +1125,10 @@ At phase closure:
 
 | Decision | Selected option | Status | Approval date | Evidence / qualification |
 |---|---|---|---|---|
-| M1-D01 | Pending | Proposed | — | — |
-| M1-D02 | Pending | Proposed | — | — |
-| M1-D02.1 | Pending | Proposed | — | — |
-| M1-D03 | Pending | Proposed | — | — |
+| M1-D01 | B — Shared platform bootstrap used by API and worker entrypoints | **Approved (Batch 1)** | 2026-11-11 | Project-owner approval; §6 M1-D01 |
+| M1-D02 | B — Explicit code-defined registry using validated manifests and typed contracts | **Approved (Batch 1)** | 2026-11-11 | Project-owner approval; §6 M1-D02 |
+| M1-D02.1 | B — Code and manifests define available modules; database records observed registration state | **Approved (Batch 1)** | 2026-11-11 | Approved as part of D02; §6 M1-D02.1 |
+| M1-D03 | B — Validate manifest fields, platform compatibility, contract conformance, and module health | **Approved (Batch 1)** | 2026-11-11 | Project-owner approval; §6 M1-D03 |
 | M1-D04 | Pending | Proposed | — | — |
 | M1-D05 | Pending | Proposed | — | — |
 | M1-D05.1 | Pending | Proposed | — | — |
@@ -1138,7 +1141,7 @@ At phase closure:
 
 ### Phase authorization
 
-**Implementation Plan status:** Proposed — pending decision approval.  
+**Implementation Plan status:** Partially approved — Batch 1 approved 2026-11-11; Batches 2–4 pending decision approval.  
 **Feature SDD status:** Not yet approved.  
 **Execution Plan status:** Not yet drafted.  
 **Execution authorization:** Not granted.  
