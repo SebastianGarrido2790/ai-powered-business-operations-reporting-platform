@@ -455,15 +455,15 @@ If an assumption conflicts with an approved requirement or current evidence, res
 
 Candidates are implementation work packages, not automatic approvals. Their final boundaries and SDD depth must be confirmed after the decisions are approved.
 
-| ID | Candidate feature | Requirement / need | Dependencies | Acceptance evidence | SDD depth |
-|---|---|---|---|---|---|
-| 001 | Platform Bootstrap & Module Registry | Validated startup, explicit module registration, shared application composition | M0 application/configuration; D01, D02 | Platform starts; Sourcing registers through the registry; invalid registration is rejected | Concise behavioral spec |
-| 002 | Module Compatibility & Health | Validate module identity, version compatibility, and health | 001; module manifest and contract | Compatible module registers; incompatible module is rejected; health state is reported correctly | Include in 001 unless independently complex |
-| 003 | Core Platform API | Shared versioned platform routes and consistent API behavior | 001; security boundary | Platform health, module information, and job-status routes behave as specified | Lightweight contract spec |
-| 004 | Independent Worker & Job Execution | Separate worker process and durable asynchronous execution | 001; 005; job lifecycle decisions | Submitted job is claimed, processed, and tracked independently of API | Substantive behavioral spec |
-| 005 | Platform Persistence & Metadata | Persist module metadata and job execution state | M0 PostgreSQL/Alembic; 001, 004 | Migrations, persistence, valid state transitions, and restart behavior verified | Substantive data/behavior spec |
-| 006 | Authentication & Authorization Foundation | Establish authenticated request context and explicit permission enforcement | 001, 003; security decisions | Protected routes reject unauthenticated or unauthorized requests | Concise security contract spec |
-| 007 | Logging, Correlation & Health | Diagnose API and worker execution and expose operational health | 001, 003, 004 | Correlation survives API-to-job-to-worker flow; health checks distinguish relevant failure states | Lightweight; combine with related specs where practical |
+| ID | Candidate feature | Requirement / need | Dependencies | Acceptance evidence | SDD depth | Disposition / status |
+|---|---|---|---|---|---|---|
+| 001 | Platform Bootstrap & Module Registry | Validated startup, explicit module registration, shared application composition | M0 application/configuration; D01, D02 | Platform starts; Sourcing registers through the registry; invalid registration is rejected | Concise behavioral spec | **✅ Approved** (Package 001; incorporates Candidate 002) |
+| 002 | Module Compatibility & Health | Validate module identity, version compatibility, and health | 001; module manifest and contract | Compatible module registers; incompatible module is rejected; health state is reported correctly | Include in 001 unless independently complex | **Merged into 001** (per boundary rules) |
+| 003 | Core Platform API | Shared versioned platform routes and consistent API behavior | 001; security boundary | Platform health, module information, and job-status routes behave as specified | Lightweight contract spec | **✅ Approved** (Package 002) |
+| 004 | Independent Worker & Job Execution | Separate worker process and durable asynchronous execution | 001; 005; job lifecycle decisions | Submitted job is claimed, processed, and tracked independently of API | Substantive behavioral spec | **✅ Approved** (Package 003; combined with Candidate 005) |
+| 005 | Platform Persistence & Metadata | Persist module metadata and job execution state | M0 PostgreSQL/Alembic; 001, 004 | Migrations, persistence, valid state transitions, and restart behavior verified | Substantive data/behavior spec | **Merged into 004** (Package 003; per boundary rules) |
+| 006 | Authentication & Authorization Foundation | Establish authenticated request context and explicit permission enforcement | 001, 003; security decisions | Protected routes reject unauthenticated or unauthorized requests | Concise security contract spec | **✅ Approved** (Package 004) |
+| 007 | Logging, Correlation & Health | Diagnose API and worker execution and expose operational health | 001, 003, 004 | Correlation survives API-to-job-to-worker flow; health checks distinguish relevant failure states | Lightweight; combine with related specs where practical | **✅ Approved** (Package 005) |
 
 ### 4.1 Candidate boundary rules
 
@@ -474,17 +474,17 @@ Candidates are implementation work packages, not automatic approvals. Their fina
 - Candidate 007 should remain small and should not become a speculative observability platform.
 - A candidate may be merged, split, or removed after audit and decision approval. Feature count is not a success metric.
 
-### 4.2 Proposed SDD package
+### 4.2 Approved SDD packages
 
-The preferred starting point is **five concise SDD packages**, subject to the audit:
+The candidate features are confirmed into **five concise SDD packages** (approved 2026-11-11 per Candidate Boundary Rules §4.1):
 
-1. `001-platform-bootstrap-and-registry/`
-2. `002-core-platform-api/`
-3. `003-persistent-job-execution/`
-4. `004-authentication-and-authorization/`
-5. `005-logging-correlation-and-health/`
+1. **`001-platform-bootstrap-and-registry/`** — Combines Candidate 001 (bootstrap, module registry, manifest validation) and Candidate 002 (compatibility rules and module health).
+2. **`002-core-platform-api/`** — Candidate 003 (versioned platform API routes: health, modules, job status, and job submission contract).
+3. **`003-persistent-job-execution/`** — Combines Candidate 004 (independent worker, concurrency claiming via `SKIP LOCKED`, lifecycle state machine) and Candidate 005 (platform schema migrations, module registrations, jobs, and job attempts persistence).
+4. **`004-authentication-and-authorization/`** — Candidate 006 (provider-neutral OIDC boundary, test identity, role-to-permission mapping, and module permission enforcement).
+5. **`005-logging-correlation-and-health/`** — Candidate 007 (structured JSON logging via `structlog`, request correlation ID propagation across API and worker, and distinct liveness/readiness health semantics).
 
-Each package should contain only the artifacts justified by its complexity:
+Each package will contain only the artifacts justified by its complexity:
 
 - `spec.md` — required behavior, boundary, constraints, and acceptance criteria.
 - `plan.md` — implementation approach and dependencies, after specification approval.
@@ -1040,8 +1040,8 @@ The next steps are:
 
 1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs. *(Completed: audited and reconciled on 2026-11-10 at commit `4de5c76`; recorded in §2).*
 2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(Completed: All decisions approved/confirmed 2026-11-11 across Batches 1–4 and Baseline; recorded in §5, §6, and §9).*
-3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
-4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
+3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state. *(Completed 2026-11-11: 5 SDD candidate packages approved and consolidated in §4.1/§4.2).*
+4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria. *(Next step: draft `spec.md` for the 5 approved packages).*
 5. **Obtain SDD approval.** Candidate acceptance does not approve the detailed feature specification.
 6. **Draft feature plans and tasks.** Only after their respective specifications are approved.
 7. **Prepare the M1 Execution Plan.** Define sequential stages, dependencies, implementation order, verification commands, hard gates, and phase evidence.
