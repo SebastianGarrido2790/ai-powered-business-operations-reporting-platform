@@ -521,8 +521,8 @@ Do not automatically create all three files for every candidate. If a capability
 | M1-D07 | Authentication and authorization boundary | Yes | **✅ Approved — Batch 3 (2026-11-11)** |
 | M1-D07.1 | Identity-provider integration scope (nested in D07) | Yes (as part of D07) | **✅ Approved — Batch 3 (2026-11-11)** |
 | M1-D07.2 | Initial authorization model (nested in D07) | Yes (as part of D07) | **✅ Approved — Batch 3 (2026-11-11)** |
-| M1-D08 | Logging, correlation, and health architecture | Yes for material operational choices | Proposed |
-| M1-D09 | M1 scope exclusions and implementation boundaries | No — determined by approved roadmap and architecture | Constrained |
+| M1-D08 | Logging, correlation, and health architecture | Yes for material operational choices | **✅ Approved — Batch 4 (2026-11-11)** |
+| M1-D09 | M1 scope exclusions and implementation boundaries | No — determined by approved roadmap and architecture | **✅ Confirmed baseline (2026-11-11)** |
 
 ### 5.3 Approval batching
 
@@ -531,8 +531,8 @@ Do not automatically create all three files for every candidate. If a capability
 | 1 — Platform structure | D01, D02 (incl. D02.1), D03 | Establishes startup, module registration, and validation | **✅ Approved 2026-11-11** |
 | 2 — Runtime and persistence | D05 (incl. D05.1), D06 | Establishes durable asynchronous execution | **✅ Approved 2026-11-11** |
 | 3 — API and security | D04, D07 (incl. D07.1, D07.2) | Establishes external application boundaries and access control | **✅ Approved 2026-11-11** |
-| 4 — Operations | D08 | Establishes operational visibility and health semantics | Pending review |
-| Baseline | D09 | Records scope constraints; no new architectural choice | Constrained |
+| 4 — Operations | D08 | Establishes operational visibility and health semantics | **✅ Approved 2026-11-11** |
+| Baseline | D09 | Records scope constraints; no new architectural choice | **✅ Confirmed 2026-11-11** |
 
 Batching is intended to reduce fragmented approval requests. It does not remove the requirement to approve each material decision.
 
@@ -541,6 +541,8 @@ Batching is intended to reduce fragmented approval requests. It does not remove 
 **Batch 2 approval note (2026-11-11):** D05 (including nested decision D05.1) and D06 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 **Batch 3 approval note (2026-11-11):** D04 and D07 (including nested decisions D07.1 and D07.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+
+**Batch 4 & Baseline approval note (2026-11-11):** D08 was approved as recommended and the D09 scope exclusions were confirmed. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved. All decisions (M1-D01 through M1-D09) are now approved/confirmed.
 
 ---
 
@@ -971,7 +973,7 @@ The accepted architecture requires correlation across API requests, jobs, worker
 | B. Establish consistent structured logs, correlation propagation, and explicit health semantics | Provides actionable operational visibility with limited dependencies |
 | C. Introduce a complete metrics, tracing, and logging platform | More capability, but unnecessary infrastructure for the M1 baseline |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 4; alternatives A and C retained above for traceability)*
 
 Establish:
 
@@ -986,7 +988,7 @@ Establish:
 
 Do not report a process as healthy merely because it is running when a critical dependency prevents it from serving its intended role.
 
-**Approval required:** Yes for the operational contract; the specific lightweight implementation follows the accepted engineering baseline.
+**Approval required:** Yes for the operational contract; the specific lightweight implementation follows the accepted engineering baseline. **Approved 2026-11-11 — M1-D08, option B.**
 
 **Consequences**
 
@@ -1010,7 +1012,7 @@ The approved roadmap defines M1 as Platform Foundation. Subsequent milestones ow
 
 There is no competing implementation option consistent with the approved phase scope. Expanding M1 would require a formal scope change.
 
-**Recommendation — Constrained**
+**Recommendation — Constrained** *(✅ Confirmed 2026-11-11 — Baseline scope boundaries)*
 
 Do not implement:
 
@@ -1026,7 +1028,7 @@ Do not implement:
 
 A minimal deterministic job handler is sufficient to prove the platform's asynchronous execution path.
 
-**Approval required:** No. This decision follows the approved roadmap and existing architecture. Any exception requires an explicit scope change.
+**Approval required:** No. This decision follows the approved roadmap and existing architecture. Any exception requires an explicit scope change. **Confirmed 2026-11-11 — M1-D09 baseline boundaries upheld.**
 
 ---
 
@@ -1037,7 +1039,7 @@ Approval of this document does not itself authorize implementation. It establish
 The next steps are:
 
 1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs. *(Completed: audited and reconciled on 2026-11-10 at commit `4de5c76`; recorded in §2).*
-2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(In progress: Batch 1 [D01, D02 incl. D02.1, D03], Batch 2 [D05 incl. D05.1, D06], and Batch 3 [D04, D07 incl. D07.1, D07.2] approved 2026-11-11; Batch 4 pending.)*
+2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(Completed: All decisions approved/confirmed 2026-11-11 across Batches 1–4 and Baseline; recorded in §5, §6, and §9).*
 3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
 4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
 5. **Obtain SDD approval.** Candidate acceptance does not approve the detailed feature specification.
@@ -1143,12 +1145,12 @@ At phase closure:
 | M1-D07 | B — Standards-based authentication boundary & explicit permission enforcement (controlled local/test ID) | **Approved (Batch 3)** | 2026-11-11 | Project-owner approval; §6 M1-D07 |
 | M1-D07.1 | B — Provider-neutral OIDC-compatible boundary; select production provider when requirements known | **Approved (Batch 3)** | 2026-11-11 | Approved as part of D07; §6 M1-D07.1 |
 | M1-D07.2 | B — Central permission evaluation using role-to-permission mappings & module permissions | **Approved (Batch 3)** | 2026-11-11 | Approved as part of D07; §6 M1-D07.2 |
-| M1-D08 | Pending | Proposed | — | — |
-| M1-D09 | Constrained by approved scope | Proposed | — | — |
+| M1-D08 | B — Structured logging, correlation propagation, and explicit health semantics | **Approved (Batch 4)** | 2026-11-11 | Project-owner approval; §6 M1-D08 |
+| M1-D09 | Constrained by approved scope — Phase boundaries upheld | **Confirmed (Baseline)** | 2026-11-11 | Approved roadmap and architecture constraints; §6 M1-D09 |
 
 ### Phase authorization
 
-**Implementation Plan status:** Partially approved — Batches 1, 2 & 3 approved 2026-11-11; Batch 4 pending decision approval.  
+**Implementation Plan status:** Fully approved — all decisions (Batches 1–4 and Baseline) approved/confirmed 2026-11-11.  
 **Feature SDD status:** Not yet approved.  
 **Execution Plan status:** Not yet drafted.  
 **Execution authorization:** Not granted.  
