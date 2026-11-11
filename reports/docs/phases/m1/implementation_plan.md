@@ -515,8 +515,9 @@ Do not automatically create all three files for every candidate. If a capability
 | M1-D02.1 | Module metadata authority (nested in D02) | Yes (as part of D02) | **✅ Approved — Batch 1 (2026-11-11)** |
 | M1-D03 | Module compatibility and health semantics | Yes | **✅ Approved — Batch 1 (2026-11-11)** |
 | M1-D04 | Core API surface and contracts | Yes | Proposed |
-| M1-D05 | Worker and job execution model | Yes | Proposed |
-| M1-D06 | Platform metadata and job persistence | Yes | Proposed |
+| M1-D05 | Worker and job execution model | Yes | **✅ Approved — Batch 2 (2026-11-11)** |
+| M1-D05.1 | Job delivery and retry semantics (nested in D05) | Yes (as part of D05) | **✅ Approved — Batch 2 (2026-11-11)** |
+| M1-D06 | Platform metadata and job persistence | Yes | **✅ Approved — Batch 2 (2026-11-11)** |
 | M1-D07 | Authentication and authorization boundary | Yes | Proposed |
 | M1-D08 | Logging, correlation, and health architecture | Yes for material operational choices | Proposed |
 | M1-D09 | M1 scope exclusions and implementation boundaries | No — determined by approved roadmap and architecture | Constrained |
@@ -526,7 +527,7 @@ Do not automatically create all three files for every candidate. If a capability
 | Batch | Decisions | Reason | Status |
 |---|---|---|---|
 | 1 — Platform structure | D01, D02 (incl. D02.1), D03 | Establishes startup, module registration, and validation | **✅ Approved 2026-11-11** |
-| 2 — Runtime and persistence | D05, D06 | Establishes durable asynchronous execution | Pending review |
+| 2 — Runtime and persistence | D05 (incl. D05.1), D06 | Establishes durable asynchronous execution | **✅ Approved 2026-11-11** |
 | 3 — API and security | D04, D07 | Establishes external application boundaries and access control | Pending review |
 | 4 — Operations | D08 | Establishes operational visibility and health semantics | Pending review |
 | Baseline | D09 | Records scope constraints; no new architectural choice | Constrained |
@@ -534,6 +535,8 @@ Do not automatically create all three files for every candidate. If a capability
 Batching is intended to reduce fragmented approval requests. It does not remove the requirement to approve each material decision.
 
 **Batch 1 approval note (2026-11-11):** D01, D02 (including nested decision D02.1), and D03 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+
+**Batch 2 approval note (2026-11-11):** D05 (including nested decision D05.1) and D06 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ---
 
@@ -771,7 +774,7 @@ The accepted architecture requires independent Python workers and durable jobs. 
 | B. Independent Python worker using PostgreSQL-backed job claiming | Satisfies the architecture with minimal additional infrastructure |
 | C. Dedicated message broker or workflow engine | May offer additional throughput or capabilities, but adds operational complexity without a demonstrated M1 need |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 2; alternatives A and C retained above for traceability)*
 
 Use PostgreSQL as the initial durable job queue. The API creates a job and returns a job identifier. The independent worker claims available jobs transactionally and executes registered handlers.
 
@@ -781,7 +784,7 @@ The initial implementation should demonstrate one deterministic job handler with
 
 The worker must support graceful shutdown and avoid losing ownership of jobs silently when interrupted.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D05, option B.**
 
 **Nested decision M1-D05.1 — Job delivery and retry semantics**
 
@@ -791,7 +794,7 @@ Options:
 - B. At-least-once execution with idempotent processing and bounded retries.
 - C. No automatic retry; all failures require manual intervention.
 
-**Recommendation — B.**
+**Recommendation — B.** *(✅ Approved 2026-11-11 — Batch 2; alternatives A and C retained above for traceability)*
 
 Exactly-once execution cannot be guaranteed merely by controlling database job state when a process may fail after an external side effect. The system should make duplicate attempts safe through idempotency at the effect boundary.
 
@@ -801,7 +804,7 @@ The initial job lifecycle should use the accepted states:
 
 Define valid transitions, bounded retry attempts, and appropriate backoff. A terminal job must not return directly to `RUNNING` without an explicit new execution or recovery procedure.
 
-**Approval required:** Yes, as a material reliability decision.
+**Approval required:** Yes, as a material reliability decision. **Approved 2026-11-11 — M1-D05.1, option B.**
 
 **Consequences**
 
@@ -839,7 +842,7 @@ M0 establishes the `platform` schema but intentionally leaves it empty. M1 requi
 | B. Persist the minimum required module and job metadata in the `platform` schema | Meets M1 requirements while preserving ownership |
 | C. Introduce a generalized metadata/event store | Adds complexity and overlaps with future capabilities |
 
-**Recommendation — B**
+**Recommendation — B** *(✅ Approved 2026-11-11 — Batch 2; alternatives A and C retained above for traceability)*
 
 Introduce only the persistence required for:
 
@@ -852,7 +855,7 @@ The exact table structure, indexes, constraints, and migration sequence belong i
 
 Do not create Sourcing business tables, speculative audit infrastructure, or an event store in this decision.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **Approved 2026-11-11 — M1-D06, option B.**
 
 **Consequences**
 
@@ -1030,7 +1033,7 @@ Approval of this document does not itself authorize implementation. It establish
 The next steps are:
 
 1. **Revalidate the current repository.** Reconcile the M0 audit baseline with the current branch, commit, and working tree. Update this document if actual state differs. *(Completed: audited and reconciled on 2026-11-10 at commit `4de5c76`; recorded in §2).*
-2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(In progress: Batch 1 — D01, D02 including D02.1, D03 — approved 2026-11-11; Batches 2–4 pending.)*
+2. **Finalize decision outcomes.** Record approved, rejected, or unresolved options, including any qualification evidence and nested-decision approvals. *(In progress: Batch 1 [D01, D02 incl. D02.1, D03] and Batch 2 [D05 incl. D05.1, D06] approved 2026-11-11; Batches 3–4 pending.)*
 3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
 4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
 5. **Obtain SDD approval.** Candidate acceptance does not approve the detailed feature specification.
@@ -1130,9 +1133,9 @@ At phase closure:
 | M1-D02.1 | B — Code and manifests define available modules; database records observed registration state | **Approved (Batch 1)** | 2026-11-11 | Approved as part of D02; §6 M1-D02.1 |
 | M1-D03 | B — Validate manifest fields, platform compatibility, contract conformance, and module health | **Approved (Batch 1)** | 2026-11-11 | Project-owner approval; §6 M1-D03 |
 | M1-D04 | Pending | Proposed | — | — |
-| M1-D05 | Pending | Proposed | — | — |
-| M1-D05.1 | Pending | Proposed | — | — |
-| M1-D06 | Pending | Proposed | — | — |
+| M1-D05 | B — Independent Python worker using PostgreSQL-backed job claiming (`SKIP LOCKED`) | **Approved (Batch 2)** | 2026-11-11 | Project-owner approval; §6 M1-D05 |
+| M1-D05.1 | B — At-least-once execution with idempotent processing and bounded retries | **Approved (Batch 2)** | 2026-11-11 | Approved as part of D05; §6 M1-D05.1 |
+| M1-D06 | B — Persist the minimum required module and job metadata in the `platform` schema | **Approved (Batch 2)** | 2026-11-11 | Project-owner approval; §6 M1-D06 |
 | M1-D07 | Pending | Proposed | — | — |
 | M1-D07.1 | Pending | Proposed | — | — |
 | M1-D07.2 | Pending | Proposed | — | — |
@@ -1141,7 +1144,7 @@ At phase closure:
 
 ### Phase authorization
 
-**Implementation Plan status:** Partially approved — Batch 1 approved 2026-11-11; Batches 2–4 pending decision approval.  
+**Implementation Plan status:** Partially approved — Batches 1 & 2 approved 2026-11-11; Batches 3–4 pending decision approval.  
 **Feature SDD status:** Not yet approved.  
 **Execution Plan status:** Not yet drafted.  
 **Execution authorization:** Not granted.  
