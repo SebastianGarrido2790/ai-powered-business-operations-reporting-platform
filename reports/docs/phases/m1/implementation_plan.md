@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M1 — Platform Foundation  
-**Status:** Proposed — decisions pending review and approval  
+**Status:** Completed — decision record finalized (all M1 decisions approved/confirmed 2026-11-11); phase implementation pending feature SDDs and execution authorization  
 **Document type:** Living phase decision record  
 **Previous phase:** M0 — Project Scaffolding & Engineering Standards (Complete, signed off 2026-11-10)
 
