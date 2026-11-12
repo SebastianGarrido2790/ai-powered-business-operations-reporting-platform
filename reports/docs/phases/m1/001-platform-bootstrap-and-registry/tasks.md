@@ -1,6 +1,6 @@
 # 001 — Platform Bootstrap & Module Registry: Tasks
 
-**Status:** Complete — implemented and verified 2026-11-12; gate acknowledged by project owner 2026-11-12; evidence in [`../stage_1_verification.md`](../stage_1_verification.md).  
+**Status:** Complete — implemented and verified 2026-11-12; gate acknowledged by project owner 2026-11-12; evidence in [`../verification/stage_1_verification.md`](../verification/stage_1_verification.md).  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** M1 Stage 1 (Platform Bootstrap & Module Registry)  
 **Governing decisions:** M1-D01, M1-D02, M1-D02.1, M1-D03, M1-D06  

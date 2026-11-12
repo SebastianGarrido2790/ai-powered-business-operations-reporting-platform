@@ -789,8 +789,8 @@ Maintain the following record as execution progresses:
 
 | Stage | Start date | Completion date | Commit / evidence reference | Gate result | Findings | Approved by |
 |---|---|---|---|---|---|---|
-| 0 | 2026-11-12 | 2026-11-12 | [`stage_0_verification.md`](stage_0_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | F1/F2 resolved; F3 resolved; F4 expected | Project owner |
-| 1 | 2026-11-12 | 2026-11-12 | [`stage_1_verification.md`](stage_1_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S1-F1/F2/F5 expected; no architectural deviation | Project owner |
+| 0 | 2026-11-12 | 2026-11-12 | [`verification/stage_0_verification.md`](verification/stage_0_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | F1/F2 resolved; F3 resolved; F4 expected | Project owner |
+| 1 | 2026-11-12 | 2026-11-12 | [`verification/stage_1_verification.md`](verification/stage_1_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S1-F1/F2/F5 expected; no architectural deviation | Project owner |
 | 2 | — | — | — | Pending | — | — |
 | 3 | — | — | — | Pending | — | — |
 | 4 | — | — | — | Pending | — | — |
@@ -817,6 +817,6 @@ A stage may be marked complete only after its gate has passed and the evidence r
 | M1 Execution Plan | Approved 2026-11-12 | No further action needed |
 | M1 execution authorization | Granted 2026-11-12 | None; implementation may begin at the project owner's direction |
 
-**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12.
+**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12.
 
 **Phase completion rule:** M1 remains incomplete until Stage 8 passes and the project owner signs off.

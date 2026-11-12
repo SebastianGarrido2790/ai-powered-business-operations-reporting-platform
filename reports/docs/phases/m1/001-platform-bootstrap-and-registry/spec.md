@@ -1,7 +1,7 @@
 # 001 — Platform Bootstrap & Registry
 
 **Phase:** M1 — Platform Foundation  
-**Status:** Approved — feature specification approved 2026-11-11; implementation plan and tasks approved 2026-11-12; Stage 1 implemented, verified 2026-11-12, and gate acknowledged by project owner 2026-11-12 (`../stage_1_verification.md`)  
+**Status:** Approved — feature specification approved 2026-11-11; implementation plan and tasks approved 2026-11-12; Stage 1 implemented, verified 2026-11-12, and gate acknowledged by project owner 2026-11-12 (`../verification/stage_1_verification.md`)  
 **Parent decision record:** `../implementation_plan.md`  
 **Execution stage:** Stage 1 (Platform Bootstrap & Module Registry), with integration in Stages 2, 6, 7  
 
