@@ -209,7 +209,7 @@ If any condition fails, Stage 0 remains open. No implementation begins.
 
 ---
 
-### Stage 1 — Platform Bootstrap & Module Registry
+### Stage 1 — Platform Bootstrap & Module Registry ✅ **PASSED**
 
 **Goal**
 
@@ -774,7 +774,7 @@ The following evidence must exist before M1 sign-off.
 | Stage | Name | Primary deliverable | ADRs | Gate | Status |
 |---|---|---|---|---|---|
 | 0 | Pre-Implementation Verification & Dependency Check | Verified M1 baseline and readiness record | None | All preconditions and baseline checks pass | Complete — evidence recorded 2026-11-12 |
-| 1 | Platform Bootstrap & Module Registry | Shared bootstrap and validated Sourcing registration | ADR-001, ADR-005, ADR-007 | Registry and independent initialization verified | Not started |
+| 1 | Platform Bootstrap & Module Registry | Shared bootstrap and validated Sourcing registration | ADR-001, ADR-005, ADR-007 | Registry and independent initialization verified | Complete — evidence recorded and acknowledged 2026-11-12 |
 | 2 | Platform Persistence Foundation | Platform migrations and persistence layer | ADR-003, ADR-005, ADR-007 | Durable platform persistence verified | Not started |
 | 3 | Authentication & Authorization Boundary | Enforceable authentication and permission boundary | ADR-002, ADR-011 | Security tests pass | Not started |
 | 4 | Core Platform API | Versioned platform endpoints and job contracts | ADR-001, ADR-005 | API contracts and security verified | Not started |
@@ -790,7 +790,7 @@ Maintain the following record as execution progresses:
 | Stage | Start date | Completion date | Commit / evidence reference | Gate result | Findings | Approved by |
 |---|---|---|---|---|---|---|
 | 0 | 2026-11-12 | 2026-11-12 | [`stage_0_verification.md`](stage_0_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | F1/F2 resolved; F3 resolved; F4 expected | Project owner |
-| 1 | — | — | — | Pending | — | — |
+| 1 | 2026-11-12 | 2026-11-12 | [`stage_1_verification.md`](stage_1_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S1-F1/F2/F5 expected; no architectural deviation | Project owner |
 | 2 | — | — | — | Pending | — | — |
 | 3 | — | — | — | Pending | — | — |
 | 4 | — | — | — | Pending | — | — |
@@ -817,6 +817,6 @@ A stage may be marked complete only after its gate has passed and the evidence r
 | M1 Execution Plan | Approved 2026-11-12 | No further action needed |
 | M1 execution authorization | Granted 2026-11-12 | None; implementation may begin at the project owner's direction |
 
-**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. No implementation work has been performed yet; Stage 0 (Pre-Implementation Verification & Dependency Check) is the first stage.
+**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12.
 
 **Phase completion rule:** M1 remains incomplete until Stage 8 passes and the project owner signs off.

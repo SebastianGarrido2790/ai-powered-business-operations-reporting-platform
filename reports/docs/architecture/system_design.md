@@ -308,7 +308,7 @@ Paths are relative to the repository root. This is the structure realized at M0 
 
 The realized tree is a subset of the target structure. The following are introduced by their owning milestone, not created as placeholders:
 
-- `src/app/bootstrap.py` and `src/app/api/` — platform API foundation (M1).
+- `src/app/core/bootstrap.py` and `src/app/api/` — platform API foundation (M1).
 - `src/app/core/{registry,security,jobs,events,audit,observability}/` — platform capabilities (M1).
 - `src/app/workers/` — independent worker execution (M1).
 - Module subpackages `api/`, `domain/`, `application/`, `infrastructure/`, `analytics/`, `ai/`, `ml/`, `workflows/`, `tests/` — introduced as the Sourcing features they serve are implemented (M1 onward).
@@ -350,7 +350,9 @@ permissions:
 
 The manifest describes module capabilities and requirements. It does not authorize arbitrary code execution or unrestricted dynamic imports.
 
-**M0 status:** the committed manifest (`src/app/modules/sourcing/manifest.yaml`) declares version `0.1.0`, `platform.minimum_version: 0.1.0`, `database.migrations: database/migrations`, the single capability `health`, and the single permission `sourcing.read`. The capability and permission lists above are the target set, introduced capability by capability as their features are implemented. No manifest validation is performed yet.
+**M0 status:** the committed manifest (`src/app/modules/sourcing/manifest.yaml`) declares version `0.1.0`, `platform.minimum_version: 0.1.0`, `database.migrations: database/migrations`, the single capability `health`, and the single permission `sourcing.read`. The capability and permission lists above are the target set, introduced capability by capability as their features are implemented.
+
+**M1 Stage 1 status:** manifests are loaded into a closed, immutable Pydantic schema and validated at registration for required fields, identity format, strict semver, unique qualified capabilities and permissions, and minimum platform compatibility. Manifest presence alone still grants no execution rights. Durable registration records arrive in Stage 2.
 
 ### 3.3 Module Contract
 
@@ -367,6 +369,8 @@ Every registered module must implement a typed contract that supports:
 Registration must be explicit and validated during application bootstrap.
 
 **M0 status:** the Sourcing contract implements module identity, name, version, and a health status interface, and `create_app()` mounts the module router explicitly. Compatibility validation, permission declaration and enforcement, lifecycle operations, and event-handler registration do not exist yet.
+
+**M1 Stage 1 status:** `BusinessModuleContract` defines manifest, router, health, permissions, and capabilities. Sourcing implements the full contract, and `create_app()` composes routes from active registry entries. Permission enforcement and event-handler registration remain later-stage scope.
 
 ### 3.4 Module Lifecycle
 
@@ -387,6 +391,8 @@ Deactivation must not delete business data.
 Database migrations must be executed through a controlled deployment process rather than automatically by every API or worker startup.
 
 **M0 status:** no lifecycle stage is implemented. The application mounts the Sourcing router directly; there is no discovery, manifest validation, compatibility check, or activation/deactivation. Migrations are operator-invoked through Alembic only, and API startup never creates or alters schema (INV-015). The registry and lifecycle are M1 scope (ADR-007).
+
+**M1 Stage 1 status:** discovery is replaced by an explicit code-defined allowlist. Registration validates manifest, compatibility, and contract conformance; active, failed, and inactive states are observable; deactivation preserves data. Registration state is in memory until Stage 2 persistence. Migrations remain operator-invoked.
 
 ---
 

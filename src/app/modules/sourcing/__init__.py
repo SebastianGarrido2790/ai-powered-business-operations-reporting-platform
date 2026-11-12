@@ -5,15 +5,13 @@ from app.modules.sourcing.module import (
     MODULE_NAME,
     MODULE_VERSION,
     SourcingModuleContract,
-    sourcing_contract,
+    create_sourcing_module,
 )
-from app.modules.sourcing.router import router as sourcing_router
 
 __all__ = [
     "MODULE_ID",
     "MODULE_NAME",
     "MODULE_VERSION",
     "SourcingModuleContract",
-    "sourcing_contract",
-    "sourcing_router",
+    "create_sourcing_module",
 ]

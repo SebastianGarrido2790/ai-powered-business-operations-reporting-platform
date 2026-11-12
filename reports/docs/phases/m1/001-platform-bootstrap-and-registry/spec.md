@@ -1,7 +1,7 @@
 # 001 — Platform Bootstrap & Registry
 
 **Phase:** M1 — Platform Foundation  
-**Status:** Approved — feature specification approved 2026-11-11; implementation plan and tasks approved 2026-11-12  
+**Status:** Approved — feature specification approved 2026-11-11; implementation plan and tasks approved 2026-11-12; Stage 1 implemented, verified 2026-11-12, and gate acknowledged by project owner 2026-11-12 (`../stage_1_verification.md`)  
 **Parent decision record:** `../implementation_plan.md`  
 **Execution stage:** Stage 1 (Platform Bootstrap & Module Registry), with integration in Stages 2, 6, 7  
 
@@ -55,16 +55,16 @@ The existing Sourcing manifest and typed precursor contract are the starting poi
 
 ### 5. Acceptance criteria
 
-- [ ] API startup initializes the platform through the shared bootstrap.
-- [ ] Worker startup uses the same bootstrap boundary without starting or supervising the API.
-- [ ] Sourcing registers through the explicit registry.
-- [ ] The application no longer depends on hardcoded Sourcing router mounting.
-- [ ] A missing or malformed manifest is rejected.
-- [ ] An incompatible platform-version requirement is rejected.
-- [ ] A module that fails contract validation is rejected.
-- [ ] Unapproved modules cannot register merely by placing a manifest in the repository.
-- [ ] Repeated registration does not create inconsistent state.
-- [ ] Module registration and health state can be inspected through the platform's internal contract.
+- [x] API startup initializes the platform through the shared bootstrap.
+- [x] Worker startup uses the same bootstrap boundary without starting or supervising the API.
+- [x] Sourcing registers through the explicit registry.
+- [x] The application no longer depends on hardcoded Sourcing router mounting.
+- [x] A missing or malformed manifest is rejected.
+- [x] An incompatible platform-version requirement is rejected.
+- [x] A module that fails contract validation is rejected.
+- [x] Unapproved modules cannot register merely by placing a manifest in the repository.
+- [x] Repeated registration does not create inconsistent state.
+- [x] Module registration and health state can be inspected through the platform's internal contract.
 
 ### 6. Constraints and governing decisions
 
