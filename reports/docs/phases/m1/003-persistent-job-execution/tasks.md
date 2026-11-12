@@ -1,6 +1,6 @@
 # 003 — Persistent Job Execution: Tasks
 
-**Status:** Approved — feature specification approved 2026-11-12; plan and tasks pending execution  
+**Status:** Approved — feature specification approved 2026-11-12; Phase 1 (Stage 2) executed and verified 2026-11-12; Phases 2–4 pending  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stage 2 (Platform Persistence Foundation) & Stage 5 (Independent Worker & Job Execution)  
 **Governing decisions:** M1-D05 / D05.1, M1-D06, M1-D01, M1-D08  
@@ -9,19 +9,21 @@
 
 ## Ordered Tasks
 
-### Phase 1: Platform Persistence & Migrations (Stage 2)
-- [ ] **Task 1.1:** Author consolidated migration `database/migrations/versions/0002_platform_jobs_and_metadata.py`:
+### Phase 1: Platform Persistence & Migrations (Stage 2) ✅ Complete 2026-11-12
+- [x] **Task 1.1:** Author consolidated migration `database/migrations/versions/0002_platform_jobs_and_metadata.py`:
   - Create `platform.module_registrations`, `platform.jobs`, `platform.job_attempts`, `platform.idempotency_keys`.
   - Add indexes on `platform.jobs (status, scheduled_at, claim_lease_until)`.
   - Add unique constraint on `platform.jobs (idempotency_key)`.
-- [ ] **Task 1.2:** Implement SQLAlchemy ORM models in `src/app/core/persistence/models.py`:
+- [x] **Task 1.2:** Implement SQLAlchemy ORM models in `src/app/core/persistence/models.py`:
   - `ModuleRegistrationModel`, `JobModel`, `JobAttemptModel`, `IdempotencyKeyModel`.
-- [ ] **Task 1.3:** Implement data-access layer `src/app/core/persistence/job_store.py`:
+- [x] **Task 1.3:** Implement data-access layer `src/app/core/persistence/job_store.py`:
   - Methods: `create_job()`, `get_job_by_id()`, `claim_next_job()`, `update_job_status()`, `recover_stale_jobs()`.
-- [ ] **Task 1.4:** Write migration and persistence integration tests in `tests/test_persistence_migrations.py`:
+- [x] **Task 1.4:** Write migration and persistence integration tests in `tests/test_persistence_migrations.py`:
   - Verify clean upgrade from M0 baseline.
   - Verify strict schema ownership under `platform` schema.
   - Verify application startup does not execute migrations.
+
+**Phase 1 evidence:** [`../verification/stage_2_verification.md`](../verification/stage_2_verification.md)
 
 ### Phase 2: Worker Process & Claim Engine (Stage 5)
 - [ ] **Task 2.1:** Implement `src/app/workers/runner.py` as a standalone entrypoint using `bootstrap_platform()` context.
@@ -51,9 +53,9 @@
 
 ## Completion Evidence Checklist
 
-- [ ] `0002_platform_jobs_and_metadata.py` migration created and verified against PostgreSQL.
-- [ ] `src/app/core/persistence/` models and `job_store.py` operational.
-- [ ] `src/app/workers/runner.py` standalone process operational.
-- [ ] `FOR UPDATE SKIP LOCKED` claim logic tested under concurrent transactions.
-- [ ] Stale lease recovery verified (abandoned `RUNNING` jobs transition to `RETRY_SCHEDULED` / `NEEDS_REVIEW`).
-- [ ] Zero Ruff or Mypy errors; 100% pytest pass rate.
+- [x] `0002_platform_jobs_and_metadata.py` migration created and verified against PostgreSQL.
+- [x] `src/app/core/persistence/` models and `job_store.py` operational.
+- [ ] `src/app/workers/runner.py` standalone process operational (initialization exists; job consumption is Stage 5).
+- [x] `FOR UPDATE SKIP LOCKED` claim logic tested under concurrent transactions.
+- [x] Stale lease recovery verified (abandoned `RUNNING` jobs transition to `RETRY_SCHEDULED` / `NEEDS_REVIEW`).
+- [x] Zero Ruff or Mypy errors; 100% pytest pass rate with `BOPF_TEST_DATABASE_URL` set.

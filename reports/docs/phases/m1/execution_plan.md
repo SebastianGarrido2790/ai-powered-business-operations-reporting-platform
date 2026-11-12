@@ -259,7 +259,9 @@ No separate fault injection. Invalid manifests, incompatible versions, unapprove
 
 ---
 
-### Stage 2 — Platform Persistence Foundation
+### Stage 2 — Platform Persistence Foundation ✅ **PASSED**
+
+**Verification:** [`verification/stage_2_verification.md`](verification/stage_2_verification.md) — implementation and verification complete 2026-11-12; gate awaiting project-owner acknowledgement.
 
 **Goal**
 
@@ -775,7 +777,7 @@ The following evidence must exist before M1 sign-off.
 |---|---|---|---|---|---|
 | 0 | Pre-Implementation Verification & Dependency Check | Verified M1 baseline and readiness record | None | All preconditions and baseline checks pass | Complete — evidence recorded 2026-11-12 |
 | 1 | Platform Bootstrap & Module Registry | Shared bootstrap and validated Sourcing registration | ADR-001, ADR-005, ADR-007 | Registry and independent initialization verified | Complete — evidence recorded and acknowledged 2026-11-12 |
-| 2 | Platform Persistence Foundation | Platform migrations and persistence layer | ADR-003, ADR-005, ADR-007 | Durable platform persistence verified | Not started |
+| 2 | Platform Persistence Foundation | Platform migrations and persistence layer | ADR-003, ADR-005, ADR-007 | Durable platform persistence verified | Implemented and verified 2026-11-12 — awaiting owner acknowledgement |
 | 3 | Authentication & Authorization Boundary | Enforceable authentication and permission boundary | ADR-002, ADR-011 | Security tests pass | Not started |
 | 4 | Core Platform API | Versioned platform endpoints and job contracts | ADR-001, ADR-005 | API contracts and security verified | Not started |
 | 5 | Independent Worker & Job Execution | Durable asynchronous processing | ADR-005, ADR-012 | Job lifecycle and worker behavior verified | Not started |
@@ -791,7 +793,7 @@ Maintain the following record as execution progresses:
 |---|---|---|---|---|---|---|
 | 0 | 2026-11-12 | 2026-11-12 | [`verification/stage_0_verification.md`](verification/stage_0_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | F1/F2 resolved; F3 resolved; F4 expected | Project owner |
 | 1 | 2026-11-12 | 2026-11-12 | [`verification/stage_1_verification.md`](verification/stage_1_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S1-F1/F2/F5 expected; no architectural deviation | Project owner |
-| 2 | — | — | — | Pending | — | — |
+| 2 | 2026-11-12 | 2026-11-12 | [`verification/stage_2_verification.md`](verification/stage_2_verification.md) | **Passed** — awaiting project-owner acknowledgement | S2-F1/F2 deferred by decision; S2-F3 fixed; no architectural deviation | — |
 | 3 | — | — | — | Pending | — | — |
 | 4 | — | — | — | Pending | — | — |
 | 5 | — | — | — | Pending | — | — |
@@ -817,6 +819,6 @@ A stage may be marked complete only after its gate has passed and the evidence r
 | M1 Execution Plan | Approved 2026-11-12 | No further action needed |
 | M1 execution authorization | Granted 2026-11-12 | None; implementation may begin at the project owner's direction |
 
-**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12.
+**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 2 is implemented and verified in `verification/stage_2_verification.md`; its gate awaits project-owner acknowledgement.
 
 **Phase completion rule:** M1 remains incomplete until Stage 8 passes and the project owner signs off.

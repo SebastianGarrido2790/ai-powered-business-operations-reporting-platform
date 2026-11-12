@@ -352,7 +352,9 @@ The manifest describes module capabilities and requirements. It does not authori
 
 **M0 status:** the committed manifest (`src/app/modules/sourcing/manifest.yaml`) declares version `0.1.0`, `platform.minimum_version: 0.1.0`, `database.migrations: database/migrations`, the single capability `health`, and the single permission `sourcing.read`. The capability and permission lists above are the target set, introduced capability by capability as their features are implemented.
 
-**M1 Stage 1 status:** manifests are loaded into a closed, immutable Pydantic schema and validated at registration for required fields, identity format, strict semver, unique qualified capabilities and permissions, and minimum platform compatibility. Manifest presence alone still grants no execution rights. Durable registration records arrive in Stage 2.
+**M1 Stage 1 status:** manifests are loaded into a closed, immutable Pydantic schema and validated at registration for required fields, identity format, strict semver, unique qualified capabilities and permissions, and minimum platform compatibility. Manifest presence alone still grants no execution rights. Durable registration records are implemented in Stage 2.
+
+**M1 Stage 2 status:** each registration carries a deterministic manifest hash, so a persisted record shows which manifest content was validated. The hash is platform-computed metadata, not an authorization signal.
 
 ### 3.3 Module Contract
 
@@ -392,7 +394,9 @@ Database migrations must be executed through a controlled deployment process rat
 
 **M0 status:** no lifecycle stage is implemented. The application mounts the Sourcing router directly; there is no discovery, manifest validation, compatibility check, or activation/deactivation. Migrations are operator-invoked through Alembic only, and API startup never creates or alters schema (INV-015). The registry and lifecycle are M1 scope (ADR-007).
 
-**M1 Stage 1 status:** discovery is replaced by an explicit code-defined allowlist. Registration validates manifest, compatibility, and contract conformance; active, failed, and inactive states are observable; deactivation preserves data. Registration state is in memory until Stage 2 persistence. Migrations remain operator-invoked.
+**M1 Stage 1 status:** discovery is replaced by an explicit code-defined allowlist. Registration validates manifest, compatibility, and contract conformance; active, failed, and inactive states are observable; deactivation preserves data. Migrations remain operator-invoked.
+
+**M1 Stage 2 status:** registration state can be persisted in `platform.module_registrations` through `SqlAlchemyModuleRegistrationStore`, including hash and diagnostics for failed or inactive modules. Runtime startup still defaults to the in-memory store; durable registration is activated with API/worker composition in Stage 4/5.
 
 ---
 
@@ -565,6 +569,8 @@ The job record should include:
 - Result reference, where applicable.
 
 Attempt history should be persisted separately or represented through a suitable execution-history structure.
+
+**M1 Stage 2 status:** implemented. `0002_platform_jobs_and_metadata` creates `platform.jobs`, `platform.job_attempts`, and `platform.idempotency_keys`; `JobStore` supports submission, read, guarded status updates, `FOR UPDATE SKIP LOCKED` claiming, and stale-lease recovery. Worker-side orchestration, full state-machine enforcement, and retry scheduling remain Stage 5.
 
 ### 5.4 Worker Concurrency
 
@@ -1224,6 +1230,8 @@ n8n uses a separate database and credentials.
 
 **Implementation status (M0, 2026-11-10):** partially realized. One PostgreSQL 16 instance is used for local development and CI. The baseline migration creates only the empty `platform` schema; `sourcing` and `analytics_sourcing` are not created until the features that own them are implemented. Schema separation is therefore a design intent, not yet an enforced boundary. Migrations are operator-invoked and version-controlled (INV-015).
 
+**Implementation status (M1 Stage 2, 2026-11-12):** `0002_platform_jobs_and_metadata` adds the platform-owned registration, job, attempt, and idempotency tables. No business schema exists yet. Verification runs the migration against disposable databases only; applying it to a deployed database remains an operator step.
+
 ---
 
 ## ADR-004 — n8n for External Workflow Orchestration
@@ -1289,6 +1297,8 @@ Workers claim and execute jobs independently.
 
 **Implementation status (M0, 2026-11-10):** not implemented. There is no worker process, no job table, and no claim or retry mechanism. M0 delivers an API-only composition; this decision becomes actionable in M1, where worker execution and durable job state are introduced.
 
+**Implementation status (M1 Stage 2, 2026-11-12):** durable job state and atomic claiming are implemented in `JobStore` with `FOR UPDATE SKIP LOCKED`. The independent worker process still only initializes; claiming loop, dispatch, and retry orchestration are Stage 5.
+
 ---
 
 ## ADR-006 — Transactional Outbox for Event Publication
@@ -1350,6 +1360,8 @@ Only modules included in the approved registry may be activated.
 - New modules require explicit registration and review.
 
 **Implementation status (M0, 2026-11-10):** precursor only. `create_app()` mounts the Sourcing router explicitly, and the module exposes a frozen dataclass contract with identity and health status. There is no registry, no manifest loading or validation, no compatibility check, and no activation lifecycle. The M0 implementation deliberately stops short of the registry to avoid pre-implementing M1.
+
+**Implementation status (M1 Stage 2, 2026-11-12):** the registry, manifest validation, compatibility checks, and lifecycle are implemented. Registration state has a durable SQLAlchemy-backed store; runtime composition still defaults to in-memory registration until Stage 4/5.
 
 ---
 
