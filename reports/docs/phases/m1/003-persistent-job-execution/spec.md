@@ -1,7 +1,7 @@
 # 003 — Persistent Job Execution
 
 **Phase:** M1 — Platform Foundation  
-**Status:** Approved — feature specification approved 2026-11-12; implementation plan and tasks pending  
+**Status:** Approved — feature specification approved 2026-11-12; implementation plan and tasks approved 2026-11-12  
 **Parent decision record:** `../implementation_plan.md`  
 **Execution stage:** Stage 2 (Platform Persistence Foundation) & Stage 5 (Independent Worker & Job Execution), with integration in Stages 6, 7  
 

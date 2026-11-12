@@ -67,9 +67,9 @@ The protocol is:
 | Feature specifications | Five reviewed and approved `spec.md` files | Approved |
 | Feature plans and tasks | Approved feature plans/tasks where applicable | Approved |
 | Execution Plan | Approved phase-level sequence and gates | Approved 2026-11-12 |
-| Repository baseline | Current branch, HEAD, working tree, CI, and tests | Must revalidate |
-| Tooling | Python environment, `uv`, Docker, Compose, Git | Must revalidate |
-| Database | PostgreSQL availability and migration baseline | Must revalidate |
+| Repository baseline | Current branch, HEAD, working tree, CI, and tests | Verified 2026-11-12 |
+| Tooling | Python environment, `uv`, Docker, Compose, Git | Verified 2026-11-12 |
+| Database | PostgreSQL availability and migration baseline | Verified 2026-11-12 |
 | Human authorization | Explicit project-owner authorization for M1 | Granted 2026-11-12 |
 
 **Important:** Acceptance of the five SDD packages established their feature boundaries; it did not by itself approve the detailed specifications. Those specifications, plans, and tasks have since been reviewed and approved, and the M1 Execution Plan is approved.
@@ -160,7 +160,7 @@ Feature tasks must reference the relevant SDD acceptance criteria. Phase gates m
 
 ## 6. Implementation Stages
 
-### Stage 0 — Pre-Implementation Verification & Dependency Check
+### Stage 0 — Pre-Implementation Verification & Dependency Check ✅ **PASSED**
 
 **Goal**
 
@@ -773,7 +773,7 @@ The following evidence must exist before M1 sign-off.
 
 | Stage | Name | Primary deliverable | ADRs | Gate | Status |
 |---|---|---|---|---|---|
-| 0 | Pre-Implementation Verification & Dependency Check | Verified M1 baseline and readiness record | None | All preconditions and baseline checks pass | Not started |
+| 0 | Pre-Implementation Verification & Dependency Check | Verified M1 baseline and readiness record | None | All preconditions and baseline checks pass | Complete — evidence recorded 2026-11-12 |
 | 1 | Platform Bootstrap & Module Registry | Shared bootstrap and validated Sourcing registration | ADR-001, ADR-005, ADR-007 | Registry and independent initialization verified | Not started |
 | 2 | Platform Persistence Foundation | Platform migrations and persistence layer | ADR-003, ADR-005, ADR-007 | Durable platform persistence verified | Not started |
 | 3 | Authentication & Authorization Boundary | Enforceable authentication and permission boundary | ADR-002, ADR-011 | Security tests pass | Not started |
@@ -789,7 +789,7 @@ Maintain the following record as execution progresses:
 
 | Stage | Start date | Completion date | Commit / evidence reference | Gate result | Findings | Approved by |
 |---|---|---|---|---|---|---|
-| 0 | — | — | — | Pending | — | — |
+| 0 | 2026-11-12 | 2026-11-12 | [`stage_0_verification.md`](stage_0_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | F1/F2 resolved; F3 resolved; F4 expected | Project owner |
 | 1 | — | — | — | Pending | — | — |
 | 2 | — | — | — | Pending | — | — |
 | 3 | — | — | — | Pending | — | — |
