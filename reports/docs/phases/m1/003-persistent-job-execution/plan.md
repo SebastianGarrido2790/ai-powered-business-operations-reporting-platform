@@ -11,145 +11,85 @@
 ## 1. Technical Approach & Architecture
 
 ### 1.1 Platform-Owned Persistence Model (`src/app/core/persistence/`)
-- Define `PlatformPersistenceModel` abstraction backed by SQLAlchemy models within the `platform` schema.
-- All schema changes driven by versioned Alembic migrations under `database/migrations/versions/`.
-- Tables: `platform.module_registrations`, `platform.jobs`, `platform.job_attempts`, `platform.idempotency_keys`.
+- Consolidated, single versioned migration (`0002_platform_jobs_and_metadata.py`) creating the four platform tables in `platform` schema:
+  - `platform.module_registrations`: `id (UUID PK)`, `module_id (VARCHAR UNIQUE)`, `version`, `manifest_hash`, `status`, `registered_at`, `updated_at`.
+  - `platform.jobs`: `id (UUID PK)`, `job_type (VARCHAR)`, `status (VARCHAR)`, `payload (JSONB)`, `correlation_id (VARCHAR)`, `idempotency_key (VARCHAR UNIQUE NULLABLE)`, `attempt_count (INT)`, `max_attempts (INT)`, `claim_lease_until (TIMESTAMPTZ NULLABLE)`, `created_at`, `updated_at`.
+  - `platform.job_attempts`: `id (UUID PK)`, `job_id (UUID FK)`, `attempt_number (INT)`, `started_at`, `completed_at`, `status`, `error_message (TEXT NULLABLE)`.
+  - `platform.idempotency_keys`: `id (UUID PK)`, `key_value (VARCHAR UNIQUE)`, `job_id (UUID FK)`, `created_at`.
+- Strict schema ownership: application models reside in Platform Core; migrations remain operator-driven (INV-015).
 
 ### 1.2 Independent Worker Process (`src/app/workers/runner.py`)
-- Uses shared bootstrap context from SDD 001.
-- Claims jobs transactionally via PostgreSQL `FOR UPDATE SKIP LOCKED`.
-- Executes registered handlers outside claim transactions.
-- Graceful shutdown preserving recoverable job state.
+- Standalone CLI/process entrypoint using the shared `bootstrap_platform()` context from SDD 001.
+- Concurrency model: Transactional claim using PostgreSQL `FOR UPDATE SKIP LOCKED`.
+- **Claim transaction boundary:** The claim query selects and updates the job to `RUNNING`, sets `claim_lease_until = now() + lease_duration` (default 5 minutes), increments `attempt_count`, records an attempt entry, and commits immediately.
+- **Execution boundary:** Handler execution occurs completely outside the database claim transaction. Long-running processing never holds open database transactions.
+- Worker implements SIGTERM/SIGINT signal handling for graceful shutdown, completing or safely relinquishing the active in-flight job.
 
-### 1.3 Job Lifecycle States
-- `QUEUED` → `RUNNING` → `SUCCEEDED` | `FAILED` | `NEEDS_REVIEW` | `RETRY_SCHEDULED` | `CANCELLED`.
+### 1.3 State Transitions & Lifecycle Semantics
+Approved states: `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `NEEDS_REVIEW`, `RETRY_SCHEDULED`, `CANCELLED`.
+- Valid transitions:
+  - `QUEUED` -> `RUNNING` (via worker claim)
+  - `RUNNING` -> `SUCCEEDED` (handler success)
+  - `RUNNING` -> `RETRY_SCHEDULED` (transient failure, attempts < max_attempts)
+  - `RUNNING` -> `FAILED` (permanent failure or attempts >= max_attempts)
+  - `RUNNING` -> `NEEDS_REVIEW` (unrecoverable execution discrepancy)
+  - `QUEUED` | `RETRY_SCHEDULED` -> `CANCELLED`
+- Terminal states (`SUCCEEDED`, `FAILED`, `CANCELLED`) cannot transition back to `RUNNING` directly without a new job submission or explicit recovery.
 
-### 1.4 Retry Behavior
-- Bounded retries with exponential backoff per job submission.
-- Duplicate submissions safe via idempotent processing at effect boundary.
+### 1.4 Bounded Retries & Backoff
+- Default maximum attempts: 3.
+- Backoff policy: Exponential with jitter (e.g., attempt 1 = 30s, attempt 2 = 120s, attempt 3 = 480s).
+- Transition to `RETRY_SCHEDULED` sets `claim_lease_until = NULL` and schedules next eligible claim at `scheduled_at = now() + backoff`.
 
-### 1.5 Idempotency Controls
-- Optional `idempotency_key` per submission; duplicate keys return existing state without re-execution.
+### 1.5 Idempotency at Effect Boundary
+- API level: Submitting with an existing `idempotency_key` returns the existing job record without re-enqueuing.
+- Worker level: Handlers must verify effect boundary idempotency so that at-least-once duplicate delivery produces no duplicated side effects.
 
-### 1.6 Concurrency & Claim Safety
-- Concurrent workers cannot claim the same active job simultaneously (`FOR UPDATE SKIP LOCKED`).
-- Claim transactions remain short; processing holds no DB transaction open.
-
-### 1.7 Recovery Policy (Interrupted-Job Falsification)
-- On restart, identify `status == RUNNING` jobs older than the claim lease window.
-- Transition those jobs to `RETRY_SCHEDULED`.
-- Resume claim from last known checkpoint without side-effect duplication.
-- Ensure jobs reach terminal state and remain observable post-restart.
-- Preserve logs, database state, test output, and recovery evidence for Stage 7 validation.
-
----
-
-## 2. Scope & Boundary Discipline
-
-- **Included:**
-  - Platform-owned persistence for module registrations and job execution.
-  - Versioned Alembic migrations.
-  - Job submission persistence.
-  - Job lifecycle and valid state transitions.
-  - Independent worker entrypoint.
-  - PostgreSQL-backed job claiming via `FOR UPDATE SKIP LOCKED`.
-  - Registered deterministic handler execution.
-  - Attempt tracking and bounded retries.
-  - Idempotency controls required by the job contract.
-  - Graceful worker shutdown preserving recoverable job state.
-- **Excluded:**
-  - Dedicated message brokers, workflow engines, or distributed task platforms.
-  - General-purpose scheduling or orchestration.
-  - External business side effects.
-  - Complete transactional outbox dispatcher.
-  - Sourcing business tables.
-  - Distributed workflow recovery beyond the minimal deterministic handler.
+### 1.6 Interrupted-Job Recovery Policy (Scrutiny Area 1)
+Pre-defined contract for jobs trapped in `RUNNING` following worker interruption or crash:
+1. **Lease Duration:** Every claimed job receives a `claim_lease_until` timestamp (default: 5 minutes from claim).
+2. **Reconciliation / Sweeper Query:** At worker startup and periodically every 60 seconds:
+   ```sql
+   SELECT id, attempt_count, max_attempts FROM platform.jobs
+   WHERE status = 'RUNNING' AND claim_lease_until < now()
+   FOR UPDATE SKIP LOCKED;
+   ```
+3. **Transition Rules on Stale Lease:**
+   - If `attempt_count < max_attempts`: transition job to `RETRY_SCHEDULED`, record recovery note in `platform.job_attempts`, and clear `claim_lease_until`.
+   - If `attempt_count >= max_attempts`: transition job to `NEEDS_REVIEW` (not silent drop) so operators have visibility into permanently interrupted work.
+4. **Stage 7 Falsification Baseline:** Stage 7 will deliberately SIGKILL a worker while running a deterministic test job, restart the worker, and verify that the sweeper recovers the job into `RETRY_SCHEDULED` and successfully completes it to `SUCCEEDED`.
 
 ---
 
-## 3. Required Behavior
+## 2. Implementation Constraints
 
-1. A job is persisted before it becomes available for processing.
-2. The worker claims jobs transactionally using PostgreSQL `FOR UPDATE SKIP LOCKED`.
-3. Claim transactions remain short; job processing does not hold a database transaction open.
-4. Concurrent workers cannot claim the same active job simultaneously.
-5. Job attempts must be observable across processes.
-6. Retry attempts must be bounded and use the approved backoff behavior.
-7. Terminal states must not transition directly back to `RUNNING` without an explicit recovery or new-execution procedure.
-8. Duplicate execution must not produce duplicate business effects.
-9. Interrupted execution must not leave jobs permanently unobservable or silently lose ownership.
-10. Worker startup, shutdown, and failure preserve diagnosable state.
-11. Workers do not run database migrations automatically.
+1. **No external broker:** PostgreSQL is the queue. No Redis, Celery, or RabbitMQ (INV-017).
+2. **No startup migrations:** Neither API nor worker startup runs Alembic (INV-015).
+3. **No child process supervision:** API never manages or runs the worker process (M1-D01).
+4. **Deterministic test handler:** The initial handler registered for verification must be deterministic and side-effect free.
 
 ---
 
-## 4. Contract Boundaries
+## 3. Validation Strategy
 
-- **Job State & Attempts:** `platform.jobs` table holds current state, attempts history, correlation ID, error message.
-- **Claim Mechanism:** Transactional `SELECT ... FOR UPDATE SKIP LOCKED` inside worker claim logic.
-- **Retry Logic:** After each failed attempt, schedule next retry with backoff; cap total attempts per job.
-- **Idempotency Key:** Optional unique key per logical request; stored in `platform.job_attempts`.
-
----
-
-## 5. Acceptance Criteria
-
-- [ ] Required platform tables created by versioned migrations.
-- [ ] Migrations apply cleanly to the M0 database baseline.
-- [ ] API and worker do not execute migrations during startup.
-- [ ] Job submission creates durable state and returns identifier.
-- [ ] Worker claims a job using `FOR UPDATE SKIP LOCKED`.
-- [ ] Concurrent claims do not process the same active job simultaneously.
-- [ ] Deterministic registered handler executes successfully.
-- [ ] Job state and attempt history persist.
-- [ ] All approved state transitions enforced.
-- [ ] Retry behavior is bounded.
-- [ ] Duplicate attempts safe under defined idempotency contract.
-- [ ] Interrupted execution recoverable per approved recovery policy.
-- [ ] Job state remains available after API or worker restart.
-- [ ] API and worker operate independently.
-- [ ] No broker, workflow engine, or unrelated business persistence introduced.
+- **Migration tests (`tests/test_persistence_migrations.py`):**
+  - Verify `0002_platform_jobs_and_metadata.py` upgrades cleanly from baseline `0001_platform_schema.py`.
+  - Verify table structure, column types, foreign keys, and indexes in PostgreSQL.
+- **Worker unit & claim tests (`tests/test_worker_claims.py`):**
+  - Verify `FOR UPDATE SKIP LOCKED` claims 1 item and skips claimed items under concurrent connections.
+  - Verify short claim transaction: DB connection released during execution.
+- **Recovery tests (`tests/test_interrupted_recovery.py`):**
+  - Insert job in `RUNNING` with expired `claim_lease_until`.
+  - Run recovery reconciliation; verify transition to `RETRY_SCHEDULED`.
+- **Integration tests (`tests/test_jobs_e2e.py`):**
+  - End-to-end API submission -> DB persistence -> worker claim -> execution -> `SUCCEEDED` status retrieval.
 
 ---
 
-## 6. Constraints and Governing Decisions
+## 4. Handoff
 
-- M1-D05 / D05.1 — Independent worker, PostgreSQL queue, at-least-once execution, idempotency, bounded retries.
-- M1-D06 — Minimal platform-owned persistence.
-- M1-D01 — Shared bootstrap.
-- M1-D08 — Correlation propagation.
-- ADR-003 — PostgreSQL primary persistence.
-- ADR-005 — PostgreSQL-backed job persistence.
-- ADR-012 — Minimal local infrastructure composition.
-- Relevant invariants: INV-006, INV-008, INV-009, INV-015, INV-017.
-
----
-
-## 7. Dependencies
-
-- M0 application factory and configuration boundary.
-- Existing Sourcing manifest and module precursor.
-- Platform persistence interface from SDD 003.
-
----
-
-## 8. Validation Strategy
-
-- **Migration Tests:** Clean migration against M0 baseline; upgrade success; no automatic migration on startup.
-- **Constraint Tests:** Schema ownership verification; index/constraint support for job lifecycle/concurrency.
-- **Concurrency Tests:** Multiple workers claim same job concurrently → only one proceeds.
-- **Recovery Tests:** Terminate worker mid-job → verify recovery policy restores valid terminal state.
-- **Integration Tests:** End-to-end job submission → claim → process → persist → status retrieval.
-
----
-
-## 9. Handoff
-
-Stage 2 exit gate requires:
-- All platform tables exist via versioned migrations.
-- Migration upgrade succeeds against verified M0 baseline.
-- API and worker never auto-run migrations.
-- Job lifecycle and state-transition tests pass.
-- Concurrent claim tests pass.
-- Recoverable interrupted execution verified.
-- Worker shutdown graceful and preserves state.
+Stage 2 & Stage 5 exit gates require:
+- Platform migrations committed and clean on PostgreSQL 16.
+- Independent worker running via `src/app/workers/runner.py`.
+- Interrupted-job recovery verified against the explicit lease policy.
+- Zero Ruff/Mypy warnings and 100% test pass rate.

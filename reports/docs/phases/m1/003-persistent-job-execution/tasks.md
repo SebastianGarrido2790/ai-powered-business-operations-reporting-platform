@@ -9,46 +9,51 @@
 
 ## Ordered Tasks
 
-### Phase 1: Migrations & Database Schema
-- [ ] **Task 1.1:** Create `database/migrations/versions/0002_platform_jobs.py` adding `platform.jobs` table:
-  - Columns: `job_id (UUID PK)`, `status`, `attempts`, `correlation_id`, `created_at`, `updated_at`, `error_message`, `idempotency_key`.
-- [ ] **Task 1.2:** Create `database/migrations/versions/0003_platform_module_registrations.py` adding `platform.module_registrations` table:
-  - Columns: `module_id (UUID PK)`, `manifest_hash`, `manifest_version`, `status`, `registered_at`, `updated_at`.
-- [ ] **Task 1.3:** Create `database/migrations/versions/0004_platform_job_attempts.py` adding `platform.job_attempts` table:
-  - Columns: `attempt_id (UUID PK)`, `job_id (FK)`, `attempt_number`, `started_at`, `completed_at`, `status`, `error_snapshot`.
-- [ ] **Task 1.4:** Create `database/migrations/versions/0005_platform_idempotency_keys.py` adding `platform.idempotency_keys` table:
-  - Columns: `key_id (UUID PK)`, `key_value (UNIQUE)`, `used_by_job_id (FK)`, `used_at`, `created_at`.
-- [ ] **Task 1.5:** Write unit and migration tests in `tests/test_migrations.py` verifying clean upgrade against M0 baseline and that API/worker startup does not auto-run migrations.
+### Phase 1: Platform Persistence & Migrations (Stage 2)
+- [ ] **Task 1.1:** Author consolidated migration `database/migrations/versions/0002_platform_jobs_and_metadata.py`:
+  - Create `platform.module_registrations`, `platform.jobs`, `platform.job_attempts`, `platform.idempotency_keys`.
+  - Add indexes on `platform.jobs (status, scheduled_at, claim_lease_until)`.
+  - Add unique constraint on `platform.jobs (idempotency_key)`.
+- [ ] **Task 1.2:** Implement SQLAlchemy ORM models in `src/app/core/persistence/models.py`:
+  - `ModuleRegistrationModel`, `JobModel`, `JobAttemptModel`, `IdempotencyKeyModel`.
+- [ ] **Task 1.3:** Implement data-access layer `src/app/core/persistence/job_store.py`:
+  - Methods: `create_job()`, `get_job_by_id()`, `claim_next_job()`, `update_job_status()`, `recover_stale_jobs()`.
+- [ ] **Task 1.4:** Write migration and persistence integration tests in `tests/test_persistence_migrations.py`:
+  - Verify clean upgrade from M0 baseline.
+  - Verify strict schema ownership under `platform` schema.
+  - Verify application startup does not execute migrations.
 
-### Phase 2: Worker Process & Claim Logic
-- [ ] **Task 2.1:** Implement `src/app/workers/runner.py` as independent Python process entrypoint.
-- [ ] **Task 2.2:** Implement transactional job claiming: `SELECT ... FOR UPDATE SKIP LOCKED FROM platform.jobs WHERE status == 'QUEUED' LIMIT 1`.
-- [ ] **Task 2.3:** Implement claim transaction shortness: process starts and ends transaction immediately after claim; handler executes in separate transaction.
-- [ ] **Task 2.4:** Implement the accepted lifecycle state machine: `QUEUED` → `RUNNING` → `[SUCCEEDED | FAILED | NEEDS_REVIEW | RETRY_SCHEDULED | CANCELLED]`.
-- [ ] **Task 2.5:** Implement graceful shutdown handling: clean flag, pending claims complete, pending jobs transferred to `RETRY_SCHEDULED`.
+### Phase 2: Worker Process & Claim Engine (Stage 5)
+- [ ] **Task 2.1:** Implement `src/app/workers/runner.py` as a standalone entrypoint using `bootstrap_platform()` context.
+- [ ] **Task 2.2:** Implement the claim transaction in `job_store.claim_next_job()` using `SELECT ... FOR UPDATE SKIP LOCKED`:
+  - Atomic transition to `RUNNING`, increment `attempt_count`, set `claim_lease_until = now() + 5 minutes`, commit immediately.
+- [ ] **Task 2.3:** Implement handler registry and dispatcher in `src/app/workers/dispatcher.py` to execute job handlers outside database transactions.
+- [ ] **Task 2.4:** Implement signal handlers (`SIGTERM`, `SIGINT`) in `runner.py` for graceful shutdown.
+- [ ] **Task 2.5:** Register a deterministic, side-effect-free test handler (e.g. `test.noop` or `test.echo`).
 
-### Phase 3: Handler Execution & Idempotency
-- [ ] **Task 3.1:** Implement `src/app/core/persistence.py` with SQLAlchemy model definitions for `Job`, `JobAttempt`, `ModuleRegistration`, `IdempotencyKey`.
-- [ ] **Task 3.2:** Implement bounded retry logic: after each failed attempt, next retry scheduled with exponential backoff; cap total attempts per job.
-- [ ] **Task 3.3:** Implement idempotency controls: optional `idempotency_key` per submission; duplicate keys return persisted state without re-execution.
-- [ ] **Task 3.3:** Write unit tests in `tests/test_worker.py` verifying state transitions, claim logic, retry backoff, and idempotency behavior.
+### Phase 3: Lifecycle, Retries & Interrupted-Job Recovery (Stage 5)
+- [ ] **Task 3.1:** Implement valid state machine transitions in `src/app/core/persistence/job_state.py` matching the approved lifecycle:
+  - `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `NEEDS_REVIEW`, `RETRY_SCHEDULED`, `CANCELLED`.
+- [ ] **Task 3.2:** Implement bounded exponential backoff retry scheduling for transient failures.
+- [ ] **Task 3.3:** Implement the stale-job recovery sweeper in `src/app/workers/sweeper.py`:
+  - Scans `status == 'RUNNING' AND claim_lease_until < now()`.
+  - Transitions to `RETRY_SCHEDULED` if `attempt_count < max_attempts`, else `NEEDS_REVIEW`.
+- [ ] **Task 3.4:** Write concurrency and recovery unit/integration tests in `tests/test_worker_claims.py` and `tests/test_interrupted_recovery.py`:
+  - Verify multiple workers cannot claim the same job simultaneously.
+  - Verify that a simulated worker crash (abandoned `RUNNING` job) is cleanly recovered by the sweeper.
 
-### Phase 4: Integration, Recovery & Gates
-- [ ] **Task 4.1:** Write integration tests in `tests/test_integration.py` for end-to-end flow:
-  - Submit job → claim → process → persist status → query status endpoint.
-- [ ] **Task 4.2:** Write the controlled interruption test: submit job, claim, terminate worker mid-claim, restart worker, verify recovery policy restores valid state and no duplicate attempts.
-- [ ] **Task 4.3:** Run `uv run ruff format --check .`, `uv run ruff check .`, `uv run mypy src tests`.
-- [ ] **Task 4.4:** Run `uv run pytest` confirming full test suite passes.
+### Phase 4: Quality Verification & Gate Review
+- [ ] **Task 4.1:** Run `uv run ruff format --check .`, `uv run ruff check .`, and `uv run mypy src tests`.
+- [ ] **Task 4.2:** Run `uv run pytest` confirming all persistence, worker, and recovery tests pass.
+- [ ] **Task 4.3:** Document Stage 2 and Stage 5 completion evidence and verify readiness for Stage 7 falsification.
 
 ---
 
 ## Completion Evidence Checklist
 
-- [ ] `database/migrations/versions/` adds `0002..0005` schema migrations for job persistence.
-- [ ] `src/app/core/persistence.py` defines SQLAlchemy models and claim logic.
-- [ ] `src/app/workers/runner.py` implements independent worker claiming `FOR UPDATE SKIP LOCKED`.
-- [ ] Worker gracefully shuts down preserving recoverable job state.
-- [ ] End-to-end integration test suite passes (submit → claim → process → persist → status retrieval).
-- [ ] Controlled worker interruption test passes per approved recovery policy.
-- [ ] Quality gates (Ruff, Mypy, Pytest) green.
-- [ ] Stage 2 exit gate evidence recorded.
+- [ ] `0002_platform_jobs_and_metadata.py` migration created and verified against PostgreSQL.
+- [ ] `src/app/core/persistence/` models and `job_store.py` operational.
+- [ ] `src/app/workers/runner.py` standalone process operational.
+- [ ] `FOR UPDATE SKIP LOCKED` claim logic tested under concurrent transactions.
+- [ ] Stale lease recovery verified (abandoned `RUNNING` jobs transition to `RETRY_SCHEDULED` / `NEEDS_REVIEW`).
+- [ ] Zero Ruff or Mypy errors; 100% pytest pass rate.
