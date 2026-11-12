@@ -6,6 +6,8 @@ Governed by:
 - INV-004: explicit module boundaries and typed contracts.
 """
 
+import hashlib
+import json
 import re
 from pathlib import Path
 from typing import Any, Final
@@ -140,6 +142,16 @@ class ModuleManifest(BaseModel):
                     f"Invalid declaration {value!r}; expected lowercase dotted identifiers."
                 )
         return values
+
+
+def compute_manifest_hash(manifest: "ModuleManifest") -> str:
+    """Return a deterministic SHA-256 hash of validated manifest content."""
+    canonical = json.dumps(
+        manifest.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def load_manifest(path: str | Path) -> ModuleManifest:

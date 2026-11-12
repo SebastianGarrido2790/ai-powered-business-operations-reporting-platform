@@ -26,3 +26,4 @@ class ModuleRegistration:
     version: str
     state: RegistrationState
     diagnostics: str | None = None
+    manifest_hash: str | None = None

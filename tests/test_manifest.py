@@ -9,6 +9,7 @@ from app.core.registry import (
     ManifestValidationError,
     ModuleCompatibilityError,
     assert_compatible,
+    compute_manifest_hash,
     is_compatible,
     load_manifest,
     parse_semver,
@@ -143,6 +144,18 @@ def test_platform_compatibility_comparison() -> None:
     assert is_compatible("0.1.0", "0.1.0")
     assert is_compatible("1.0.0", "0.9.9")
     assert not is_compatible("0.1.0", "0.2.0")
+
+
+def test_manifest_hash_is_deterministic_and_content_sensitive() -> None:
+    """Verify manifest hashing is stable and reflects validated content."""
+    manifest = load_manifest(SOURCING_MANIFEST)
+    repeat = load_manifest(SOURCING_MANIFEST)
+
+    digest = compute_manifest_hash(manifest)
+
+    assert len(digest) == 64
+    assert digest == compute_manifest_hash(repeat)
+    assert digest != compute_manifest_hash(manifest.model_copy(update={"version": "0.1.1"}))
 
 
 def test_incompatible_manifest_is_rejected() -> None:

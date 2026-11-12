@@ -75,6 +75,8 @@ def test_register_valid_module() -> None:
     registration = registry.register(module)
 
     assert registration.state is RegistrationState.REGISTERED
+    assert registration.manifest_hash is not None
+    assert len(registration.manifest_hash) == 64
     assert registry.get_active_modules() == (module,)
     assert registry.get_registration("sample") == registration
     assert registry.list_registrations() == (registration,)

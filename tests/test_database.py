@@ -100,12 +100,17 @@ def test_verify_connection_executes_probe() -> None:
 
 def test_application_startup_does_not_run_migrations() -> None:
     """Verify FastAPI startup performs no implicit migration work (INV-015)."""
-    main_source = (PROJECT_ROOT / "src" / "app" / "main.py").read_text(encoding="utf-8")
-    lowered = main_source.lower()
+    startup_paths = (
+        PROJECT_ROOT / "src" / "app" / "main.py",
+        PROJECT_ROOT / "src" / "app" / "core" / "bootstrap.py",
+        PROJECT_ROOT / "src" / "app" / "workers" / "runner.py",
+    )
 
-    assert "alembic" not in lowered
-    assert "create_all" not in lowered
-    assert "upgrade" not in lowered
+    for startup_path in startup_paths:
+        source = startup_path.read_text(encoding="utf-8").lower()
+        assert "alembic" not in source, startup_path
+        assert "create_all" not in source, startup_path
+        assert "upgrade" not in source, startup_path
 
 
 requires_database = pytest.mark.skipif(
@@ -175,15 +180,25 @@ def test_alembic_upgrade_produces_expected_schema_state() -> None:
         schemas, platform_tables, revision = schema_snapshot()
 
         assert "platform" in schemas
-        assert platform_tables == []
-        assert revision == "0001_platform_schema"
+        assert sorted(platform_tables) == [
+            "idempotency_keys",
+            "job_attempts",
+            "jobs",
+            "module_registrations",
+        ]
+        assert revision == "0002_platform_jobs_and_metadata"
 
         # Repeatability: a clean re-upgrade must succeed without manual repair.
         command.downgrade(alembic_config, "base")
         command.upgrade(alembic_config, "head")
 
         _, platform_tables, revision = schema_snapshot()
-        assert platform_tables == []
-        assert revision == "0001_platform_schema"
+        assert sorted(platform_tables) == [
+            "idempotency_keys",
+            "job_attempts",
+            "jobs",
+            "module_registrations",
+        ]
+        assert revision == "0002_platform_jobs_and_metadata"
     finally:
         engine.dispose()

@@ -16,7 +16,11 @@ from app.core.registry.errors import (
     ModuleRegistrationConflictError,
     RegistryError,
 )
-from app.core.registry.manifest import assert_compatible, validate_platform_version
+from app.core.registry.manifest import (
+    assert_compatible,
+    compute_manifest_hash,
+    validate_platform_version,
+)
 from app.core.registry.models import ModuleRegistration, RegistrationState
 from app.core.registry.store import InMemoryModuleRegistrationStore, ModuleRegistrationStore
 
@@ -58,12 +62,14 @@ class ModuleRegistry:
             self._record_failure(type(module).__name__, diagnostics=str(exc))
             raise
 
+        manifest_hash = compute_manifest_hash(manifest)
         try:
             assert_compatible(manifest, self._platform_version)
         except ModuleCompatibilityError as exc:
             self._record_failure(
                 manifest.id,
                 version=manifest.version,
+                manifest_hash=manifest_hash,
                 diagnostics=str(exc),
             )
             raise
@@ -81,6 +87,7 @@ class ModuleRegistry:
             module_id=manifest.id,
             version=manifest.version,
             state=RegistrationState.REGISTERED,
+            manifest_hash=manifest_hash,
         )
         self._modules[manifest.id] = module
         self._records(registration)
@@ -119,6 +126,7 @@ class ModuleRegistry:
         module_id: str,
         *,
         version: str = "unknown",
+        manifest_hash: str | None = None,
         diagnostics: str,
     ) -> None:
         self._records(
@@ -127,6 +135,7 @@ class ModuleRegistry:
                 version=version,
                 state=RegistrationState.FAILED,
                 diagnostics=diagnostics,
+                manifest_hash=manifest_hash,
             )
         )
 
