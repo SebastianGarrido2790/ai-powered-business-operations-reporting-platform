@@ -1,9 +1,9 @@
 # 001 — Platform Bootstrap & Registry
 
-**Phase:** M1 — Platform Foundation 
-**Status:**  
+**Phase:** M1 — Platform Foundation  
+**Status:** Approved — feature specification approved 2026-11-11; implementation plan and tasks pending  
 **Parent decision record:** `../implementation_plan.md`  
-**Execution stage:** 
+**Execution stage:** Stage 1 (Platform Bootstrap & Module Registry), with integration in Stages 2, 6, 7  
 
 ### 1. Purpose
 
