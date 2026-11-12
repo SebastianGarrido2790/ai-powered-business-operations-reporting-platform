@@ -1,9 +1,9 @@
 # 005 — Logging, Correlation & Health
 
-**Phase:** M1 — Platform Foundation 
-**Status:**  
+**Phase:** M1 — Platform Foundation  
+**Status:** Approved — feature specification approved 2026-11-12; implementation plan and tasks pending  
 **Parent decision record:** `../implementation_plan.md`  
-**Execution stage:** 
+**Execution stage:** Stage 6 (Logging, Correlation & Health Integration), with integration in Stages 1, 4, 5, 7  
 
 ### 1. Purpose
 

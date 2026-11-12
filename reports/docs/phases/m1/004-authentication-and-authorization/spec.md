@@ -1,9 +1,9 @@
 # 004 — Authentication & Authorization
 
-**Phase:** M1 — Platform Foundation 
-**Status:**  
+**Phase:** M1 — Platform Foundation  
+**Status:** Approved — feature specification approved 2026-11-12; implementation plan and tasks pending  
 **Parent decision record:** `../implementation_plan.md`  
-**Execution stage:** 
+**Execution stage:** Stage 3 (Authentication & Authorization Boundary), with integration in Stages 4, 6, 7  
 
 ### 1. Purpose
 
