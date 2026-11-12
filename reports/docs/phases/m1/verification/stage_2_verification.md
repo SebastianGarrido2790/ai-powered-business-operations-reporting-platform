@@ -3,7 +3,7 @@
 **Phase:** M1 — Platform Foundation  
 **Stage:** 2  
 **Verification date:** 2026-11-12  
-**Status:** Implementation and verification complete — gate passed; awaiting project-owner acknowledgement  
+**Status:** Implementation and verification complete — gate passed and acknowledged by the project owner on 2026-11-12; committed (`eab8482`, `6358c07`) and pushed; CI run `43316145152` green  
 **Authorization:** M1 execution authorized by the project owner on 2026-11-12
 
 ---
@@ -13,10 +13,11 @@
 | Item | Value |
 |---|---|
 | Branch | `main`, tracking `origin/main` |
-| HEAD | `a9c02fe` |
-| Working tree | Stage 2 changes uncommitted; no unrelated tracked changes |
+| HEAD | `6358c07` — Stage 2 delivered as `eab8482` (implementation) and `6358c07` (verification evidence) |
+| Working tree | Clean after push; no unrelated tracked changes |
 | Previous stage | Stage 1 passed and acknowledged 2026-11-12 |
 | Scope source | SDD 003 `spec.md`, `plan.md`, `tasks.md` Phase 1; `execution_plan.md` Stage 2 |
+| CI | Run `43316145152` on `6358c07` — success (Ruff format, Ruff lint, mypy, pytest against PostgreSQL) |
 
 ## 2. Implementation Summary
 
@@ -57,7 +58,7 @@
 
 | Check | Command | Result |
 |---|---|---|
-| Formatting | `uv run --frozen ruff format --check .` | Pass — 80 files formatted |
+| Formatting | `uv run --frozen ruff format --check .` | Pass — 81 files formatted (final check after record creation) |
 | Linting | `uv run --frozen ruff check .` | Pass — no findings |
 | Static typing | `uv run --frozen mypy src tests` | Pass — 35 files, strict mode, no issues |
 | Default suite | `uv run --frozen pytest -q` | 80 passed, 20 DB-gated skips; 84% statement coverage (636 statements) |
@@ -84,7 +85,8 @@ No architectural deviation or new dependency was introduced.
 - No worker claim loop, dispatcher, signal handling, or sweeper was implemented (Stage 5).
 - No platform API endpoint for jobs or modules was added (Stage 4).
 - No CI workflow modification; the existing workflow runs the same quality gates.
+- Commit and push performed with project-owner authorization on 2026-11-12 (`eab8482`, `6358c07`, `main`). CI run `43316145152` passed.
 
 ## 7. Stage 3 Handoff
 
-Stage 2 supplies the durable platform schema, the `JobStore` boundary, and the SQL-backed registration store that later stages compose into the API and worker. Stage 3 (Authentication & Authorization) is independent of persistence and may begin once this gate is acknowledged. Wiring durable registration and job submission into runtime composition remains Stage 4/5 scope.
+Stage 2 supplies the durable platform schema, the `JobStore` boundary, and the SQL-backed registration store that later stages compose into the API and worker. Stage 3 (Authentication & Authorization) is independent of persistence and may begin at the project owner's direction. Wiring durable registration and job submission into runtime composition remains Stage 4/5 scope.
