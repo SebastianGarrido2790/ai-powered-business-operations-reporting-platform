@@ -17,6 +17,7 @@ from app.core.registry import (
     RegistrationState,
     load_manifest,
 )
+from app.core.security import AuthenticatedIdentity, CanonicalRole, create_test_token
 from app.main import app, create_app
 from app.modules.sourcing import (
     MODULE_ID,
@@ -94,11 +95,26 @@ def test_custom_app_settings() -> None:
     assert data["environment"] == "test"
 
 
-def test_sourcing_health_endpoint() -> None:
-    """Verify Sourcing module health route returns expected status."""
-    client = TestClient(app)
-    response = client.get("/api/v1/sourcing/health")
+def _sourcing_auth_headers() -> dict[str, str]:
+    """Helper returning an Authorization header with sourcing.read permission."""
+    identity = AuthenticatedIdentity(
+        subject="test-analyst",
+        roles=frozenset({CanonicalRole.OPERATIONS_ANALYST.value}),
+    )
+    token = create_test_token(identity)
+    return {"Authorization": f"Bearer {token}"}
 
+
+def test_sourcing_health_endpoint() -> None:
+    """Verify Sourcing module health route enforces authentication and permission."""
+    client = TestClient(app)
+
+    # Unauthenticated request must be rejected (Stage 3 security boundary)
+    unauth_res = client.get("/api/v1/sourcing/health")
+    assert unauth_res.status_code == 401
+
+    # Authorized request with sourcing.read permission must succeed
+    response = client.get("/api/v1/sourcing/health", headers=_sourcing_auth_headers())
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
@@ -107,10 +123,15 @@ def test_sourcing_health_endpoint() -> None:
 
 
 def test_sourcing_status_endpoint() -> None:
-    """Verify Sourcing module status route is reachable and returns status."""
+    """Verify Sourcing module status route enforces authentication and permission."""
     client = TestClient(app)
-    response = client.get("/api/v1/sourcing/status")
 
+    # Unauthenticated request must be rejected
+    unauth_res = client.get("/api/v1/sourcing/status")
+    assert unauth_res.status_code == 401
+
+    # Authorized request succeeds
+    response = client.get("/api/v1/sourcing/status", headers=_sourcing_auth_headers())
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
@@ -190,7 +211,8 @@ def test_invalid_module_routes_are_not_exposed(
     hermetic_app = create_app(Settings())
     with TestClient(hermetic_app) as client:
         assert client.get("/api/v1/invalid/health").status_code == 404
-        assert client.get("/api/v1/sourcing/health").status_code == 200
+        auth_headers = _sourcing_auth_headers()
+        assert client.get("/api/v1/sourcing/health", headers=auth_headers).status_code == 200
 
         openapi_paths = client.get("/openapi.json").json()["paths"]
         assert "/api/v1/invalid/health" not in openapi_paths

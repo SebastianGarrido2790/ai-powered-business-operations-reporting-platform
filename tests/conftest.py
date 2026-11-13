@@ -18,6 +18,7 @@ _SETTINGS_ENV_VARS = (
     "DB_PASSWORD",
     "DB_NAME",
     "DATABASE_URL",
+    "AUTH_SECRET_KEY",
 )
 
 

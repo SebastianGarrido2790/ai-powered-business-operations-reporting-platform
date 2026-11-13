@@ -104,6 +104,13 @@ class Settings(BaseSettings):
         description="Optional full connection URI override",
     )
 
+    # Security & authentication
+    auth_secret_key: str = Field(
+        default="bopf-insecure-local-dev-secret-do-not-use-in-production-32b",
+        alias="AUTH_SECRET_KEY",
+        description="Secret key for local/test token validation and signing",
+    )
+
     @property
     def sync_database_uri(self) -> str:
         """Construct synchronous psycopg connection URI."""
