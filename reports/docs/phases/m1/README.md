@@ -1,6 +1,6 @@
 # M1 SDD & Execution Package
 
-**Status:** Implementation complete — feature SDDs, plans, tasks, and the execution plan approved; M1 execution authorized 2026-11-12; Stages 0–7 passed and acknowledged; Stage 8 reconciliation complete 2026-11-13; M1 sign-off pending (see `execution_plan.md` §10).
+**Status:** Complete — feature SDDs, plans, tasks, and the execution plan approved and executed; all stages passed and acknowledged; project owner signed off M1 on 2026-11-13 (see `execution_plan.md` §10).
 
 ## Package contents
 
@@ -33,7 +33,7 @@ The parent decisions and candidate dispositions are already approved. The approv
 
 Candidate acceptance and approval of M1-D01–D09 do not automatically approve the detailed feature SDDs or authorize implementation.
 
-Completion record (2026-11-12): steps 1–3 approved for all five SDDs; step 4 execution authorization issued in `execution_plan.md`. Stages 0–4 passed their gates and were acknowledged by the project owner on 2026-11-12. Stage 5 (Independent Worker & Job Execution) was implemented and verified on 2026-11-13 (`verification/stage_5_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 6 (Logging, Correlation & Health Integration) was implemented and verified on 2026-11-13 (`verification/stage_6_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 7 (Integrated Acceptance & One-Time Falsification) was implemented and verified on 2026-11-13 (`verification/stage_7_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 8 (ADR Consolidation & Phase Sign-Off) completed decision reconciliation, exit-criteria verification, ADR consolidation, the Post-Implementation Review, and the accepted-limitation disposition on 2026-11-13 (`verification/stage_8_verification.md`); M1 sign-off is pending.
+Completion record (2026-11-12): steps 1–3 approved for all five SDDs; step 4 execution authorization issued in `execution_plan.md`. Stages 0–4 passed their gates and were acknowledged by the project owner on 2026-11-12. Stage 5 (Independent Worker & Job Execution) was implemented and verified on 2026-11-13 (`verification/stage_5_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 6 (Logging, Correlation & Health Integration) was implemented and verified on 2026-11-13 (`verification/stage_6_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 7 (Integrated Acceptance & One-Time Falsification) was implemented and verified on 2026-11-13 (`verification/stage_7_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 8 (ADR Consolidation & Phase Sign-Off) completed decision reconciliation, exit-criteria verification, ADR consolidation, the Post-Implementation Review, and the accepted-limitation disposition on 2026-11-13 (`verification/stage_8_verification.md`); the project owner signed off M1 on 2026-11-13. M1 is complete.
 
 ## Authority
 

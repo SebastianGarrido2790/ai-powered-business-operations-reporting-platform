@@ -3,7 +3,7 @@
 **Phase:** M1 — Platform Foundation  
 **Stage:** 8  
 **Verification date:** 2026-11-13  
-**Status:** Reconciliation complete — ready for project-owner M1 sign-off  
+**Status:** Reconciliation complete — M1 signed off by the project owner 2026-11-13  
 **Authorization:** M1 execution authorized by the project owner on 2026-11-12
 
 ---
@@ -200,11 +200,11 @@ No critical or high-severity finding remains open. S8-F1 is the only open low-se
 | Material findings are resolved or formally accepted | Met — §7 |
 | Acceptance evidence is recorded | Met — §10 and the stage verification records |
 | Project architecture and status records are updated | Met — `system_design.md`, phase records, and READMEs updated in this stage |
-| Project owner has signed off M1 | **Pending — requested below** |
+| Project owner has signed off M1 | **Met — signed off 2026-11-13** |
 
 **Project-owner M1 sign-off**
 
-- [ ] I confirm that M1 — Platform Foundation satisfies its approved exit criteria and is accepted, including the S8-F1 deviation, S8-F4 accepted risk, and the deferred work in §9.
-- [ ] I authorize the `docs(M1)` closure commit.
+- [x] I confirm that M1 — Platform Foundation satisfies its approved exit criteria and is accepted, including the S8-F1 deviation, S8-F4 accepted risk, and the deferred work in §9.
+- [x] I authorize the `docs(M1)` closure commit.
 
-**Sign-off record:** Pending project-owner decision.
+**Sign-off record:** The project owner confirmed M1 acceptance on 2026-11-13. Stage 8 passes; M1 — Platform Foundation is complete and signed off.

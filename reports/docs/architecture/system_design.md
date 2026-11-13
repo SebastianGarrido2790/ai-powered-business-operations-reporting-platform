@@ -8,19 +8,19 @@
 | Product | Business Operations Platform Foundation |
 | Initial module | Sourcing Operations Intelligence |
 | Version | 1.1 |
-| Status | Accepted architecture baseline — Part I is realized incrementally; M0 scaffolding implemented |
+| Status | Accepted architecture baseline — Part I realized through M0 and M1; M1 platform foundation signed off |
 | Upstream documents | User Story & Problem Framing; Product Requirements Document |
 | Architecture style | Domain-oriented modular monolith with independent workers |
 | Initial deployment model | Single-enterprise deployment |
-| Last reconciled with implementation | 2026-11-10 (M0 phase sign-off, commit `28b4ea6`) |
+| Last reconciled with implementation | 2026-11-13 (M1 phase sign-off — `reports/docs/phases/m1/verification/stage_8_verification.md`) |
 
 ---
 
-## Implementation Status (M0 Baseline)
+## Implementation Status
 
-**Reconciled:** 2026-11-10.
+**M0 baseline reconciled:** 2026-11-10. **M1 platform foundation reconciled and signed off:** 2026-11-13 (`reports/docs/phases/m1/verification/stage_8_verification.md`).
 
-Part I describes the architecture the platform is being built toward. It is not a description of a complete system. As of M0, only the scaffolding baseline exists: every capability of later milestones is a design target, not implemented behavior.
+Part I describes the architecture the platform is being built toward. The M1 Platform Foundation is now realized and signed off; later milestone capabilities remain design targets. The tables below retain the M0 baseline record; M1 outcomes are recorded per ADR and capability section.
 
 | Area | M0 state |
 |---|---|

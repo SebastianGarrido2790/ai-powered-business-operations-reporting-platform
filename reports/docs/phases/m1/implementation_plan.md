@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M1 — Platform Foundation  
-**Status:** Completed — all M1 decisions approved/confirmed 2026-11-11, implemented and reconciled at Stage 8 on 2026-11-13; phase closure pending project-owner sign-off  
+**Status:** Completed — all M1 decisions approved/confirmed 2026-11-11, implemented and reconciled at Stage 8 on 2026-11-13; phase signed off by the project owner 2026-11-13  
 **Document type:** Living phase decision record  
 **Previous phase:** M0 — Project Scaffolding & Engineering Standards (Complete, signed off 2026-11-10)
 
@@ -1126,7 +1126,7 @@ At phase closure:
 - Record deferred work and M2 entry conditions.
 - Obtain explicit human phase sign-off.
 
-**M1 remains incomplete until the exit criteria and evidence are reconciled and the project owner signs off.**
+**M1 remained incomplete until the exit criteria and evidence were reconciled and the project owner signed off. That gate passed on 2026-11-13; M1 is complete.**
 
 ---
 
@@ -1154,14 +1154,15 @@ At phase closure:
 **Feature SDD status:** Approved — all five SDD specifications, plans, and tasks approved 2026-11-12.  
 **Execution Plan status:** Approved 2026-11-12; Stages 0–7 passed and acknowledged.  
 **Execution authorization:** Granted by the project owner 2026-11-12.  
-**Phase status:** Implementation and Stage 8 reconciliation complete 2026-11-13; M1 closure pending project-owner sign-off.
+**Phase status:** Completed — all stages passed and acknowledged; project owner signed off 2026-11-13.
 
 ---
 
 ## 10. Phase Outcome Record (Stage 8)
 
-**Reconciliation date:** 2026-11-13  
-**Evidence:** [`verification/stage_8_verification.md`](verification/stage_8_verification.md)
+**Reconciliation and sign-off date:** 2026-11-13  
+**Evidence:** [`verification/stage_8_verification.md`](verification/stage_8_verification.md)  
+**Sign-off:** M1 signed off by the project owner on 2026-11-13. M1 — Platform Foundation is complete.
 
 Every approved decision is reflected in the system. The only limitation is the runtime activation of durable module-registration state, accepted by the project owner on 2026-11-13 as S8-F1 and deferred to M2. No decision was rejected, replaced, or left unimplemented; no new architectural decision required an ADR.
 
