@@ -1,6 +1,6 @@
 # 004 — Authentication & Authorization: Plan
 
-**Status:** Approved — feature specification approved 2026-11-12; plan and tasks pending execution  
+**Status:** Approved — feature specification approved 2026-11-12; executed and verified 2026-11-12  
 **Parent:** [`spec.md`](spec.md)  
 **Execution stage:** Stage 3 (Authentication & Authorization Boundary), with integration in Stages 4, 6, 7  
 **Governing decisions:** M1-D07 / D07.1 / D07.2, M1-D02, M1-D04, ADR-002, ADR-011  

@@ -926,6 +926,8 @@ Permissions must be evaluated at the application boundary.
 
 Module-specific permissions must be declared and enforced explicitly.
 
+**M1 Stage 3 status:** implemented. `src/app/core/security/` establishes the provider-neutral authentication boundary (`TokenValidator`, `AuthenticatedIdentity`), canonical role-to-permission mapping (`CanonicalRole`, `ROLE_PERMISSIONS`), and central enforcement factory (`require_permission`). Sourcing routes enforce `sourcing.read`. Test token usage is strictly blocked in production mode (INV-016).
+
 ### 11.3 Secrets Management
 
 - Local development may use environment-based configuration.
@@ -1192,6 +1194,8 @@ Each module owns its domain entities, business rules, APIs, analytical definitio
 - Cross-module interactions require explicit contracts.
 
 **Implementation status (M0, 2026-11-10):** realized for one module. `src/app/modules/sourcing/` owns its manifest, contract, and router; Platform Core holds only configuration and database concerns. No second module exists to test the boundary.
+
+**Implementation status (M1 Stage 3, 2026-11-12):** module permissions are enforced at the application boundary. Sourcing module routes (`/api/v1/sourcing/health`, `/api/v1/sourcing/status`) require the module-declared `sourcing.read` permission via `require_permission`.
 
 ---
 
@@ -1483,6 +1487,8 @@ Do not implement multi-tenancy until a concrete requirement exists.
 - Reduced initial complexity.
 - Simpler operational and security model.
 - Multi-tenancy will require a deliberate architectural decision if the product evolves into a multi-customer service.
+
+**Implementation status (M1 Stage 3, 2026-11-12):** realized. The authentication and authorization model evaluates in a single-enterprise context without tenant-isolation overhead. Roles and permissions are centralized and enforced at application boundaries.
 
 ---
 
