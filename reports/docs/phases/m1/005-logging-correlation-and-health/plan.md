@@ -1,6 +1,6 @@
 # 005 — Logging, Correlation & Health: Plan
 
-**Status:** Approved — feature specification approved 2026-11-12; plan and tasks pending execution  
+**Status:** Approved — feature specification approved 2026-11-12; plan and tasks executed and verified 2026-11-13  
 **Parent:** [`spec.md`](spec.md)  
 **Execution stage:** Stage 6 (Logging, Correlation & Health Integration), with integration in Stages 1, 4, 5, 7  
 **Governing decisions:** M1-D08, M1-D01, M1-D03, M1-D04, M1-D05, ADR-001  

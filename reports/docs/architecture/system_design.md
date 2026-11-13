@@ -155,6 +155,8 @@ Platform Core must not contain supplier-specific rules, procurement calculations
 
 **M0 status:** only the first two items exist, in reduced form — application configuration (`src/app/core/config/`) and an explicitly constructed FastAPI app (`create_app()`), plus a SQLAlchemy engine factory. There is no registry, compatibility validation, shared API composition, identity integration, job lifecycle, event contract, audit interface, or shared health-check mechanism. The `/health` endpoint is defined directly in the application entrypoint.
 
+**M1 Stage 6 status:** Platform Core now provides shared operational mechanisms under `src/app/core/`: structured logging (`logging/`), request and job correlation (`correlation/`), and reusable health probes (`health/`). The root `/health` liveness endpoint stays dependency-free; readiness, platform health, and module health are served through the protected platform API.
+
 ### 2.3 Sourcing Module
 
 The Sourcing module owns the initial business domain.
@@ -879,6 +881,8 @@ This is the target contract inventory. The `M0 state` column records what exists
 
 Request schemas, response schemas, pagination, filtering, and error formats will be specified during implementation.
 
+**M1 Stage 6 status:** `GET /health` remains public liveness. The authenticated platform endpoints now include `GET /api/v1/platform/health` (critical-dependency health; 503 when PostgreSQL is unreachable), `GET /api/v1/platform/readiness` (database and registry readiness; 503 when not ready), `GET /api/v1/platform/modules`, and `GET /api/v1/platform/modules/{module_id}/health`. Health and readiness require `platform.health.read`; module inspection and module health require `platform.modules.read`. The `M0 state` column above is retained as the original baseline record.
+
 ### 10.3 API Behavior
 
 Long-running operations return:
@@ -1060,7 +1064,13 @@ A correlation ID should connect related API requests, jobs, worker executions, i
 
 This enables diagnosis across asynchronous processing boundaries.
 
-### 13.3 Failure Handling
+**Implementation status (M1 Stage 6, 2026-11-13):** correlation is implemented as a context variable shared by the API and worker. The HTTP middleware accepts or generates the identifier, echoes `X-Correlation-ID` (`X-Request-ID` is accepted as an alias), binds it for the request scope, and the submission handler persists it on the job. The worker re-binds the persisted value for the execution scope, and every structured event emitted in that scope carries `correlation_id`. Correlation is trace-only and is never used for authorization.
+
+### 13.3 Logging
+
+**Implementation status (M1 Stage 6, 2026-11-13):** both processes use one `structlog` configuration that emits one JSON object per event outside `local`, including logs produced by standard-library loggers such as uvicorn and SQLAlchemy. Events carry timestamp, level, service, and the active correlation ID. A recursive field-name redaction processor removes credentials and secrets; request headers, bodies, and job payloads are never logged.
+
+### 13.4 Failure Handling
 
 The system must distinguish:
 
@@ -1073,7 +1083,7 @@ The system must distinguish:
 
 Retry policies must be appropriate to the failure type.
 
-### 13.4 n8n Operational Controls
+### 13.5 n8n Operational Controls
 
 n8n execution history is not the platform's permanent business audit ledger.
 

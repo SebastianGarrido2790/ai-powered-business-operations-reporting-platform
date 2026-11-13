@@ -25,7 +25,7 @@ Its central architectural principle is:
 | Phase | Scope | State |
 |---|---|---|
 | **M0 — Project Scaffolding & Engineering Standards** | Repository structure, runtime lock, configuration/secrets conventions, application skeleton and minimal Sourcing contract, local containerized environment, database/migration baseline, CI quality gates | ✅ **Complete** — signed off 2026-11-10 (`reports/docs/phases/m0/`) |
-| **M1 — Platform Foundation** | Module registry/lifecycle, workers, durable jobs, platform metadata persistence, API foundation, authentication/authorization, observability | In progress — Stages 1–5 (bootstrap/registry, persistence foundation, auth boundary, platform API, independent worker) implemented and verified; Stages 3–5 gates acknowledged 2026-11-12/13 |
+| **M1 — Platform Foundation** | Module registry/lifecycle, workers, durable jobs, platform metadata persistence, API foundation, authentication/authorization, observability | In progress — Stages 1–6 (bootstrap/registry, persistence foundation, auth boundary, platform API, independent worker, logging/correlation/health) implemented and verified; Stages 3–6 gates acknowledged 2026-11-12/13 |
 
 **M0 delivered:**
 
