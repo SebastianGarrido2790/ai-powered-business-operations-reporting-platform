@@ -33,7 +33,7 @@ The parent decisions and candidate dispositions are already approved. The approv
 
 Candidate acceptance and approval of M1-D01–D09 do not automatically approve the detailed feature SDDs or authorize implementation.
 
-Completion record (2026-11-12): steps 1–3 approved for all five SDDs; step 4 execution authorization issued in `execution_plan.md`. Stages 0–2 passed their gates and were acknowledged by the project owner; Stage 3 is implemented and verified (gate awaiting acknowledgement).
+Completion record (2026-11-12): steps 1–3 approved for all five SDDs; step 4 execution authorization issued in `execution_plan.md`. Stages 0–2 passed their gates and were acknowledged by the project owner; Stage 3 is implemented and verified (gate awaiting acknowledgement); Stage 4 is implemented and verified (gate acknowledged by the project owner on 2026-11-12).
 
 ## Authority
 

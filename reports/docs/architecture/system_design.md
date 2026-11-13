@@ -1164,6 +1164,8 @@ Adopt a domain-oriented modular monolith with explicit module boundaries.
 
 **Implementation status (M0, 2026-11-10):** realized. One FastAPI deployable under `src/app/`, with `core` and `modules` separated in code and a single module mounted. No worker process exists, so the "with independent workers" half of the style is not yet in operation.
 
+**Implementation status (M1 Stage 4, 2026-11-12):** core platform API is mounted under `/api/v1/platform` (`/health`, `/modules`, `/jobs`), strictly separated from domain module routes (`/api/v1/{module_id}`). Request correlation is preserved across the application lifecycle.
+
 ---
 
 ## ADR-002 — Domain-Oriented Business Modules
@@ -1302,6 +1304,8 @@ Workers claim and execute jobs independently.
 **Implementation status (M0, 2026-11-10):** not implemented. There is no worker process, no job table, and no claim or retry mechanism. M0 delivers an API-only composition; this decision becomes actionable in M1, where worker execution and durable job state are introduced.
 
 **Implementation status (M1 Stage 2, 2026-11-12):** durable job state and atomic claiming are implemented in `JobStore` with `FOR UPDATE SKIP LOCKED`. The independent worker process still only initializes; claiming loop, dispatch, and retry orchestration are Stage 5.
+
+**Implementation status (M1 Stage 4, 2026-11-12):** asynchronous job submission boundary is operational at `POST /api/v1/platform/jobs` and `GET /api/v1/platform/jobs/{job_id}`. Submissions persist immediately into `QUEUED` status and return HTTP 201 without blocking on execution (INV-008); worker claiming loop and handler execution follow in Stage 5.
 
 ---
 

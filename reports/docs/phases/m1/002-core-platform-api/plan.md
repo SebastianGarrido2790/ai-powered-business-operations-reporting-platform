@@ -1,6 +1,6 @@
 # 002 — Core Platform API: Plan
 
-**Status:** Approved — specification approved 2026-11-12; plan and tasks pending execution  
+**Status:** Approved — specification approved 2026-11-12; executed and verified 2026-11-12; gate passed and acknowledged by the project owner on 2026-11-12  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** M1 Stage 4 (with integration in Stages 6, 7)  
 **Governing decisions:** M1-D04, M1-D05, M1-D07, M1-D08  
