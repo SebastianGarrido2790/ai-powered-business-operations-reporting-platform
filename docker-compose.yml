@@ -54,5 +54,27 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "app.workers.runner"]
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      DEBUG: ${DEBUG:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-operations}
+    depends_on:
+      db:
+        condition: service_healthy
+    # The image healthcheck probes the API port; the worker exposes no HTTP server.
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
 volumes:
   postgres_data:

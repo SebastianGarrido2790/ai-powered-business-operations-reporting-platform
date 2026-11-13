@@ -20,6 +20,11 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.persistence.errors import (
+    InvalidJobStateError,
+    JobNotFoundError,
+)
+from app.core.persistence.job_state import validate_transition
 from app.core.persistence.models import (
     AttemptStatus,
     IdempotencyKeyModel,
@@ -31,18 +36,6 @@ from app.core.persistence.models import (
 DEFAULT_MAX_ATTEMPTS = 3
 DEFAULT_CLAIM_LEASE = timedelta(minutes=5)
 RECOVERY_ERROR_MESSAGE = "Claim lease expired before completion; job recovered."
-
-
-class JobStoreError(Exception):
-    """Base class for durable job persistence failures."""
-
-
-class JobNotFoundError(JobStoreError):
-    """Raised when an operation targets an unknown job."""
-
-
-class InvalidJobStateError(JobStoreError):
-    """Raised when a guarded state update finds an unexpected current state."""
 
 
 @dataclass(frozen=True)
@@ -286,6 +279,7 @@ class JobStore:
                 raise InvalidJobStateError(
                     f"Job {job_id} is {job.status}, expected {expected_status.value}."
                 )
+            validate_transition(JobStatus(job.status), status)
 
             job.status = status.value
             job.claim_lease_until = claim_lease_until
@@ -405,3 +399,144 @@ class InMemoryJobStore:
     def get_job_by_id(self, job_id: uuid.UUID) -> JobRecord | None:
         """Return a job record by ID if it exists."""
         return self._jobs.get(job_id)
+
+    def claim_next_job(
+        self,
+        lease_duration: timedelta = DEFAULT_CLAIM_LEASE,
+    ) -> JobClaim | None:
+        """Atomically claim the next eligible QUEUED or RETRY_SCHEDULED job."""
+        now = _now()
+        eligible: list[JobRecord] = []
+        for job in self._jobs.values():
+            if (
+                job.status in (JobStatus.QUEUED.value, JobStatus.RETRY_SCHEDULED.value)
+                and job.scheduled_at <= now
+                and job.attempt_count < job.max_attempts
+            ):
+                eligible.append(job)
+
+        if not eligible:
+            return None
+
+        # Deterministic ordering: scheduled_at asc, created_at asc, id asc
+        eligible.sort(key=lambda j: (j.scheduled_at, j.created_at, j.id))
+        target = eligible[0]
+
+        validate_transition(JobStatus(target.status), JobStatus.RUNNING)
+        new_attempt = target.attempt_count + 1
+        lease_until = now + lease_duration
+
+        updated = JobRecord(
+            id=target.id,
+            job_type=target.job_type,
+            status=JobStatus.RUNNING.value,
+            payload=target.payload,
+            correlation_id=target.correlation_id,
+            idempotency_key=target.idempotency_key,
+            attempt_count=new_attempt,
+            max_attempts=target.max_attempts,
+            claim_lease_until=lease_until,
+            scheduled_at=target.scheduled_at,
+            created_at=target.created_at,
+            updated_at=now,
+        )
+        self._jobs[target.id] = updated
+        return JobClaim(
+            job_id=target.id,
+            job_type=target.job_type,
+            payload=dict(target.payload),
+            attempt_number=new_attempt,
+            max_attempts=target.max_attempts,
+            correlation_id=target.correlation_id,
+            lease_until=lease_until,
+        )
+
+    def update_job_status(
+        self,
+        job_id: uuid.UUID,
+        status: JobStatus,
+        *,
+        error_message: str | None = None,
+        scheduled_at: datetime | None = None,
+        claim_lease_until: datetime | None = None,
+        expected_status: JobStatus | None = None,
+    ) -> JobRecord:
+        """Apply a status update with state transition and existence guards."""
+        if not isinstance(status, JobStatus):
+            raise ValueError("status must be a JobStatus value.")
+
+        job = self._jobs.get(job_id)
+        if job is None:
+            raise JobNotFoundError(f"Job {job_id} does not exist.")
+        if expected_status is not None and job.status != expected_status.value:
+            raise InvalidJobStateError(
+                f"Job {job_id} is {job.status}, expected {expected_status.value}."
+            )
+        validate_transition(JobStatus(job.status), status)
+
+        now = _now()
+        updated = JobRecord(
+            id=job.id,
+            job_type=job.job_type,
+            status=status.value,
+            payload=job.payload,
+            correlation_id=job.correlation_id,
+            idempotency_key=job.idempotency_key,
+            attempt_count=job.attempt_count,
+            max_attempts=job.max_attempts,
+            claim_lease_until=claim_lease_until,
+            scheduled_at=scheduled_at if scheduled_at is not None else job.scheduled_at,
+            created_at=job.created_at,
+            updated_at=now,
+        )
+        self._jobs[job_id] = updated
+        return updated
+
+    def recover_stale_jobs(self) -> tuple[RecoveredJob, ...]:
+        """Reconcile expired RUNNING leases into retry or review states."""
+        now = _now()
+        recovered: list[RecoveredJob] = []
+
+        stale_jobs = [
+            j
+            for j in self._jobs.values()
+            if j.status == JobStatus.RUNNING.value
+            and j.claim_lease_until is not None
+            and j.claim_lease_until < now
+        ]
+        stale_jobs.sort(key=lambda j: (j.claim_lease_until or now, j.id))
+
+        for job in stale_jobs:
+            previous = JobStatus(job.status)
+            if job.attempt_count < job.max_attempts:
+                new_status = JobStatus.RETRY_SCHEDULED
+                new_scheduled_at = now
+            else:
+                new_status = JobStatus.NEEDS_REVIEW
+                new_scheduled_at = job.scheduled_at
+
+            updated = JobRecord(
+                id=job.id,
+                job_type=job.job_type,
+                status=new_status.value,
+                payload=job.payload,
+                correlation_id=job.correlation_id,
+                idempotency_key=job.idempotency_key,
+                attempt_count=job.attempt_count,
+                max_attempts=job.max_attempts,
+                claim_lease_until=None,
+                scheduled_at=new_scheduled_at,
+                created_at=job.created_at,
+                updated_at=now,
+            )
+            self._jobs[job.id] = updated
+            recovered.append(
+                RecoveredJob(
+                    job_id=job.id,
+                    previous_status=previous,
+                    new_status=new_status,
+                    attempt_count=job.attempt_count,
+                )
+            )
+
+        return tuple(recovered)

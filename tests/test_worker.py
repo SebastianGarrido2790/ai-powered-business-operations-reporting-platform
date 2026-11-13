@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.core.bootstrap import PlatformRuntimeContext, bootstrap_platform
 from app.core.config import Settings
+from app.core.persistence.job_store import InMemoryJobStore
 from app.core.registry import RegistrationState
 from app.workers.runner import initialize_worker, main
 
@@ -44,15 +45,21 @@ def test_api_and_worker_share_the_bootstrap_boundary() -> None:
 
 def test_worker_entrypoint_returns_cleanly() -> None:
     """Verify worker initialization completes and disposes shared resources."""
-    assert main() == 0
+    assert main(single_run=True, store=InMemoryJobStore()) == 0
+
+
+def test_worker_cli_once_flag() -> None:
+    """Verify worker parses --once CLI argument and exits cleanly after one pass."""
+    assert main(["--once"], store=InMemoryJobStore()) == 0
 
 
 def test_worker_initializes_without_importing_the_api() -> None:
     """Verify worker startup does not construct or import the FastAPI application."""
     command = (
         "import sys; "
+        "from app.core.persistence.job_store import InMemoryJobStore; "
         "from app.workers.runner import main; "
-        "code = main(); "
+        "code = main(single_run=True, store=InMemoryJobStore()); "
         "print('app.main' in sys.modules); "
         "raise SystemExit(code)"
     )
