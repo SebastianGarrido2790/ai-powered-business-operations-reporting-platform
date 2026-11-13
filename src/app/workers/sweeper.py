@@ -8,7 +8,10 @@ Governed by:
 
 from typing import Protocol
 
+from app.core.logging import get_logger
 from app.core.persistence.job_store import RecoveredJob
+
+logger = get_logger("app.workers.sweeper")
 
 
 class StaleJobStore(Protocol):
@@ -27,7 +30,15 @@ class JobSweeper:
 
     def sweep(self) -> tuple[RecoveredJob, ...]:
         """Perform one recovery pass, returning all recovered job summaries."""
-        return self._store.recover_stale_jobs()
+        recovered = self._store.recover_stale_jobs()
+        if recovered:
+            logger.warning(
+                "jobs_recovered",
+                count=len(recovered),
+                job_ids=[str(job.job_id) for job in recovered],
+                new_statuses=sorted({job.new_status.value for job in recovered}),
+            )
+        return recovered
 
 
 def reconcile_stale_jobs(store: StaleJobStore) -> tuple[RecoveredJob, ...]:

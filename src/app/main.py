@@ -18,6 +18,7 @@ from app.core.bootstrap import PlatformRuntimeContext, bootstrap_platform
 from app.core.config import Settings, get_settings
 from app.core.correlation import CorrelationIdMiddleware
 from app.core.errors import register_error_handlers
+from app.core.logging import configure_logging
 
 
 @asynccontextmanager
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Create the FastAPI application through the shared platform bootstrap."""
     app_settings = settings or get_settings()
+    configure_logging(app_settings, service="api")
     context = bootstrap_platform(app_settings)
 
     app = FastAPI(

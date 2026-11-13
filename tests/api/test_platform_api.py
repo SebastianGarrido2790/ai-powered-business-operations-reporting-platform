@@ -55,20 +55,57 @@ def client(app_instance: FastAPI) -> TestClient:
 # ---------------------------------------------------------------------------
 
 
-def test_platform_health_public_access(client: TestClient) -> None:
-    """Verify platform health endpoint is publicly accessible without auth (INV-014)."""
+class _HealthyEngine:
+    """Minimal engine stand-in that accepts the readiness probe query."""
+
+    def connect(self) -> "_HealthyEngine":
+        return self
+
+    def __enter__(self) -> "_HealthyEngine":
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+    def execute(self, _statement: object) -> None:
+        return None
+
+    def dispose(self) -> None:
+        return None
+
+
+def test_platform_health_requires_authentication(client: TestClient) -> None:
+    """Verify platform health enforces the health permission boundary (SDD 005)."""
     response = client.get("/api/v1/platform/health")
+    assert response.status_code == 401
+    assert response.json()["code"] == "unauthenticated"
+    assert "X-Correlation-ID" in response.headers
+
+
+def test_platform_health_returns_structured_status(
+    app_instance: FastAPI,
+) -> None:
+    """Verify authorized health calls report database state with the contract shape."""
+    app_instance.state.platform_context = replace(
+        app_instance.state.platform_context,
+        engine=_HealthyEngine(),
+    )
+    headers = _make_auth_header(CanonicalRole.OPERATIONS_ANALYST.value)
+
+    with TestClient(app_instance) as c:
+        response = c.get("/api/v1/platform/health", headers=headers)
+
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] in ("ok", "degraded")
-    assert data["database"] in ("connected", "unreachable")
+    assert data["status"] == "ok"
+    assert data["database"] == "connected"
     assert "version" in data
     assert "timestamp" in data
     assert "X-Correlation-ID" in response.headers
 
 
 def test_platform_health_degraded_when_database_unreachable(app_instance: FastAPI) -> None:
-    """Verify health returns degraded when the database engine cannot connect."""
+    """Verify health returns 503 when the database engine cannot connect."""
 
     # Simulate a broken database engine
     class FailingEngine:
@@ -82,9 +119,11 @@ def test_platform_health_degraded_when_database_unreachable(app_instance: FastAP
         app_instance.state.platform_context,
         engine=FailingEngine(),
     )
+    headers = _make_auth_header(CanonicalRole.PLATFORM_ADMIN.value)
+
     with TestClient(app_instance) as c:
-        response = c.get("/api/v1/platform/health")
-        assert response.status_code == 200
+        response = c.get("/api/v1/platform/health", headers=headers)
+        assert response.status_code == 503
         data = response.json()
         assert data["status"] == "degraded"
         assert data["database"] == "unreachable"

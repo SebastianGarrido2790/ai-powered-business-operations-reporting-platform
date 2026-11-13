@@ -13,11 +13,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.correlation import get_correlation_id
+from app.core.logging import get_logger
 from app.core.persistence import InMemoryJobStore, JobRecord, JobStore
 from app.core.security import PlatformPermission, require_permission
 from app.schemas.platform.jobs import JobCreateRequest, JobDetailResponse, JobResponse
 
 router = APIRouter()
+logger = get_logger("app.api.jobs")
 
 
 def _get_job_store(request: Request) -> Any:
@@ -63,6 +65,14 @@ async def submit_job(
         payload=job_in.payload,
         idempotency_key=job_in.idempotency_key,
         correlation_id=correlation_id,
+    )
+
+    logger.info(
+        "job_submitted",
+        job_id=str(record.id),
+        job_type=record.job_type,
+        status=record.status,
+        has_idempotency_key=record.idempotency_key is not None,
     )
 
     return JobResponse(

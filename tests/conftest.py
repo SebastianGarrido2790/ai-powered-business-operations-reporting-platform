@@ -1,8 +1,11 @@
 """Shared pytest configuration for the BOPF test suite."""
 
+from collections.abc import Iterator
+
 import pytest
 
 from app.core.config import Settings
+from app.core.correlation import reset_correlation_id, set_correlation_id
 
 _SETTINGS_ENV_VARS = (
     "APP_NAME",
@@ -38,3 +41,13 @@ def isolate_settings(monkeypatch: pytest.MonkeyPatch) -> None:
         "model_config",
         {**Settings.model_config, "env_file": None},
     )
+
+
+@pytest.fixture(autouse=True)
+def isolate_correlation_context() -> Iterator[None]:
+    """Clear any correlation ID bound by a previous test's context."""
+    token = set_correlation_id(None)
+    try:
+        yield
+    finally:
+        reset_correlation_id(token)

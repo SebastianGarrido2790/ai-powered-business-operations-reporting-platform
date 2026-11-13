@@ -6,10 +6,13 @@ Governed by:
 - INV-004: explicit module boundaries and non-sensitive metadata only.
 """
 
-from fastapi import APIRouter, Depends, Request
+from datetime import UTC, datetime
 
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+
+from app.core.health import normalize_module_health
 from app.core.security import PlatformPermission, require_permission
-from app.schemas.platform.modules import ModuleSummaryResponse
+from app.schemas.platform.modules import ModuleHealthResponse, ModuleSummaryResponse
 
 router = APIRouter()
 
@@ -44,3 +47,49 @@ async def list_registered_modules(request: Request) -> list[ModuleSummaryRespons
 
     results.sort(key=lambda m: m.id)
     return results
+
+
+@router.get(
+    "/modules/{module_id}/health",
+    response_model=ModuleHealthResponse,
+    dependencies=[Depends(require_permission(PlatformPermission.MODULES_READ.value))],
+    summary="Get Registered Module Health",
+)
+async def get_module_health(module_id: str, request: Request) -> ModuleHealthResponse:
+    """Return health reported by one registered module.
+
+    Module health never changes platform liveness. A failing module health
+    check is reported as `degraded` here, without leaking diagnostics.
+    """
+    context = getattr(request.app.state, "platform_context", None)
+    registry = getattr(context, "registry", None) if context is not None else None
+
+    module = None
+    if registry is not None:
+        module = next(
+            (m for m in registry.get_active_modules() if m.manifest.id == module_id),
+            None,
+        )
+
+    if module is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "not_found",
+                "message": f"Module '{module_id}' is not registered.",
+                "module_id": module_id,
+            },
+        )
+
+    try:
+        health_status, reason = normalize_module_health(module.get_health_status())
+    except Exception:
+        health_status, reason = "degraded", "Module health check failed."
+
+    return ModuleHealthResponse(
+        module_id=module.manifest.id,
+        status=health_status,
+        version=module.manifest.version,
+        reason=reason,
+        timestamp=datetime.now(UTC),
+    )

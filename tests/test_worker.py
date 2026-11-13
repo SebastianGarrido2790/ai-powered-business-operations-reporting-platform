@@ -73,4 +73,5 @@ def test_worker_initializes_without_importing_the_api() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "False"
+    # Worker logs are emitted before the probe print; the final line is the probe.
+    assert result.stdout.strip().splitlines()[-1] == "False"

@@ -21,6 +21,8 @@ from typing import Any, Protocol
 
 from app.core.bootstrap import PlatformRuntimeContext, bootstrap_platform
 from app.core.config import Settings
+from app.core.correlation import reset_correlation_id, set_correlation_id
+from app.core.logging import configure_logging, get_logger
 from app.core.persistence.job_state import calculate_backoff
 from app.core.persistence.job_store import JobClaim, JobRecord, JobStore
 from app.core.persistence.models import JobStatus
@@ -33,6 +35,9 @@ from app.workers.sweeper import JobSweeper, StaleJobStore
 
 DEFAULT_POLL_INTERVAL = 1.0
 DEFAULT_SWEEP_INTERVAL = 60.0
+MAX_LOGGED_ERROR_LENGTH = 500
+
+logger = get_logger("app.workers.runner")
 
 
 class WorkerStore(StaleJobStore, Protocol):
@@ -58,6 +63,11 @@ class WorkerStore(StaleJobStore, Protocol):
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def _elapsed_ms(started: float) -> float:
+    """Return elapsed wall-clock time in milliseconds, rounded for logs."""
+    return round((time.perf_counter() - started) * 1000, 2)
 
 
 def _install_signal_handlers(stop_event: threading.Event) -> None:
@@ -116,40 +126,84 @@ class Worker:
         if claim is None:
             return None
 
-        # Execute handler outside database transaction
+        # Execute handler outside database transaction, with the persisted
+        # correlation ID bound for every event emitted during execution.
+        token = set_correlation_id(claim.correlation_id)
+        started = time.perf_counter()
+        logger.info(
+            "job_claimed",
+            job_id=str(claim.job_id),
+            job_type=claim.job_type,
+            attempt=claim.attempt_number,
+            max_attempts=claim.max_attempts,
+        )
+
         try:
-            self._dispatcher.dispatch(claim)
-            return self._store.update_job_status(
-                claim.job_id,
-                JobStatus.SUCCEEDED,
-                expected_status=JobStatus.RUNNING,
-            )
-        except PermanentJobError as exc:
-            # Non-retryable error: fail immediately
-            return self._store.update_job_status(
-                claim.job_id,
-                JobStatus.FAILED,
-                error_message=str(exc),
-                expected_status=JobStatus.RUNNING,
-            )
-        except Exception as exc:
-            error_msg = str(exc) or exc.__class__.__name__
-            if claim.attempt_number < claim.max_attempts:
-                backoff = calculate_backoff(claim.attempt_number)
-                scheduled_at = _now() + backoff
+            try:
+                self._dispatcher.dispatch(claim)
+            except PermanentJobError as exc:
+                logger.error(
+                    "job_failed",
+                    job_id=str(claim.job_id),
+                    job_type=claim.job_type,
+                    attempt=claim.attempt_number,
+                    error_class=exc.__class__.__name__,
+                    error=str(exc)[:MAX_LOGGED_ERROR_LENGTH],
+                    retryable=False,
+                    duration_ms=_elapsed_ms(started),
+                )
                 return self._store.update_job_status(
                     claim.job_id,
-                    JobStatus.RETRY_SCHEDULED,
-                    scheduled_at=scheduled_at,
+                    JobStatus.FAILED,
+                    error_message=str(exc),
+                    expected_status=JobStatus.RUNNING,
+                )
+            except Exception as exc:
+                log = logger.warning if claim.attempt_number < claim.max_attempts else logger.error
+                log(
+                    "job_failed",
+                    job_id=str(claim.job_id),
+                    job_type=claim.job_type,
+                    attempt=claim.attempt_number,
+                    max_attempts=claim.max_attempts,
+                    error_class=exc.__class__.__name__,
+                    error=str(exc)[:MAX_LOGGED_ERROR_LENGTH],
+                    retryable=claim.attempt_number < claim.max_attempts,
+                    duration_ms=_elapsed_ms(started),
+                )
+
+                error_msg = str(exc) or exc.__class__.__name__
+                if claim.attempt_number < claim.max_attempts:
+                    backoff = calculate_backoff(claim.attempt_number)
+                    scheduled_at = _now() + backoff
+                    return self._store.update_job_status(
+                        claim.job_id,
+                        JobStatus.RETRY_SCHEDULED,
+                        scheduled_at=scheduled_at,
+                        error_message=error_msg,
+                        expected_status=JobStatus.RUNNING,
+                    )
+                return self._store.update_job_status(
+                    claim.job_id,
+                    JobStatus.FAILED,
                     error_message=error_msg,
                     expected_status=JobStatus.RUNNING,
                 )
-            return self._store.update_job_status(
-                claim.job_id,
-                JobStatus.FAILED,
-                error_message=error_msg,
-                expected_status=JobStatus.RUNNING,
-            )
+            else:
+                logger.info(
+                    "job_succeeded",
+                    job_id=str(claim.job_id),
+                    job_type=claim.job_type,
+                    attempt=claim.attempt_number,
+                    duration_ms=_elapsed_ms(started),
+                )
+                return self._store.update_job_status(
+                    claim.job_id,
+                    JobStatus.SUCCEEDED,
+                    expected_status=JobStatus.RUNNING,
+                )
+        finally:
+            reset_correlation_id(token)
 
     def run(
         self,
@@ -221,6 +275,7 @@ def main(
     run_once_mode = single_run or args.once
     target_max_jobs = max_jobs if max_jobs is not None else args.max_jobs
 
+    configure_logging(settings, service="worker")
     context = initialize_worker(settings)
     try:
         resolved_store = store or context.job_store or JobStore(context.engine)
@@ -228,12 +283,18 @@ def main(
             store=resolved_store,
             poll_interval=args.poll_interval,
         )
+        logger.info(
+            "worker_started",
+            mode="once" if run_once_mode else "loop",
+            environment=str(context.settings.environment),
+        )
 
         if run_once_mode:
             worker.run_once(sweep=True)
             return 0
 
         worker.run(max_jobs=target_max_jobs)
+        logger.info("worker_stopped")
         return 0
     finally:
         context.engine.dispose()
