@@ -351,3 +351,57 @@ class JobStore:
 
             session.flush()
             return tuple(recovered)
+
+
+class InMemoryJobStore:
+    """In-memory job persistence store for hermetic testing and local simulation."""
+
+    def __init__(self) -> None:
+        self._jobs: dict[uuid.UUID, JobRecord] = {}
+        self._idempotency_index: dict[str, uuid.UUID] = {}
+
+    def create_job(
+        self,
+        job_type: str,
+        payload: dict[str, Any],
+        *,
+        idempotency_key: str | None = None,
+        correlation_id: str | None = None,
+        max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+        scheduled_at: datetime | None = None,
+    ) -> JobRecord:
+        """Persist a job in memory, returning the existing job for a duplicate idempotency key."""
+        if not job_type.strip():
+            raise ValueError("job_type must not be blank.")
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1.")
+        if idempotency_key is not None and not idempotency_key.strip():
+            raise ValueError("idempotency_key must not be blank when provided.")
+
+        now = _now()
+        if idempotency_key is not None and idempotency_key in self._idempotency_index:
+            return self._jobs[self._idempotency_index[idempotency_key]]
+
+        job_id = uuid.uuid4()
+        record = JobRecord(
+            id=job_id,
+            job_type=job_type,
+            status=JobStatus.QUEUED.value,
+            payload=dict(payload),
+            correlation_id=correlation_id,
+            idempotency_key=idempotency_key,
+            attempt_count=0,
+            max_attempts=max_attempts,
+            claim_lease_until=None,
+            scheduled_at=scheduled_at or now,
+            created_at=now,
+            updated_at=now,
+        )
+        self._jobs[job_id] = record
+        if idempotency_key is not None:
+            self._idempotency_index[idempotency_key] = job_id
+        return record
+
+    def get_job_by_id(self, job_id: uuid.UUID) -> JobRecord | None:
+        """Return a job record by ID if it exists."""
+        return self._jobs.get(job_id)

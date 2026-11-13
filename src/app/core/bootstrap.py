@@ -14,6 +14,7 @@ from sqlalchemy.engine import Engine
 
 from app.core.config import Settings, get_settings
 from app.core.database import create_engine_from_settings
+from app.core.persistence.job_store import JobStore
 from app.core.registry import (
     BusinessModuleContract,
     ModuleRegistry,
@@ -30,6 +31,7 @@ class PlatformRuntimeContext:
     engine: Engine
     registry: ModuleRegistry
     platform_version: str
+    job_store: JobStore | None = None
 
 
 def _approved_module_factories() -> tuple[Callable[[], BusinessModuleContract], ...]:
@@ -62,9 +64,12 @@ def bootstrap_platform(settings: Settings | None = None) -> PlatformRuntimeConte
         except RegistryError:
             continue
 
+    job_store = JobStore(engine)
+
     return PlatformRuntimeContext(
         settings=resolved,
         engine=engine,
         registry=registry,
         platform_version=resolved.app_version,
+        job_store=job_store,
     )

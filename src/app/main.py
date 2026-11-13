@@ -13,8 +13,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.v1.platform import router as platform_router
 from app.core.bootstrap import PlatformRuntimeContext, bootstrap_platform
 from app.core.config import Settings, get_settings
+from app.core.correlation import CorrelationIdMiddleware
+from app.core.errors import register_error_handlers
 
 
 @asynccontextmanager
@@ -46,6 +49,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.platform_context = context
 
+    # Correlation ID propagation middleware
+    app.add_middleware(CorrelationIdMiddleware)
+
+    # Uniform platform error handling
+    register_error_handlers(app)
+
     # Platform-level liveness health check endpoint
     @app.get("/health", summary="Platform Liveness Health Check", tags=["platform"])
     async def platform_health() -> dict[str, str]:
@@ -56,6 +65,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "version": app_settings.app_version,
             "environment": str(app_settings.environment),
         }
+
+    # Core platform versioned API routes (/api/v1/platform)
+    app.include_router(
+        platform_router,
+        prefix="/api/v1/platform",
+        tags=["platform"],
+    )
 
     for module in context.registry.get_active_modules():
         module_router = module.get_router()

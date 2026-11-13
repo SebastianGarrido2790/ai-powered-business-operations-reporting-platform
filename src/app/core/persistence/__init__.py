@@ -3,6 +3,7 @@
 from app.core.persistence.job_store import (
     DEFAULT_CLAIM_LEASE,
     DEFAULT_MAX_ATTEMPTS,
+    InMemoryJobStore,
     InvalidJobStateError,
     JobClaim,
     JobNotFoundError,
@@ -29,6 +30,7 @@ __all__ = [
     "AttemptStatus",
     "Base",
     "IdempotencyKeyModel",
+    "InMemoryJobStore",
     "InvalidJobStateError",
     "JobAttemptModel",
     "JobClaim",
