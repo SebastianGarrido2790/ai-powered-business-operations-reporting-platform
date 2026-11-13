@@ -33,7 +33,7 @@ The parent decisions and candidate dispositions are already approved. The approv
 
 Candidate acceptance and approval of M1-D01–D09 do not automatically approve the detailed feature SDDs or authorize implementation.
 
-Completion record (2026-11-12): steps 1–3 approved for all five SDDs; step 4 execution authorization issued in `execution_plan.md`. Stages 0–4 passed their gates and were acknowledged by the project owner on 2026-11-12. Stage 5 (Independent Worker & Job Execution) was implemented and verified on 2026-11-13 (`verification/stage_5_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 6 (Logging, Correlation & Health Integration) was implemented and verified on 2026-11-13 (`verification/stage_6_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13.
+Completion record (2026-11-12): steps 1–3 approved for all five SDDs; step 4 execution authorization issued in `execution_plan.md`. Stages 0–4 passed their gates and were acknowledged by the project owner on 2026-11-12. Stage 5 (Independent Worker & Job Execution) was implemented and verified on 2026-11-13 (`verification/stage_5_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 6 (Logging, Correlation & Health Integration) was implemented and verified on 2026-11-13 (`verification/stage_6_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13. Stage 7 (Integrated Acceptance & One-Time Falsification) was implemented and verified on 2026-11-13 (`verification/stage_7_verification.md`); its gate passed and was acknowledged by the project owner on 2026-11-13.
 
 ## Authority
 

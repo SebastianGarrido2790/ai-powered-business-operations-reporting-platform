@@ -883,6 +883,8 @@ Request schemas, response schemas, pagination, filtering, and error formats will
 
 **M1 Stage 6 status:** `GET /health` remains public liveness. The authenticated platform endpoints now include `GET /api/v1/platform/health` (critical-dependency health; 503 when PostgreSQL is unreachable), `GET /api/v1/platform/readiness` (database and registry readiness; 503 when not ready), `GET /api/v1/platform/modules`, and `GET /api/v1/platform/modules/{module_id}/health`. Health and readiness require `platform.health.read`; module inspection and module health require `platform.modules.read`. The `M0 state` column above is retained as the original baseline record.
 
+**M1 Stage 7 status:** health and readiness probes use a bounded 3-second database connect timeout and run off the event loop, so an unreachable dependency yields a prompt 503 while liveness stays responsive. This behavior was verified against a stopped PostgreSQL service and recorded in `verification/stage_7_verification.md`.
+
 ### 10.3 API Behavior
 
 Long-running operations return:
