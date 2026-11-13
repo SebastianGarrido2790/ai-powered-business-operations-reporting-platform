@@ -162,6 +162,8 @@ Feature tasks must reference the relevant SDD acceptance criteria. Phase gates m
 
 ### Stage 0 — Pre-Implementation Verification & Dependency Check ✅ **PASSED**
 
+**Verification:** [`verification/stage_0_verification.md`](verification/stage_0_verification.md) — verification complete 2026-11-12; passed with recorded findings, acknowledged by project owner on 2026-11-12.
+
 **Goal**
 
 Establish a verified M1 starting point and confirm that all implementation prerequisites are satisfied.
@@ -210,6 +212,8 @@ If any condition fails, Stage 0 remains open. No implementation begins.
 ---
 
 ### Stage 1 — Platform Bootstrap & Module Registry ✅ **PASSED**
+
+**Verification:** [`verification/stage_1_verification.md`](verification/stage_1_verification.md) — implementation and verification complete 2026-11-12; gate passed and acknowledged by project owner on 2026-11-12.
 
 **Goal**
 
