@@ -8,9 +8,14 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
 
 from app.core.config import Settings
-from app.core.database import create_engine_from_settings, verify_connection
+from app.core.database import (
+    DB_CONNECT_TIMEOUT_SECONDS,
+    create_engine_from_settings,
+    verify_connection,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
@@ -80,6 +85,29 @@ def test_engine_honors_database_url_override() -> None:
         assert engine.url.render_as_string(hide_password=False) == (
             "postgresql+psycopg://u:p@override:5432/other"
         )
+    finally:
+        engine.dispose()
+
+
+def test_engine_sets_bounded_connect_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify dependency probes cannot hang on an unreachable database host."""
+    captured: dict[str, object] = {}
+
+    def fake_create_engine(url: str, **kwargs: object) -> Engine:
+        captured["url"] = url
+        captured.update(kwargs)
+        return create_engine("sqlite://")
+
+    monkeypatch.setattr("app.core.database.create_engine", fake_create_engine)
+
+    engine = create_engine_from_settings(
+        Settings(DATABASE_URL="postgresql+psycopg://u:p@localhost:5432/x")
+    )
+    try:
+        assert captured["connect_args"] == {"connect_timeout": DB_CONNECT_TIMEOUT_SECONDS}
+        assert DB_CONNECT_TIMEOUT_SECONDS > 0
     finally:
         engine.dispose()
 

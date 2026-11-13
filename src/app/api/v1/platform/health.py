@@ -10,6 +10,7 @@ Governed by:
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request, Response, status
+from starlette.concurrency import run_in_threadpool
 
 from app.core.bootstrap import PlatformRuntimeContext
 from app.core.config import get_settings
@@ -48,7 +49,8 @@ async def get_platform_health(request: Request, response: Response) -> PlatformH
     """
     context, version, _registry = _resolve_context(request)
     engine = getattr(context, "engine", None)
-    database_ready = check_database_ready(engine)
+    # Keep the event loop responsive: the probe may wait on a dead dependency.
+    database_ready = await run_in_threadpool(check_database_ready, engine)
 
     if not database_ready:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
@@ -76,7 +78,7 @@ async def get_platform_readiness(request: Request, response: Response) -> Platfo
     """
     context, version, registry = _resolve_context(request)
     engine = getattr(context, "engine", None)
-    database_ready = check_database_ready(engine)
+    database_ready = await run_in_threadpool(check_database_ready, engine)
     registry_ready = check_module_registry_ready(registry)
     ready = database_ready and registry_ready
 
