@@ -90,3 +90,5 @@ No architectural deviation or new dependency was introduced.
 ## 7. Stage 3 Handoff
 
 Stage 2 supplies the durable platform schema, the `JobStore` boundary, and the SQL-backed registration store that later stages compose into the API and worker. Stage 3 (Authentication & Authorization) is independent of persistence and may begin at the project owner's direction. Wiring durable registration and job submission into runtime composition remains Stage 4/5 scope.
+
+**Stage 8 closure note (2026-11-13):** job submission and worker composition were completed in Stages 4–5, but durable registration runtime activation was not. The store and table remain implemented and tested; runtime wiring is accepted as M1 deviation S8-F1 and deferred to M2. See [`stage_8_verification.md`](stage_8_verification.md) §7.

@@ -25,7 +25,7 @@ Its central architectural principle is:
 | Phase | Scope | State |
 |---|---|---|
 | **M0 — Project Scaffolding & Engineering Standards** | Repository structure, runtime lock, configuration/secrets conventions, application skeleton and minimal Sourcing contract, local containerized environment, database/migration baseline, CI quality gates | ✅ **Complete** — signed off 2026-11-10 (`reports/docs/phases/m0/`) |
-| **M1 — Platform Foundation** | Module registry/lifecycle, workers, durable jobs, platform metadata persistence, API foundation, authentication/authorization, observability | In progress — Stages 1–7 (bootstrap/registry, persistence foundation, auth boundary, platform API, independent worker, logging/correlation/health, integrated acceptance) implemented and verified; Stages 3–7 gates acknowledged 2026-11-12/13 |
+| **M1 — Platform Foundation** | Module registry/lifecycle, workers, durable jobs, platform metadata persistence, API foundation, authentication/authorization, observability | Implementation complete — Stages 1–8 (bootstrap/registry, persistence foundation, auth boundary, platform API, independent worker, logging/correlation/health, integrated acceptance, ADR consolidation) verified; all 10 exit criteria satisfied; Stages 3–7 gates acknowledged 2026-11-12/13; M1 sign-off pending 2026-11-13 |
 
 **M0 delivered:**
 
@@ -37,6 +37,8 @@ Its central architectural principle is:
 - Documented engineering conventions, configuration/secrets hygiene, locked dependencies, and reproducibility via `uv.lock`.
 
 **M0 did not deliver:** module registry and lifecycle, independent workers, durable job execution, transactional outbox, n8n integration, LLM/ML/AI capabilities, Power BI read models, authentication and authorization, or observability instrumentation. These are deliberate M1+ scope, subject to future architectural decisions.
+
+**M1 delivered:** shared bootstrap, explicit module registry and manifest/compatibility validation, versioned platform API, provider-neutral authentication and permission enforcement, independent worker with durable PostgreSQL jobs and lease recovery, structured logging and correlation, and distinct liveness/readiness/platform/module health. Stage 8 verified all 10 exit criteria and consolidated the ADRs; M1 sign-off is pending. The one accepted limitation is runtime activation of durable module-registration state (S8-F1), deferred to M2.
 
 ## Architecture at a Glance
 

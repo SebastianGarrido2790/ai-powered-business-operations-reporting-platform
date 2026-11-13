@@ -398,7 +398,9 @@ Database migrations must be executed through a controlled deployment process rat
 
 **M1 Stage 1 status:** discovery is replaced by an explicit code-defined allowlist. Registration validates manifest, compatibility, and contract conformance; active, failed, and inactive states are observable; deactivation preserves data. Migrations remain operator-invoked.
 
-**M1 Stage 2 status:** registration state can be persisted in `platform.module_registrations` through `SqlAlchemyModuleRegistrationStore`, including hash and diagnostics for failed or inactive modules. Runtime startup still defaults to the in-memory store; durable registration is activated with API/worker composition in Stage 4/5.
+**M1 Stage 2 status:** registration state can be persisted in `platform.module_registrations` through `SqlAlchemyModuleRegistrationStore`, including hash and diagnostics for failed or inactive modules. Runtime startup defaults to the in-memory store; durable registration activation was deferred to Stage 4/5.
+
+**M1 Stage 8 status:** consolidated. The code-defined allowlist, strict manifest validation, compatibility checks, typed contract conformance, and lifecycle states are operational in both API and worker composition. Registration records remain deterministic per start. Durable registration-state activation was not wired into bootstrap and is accepted as the M1 limitation S8-F1, deferred to M2 with project-owner approval on 2026-11-13.
 
 ---
 
@@ -1184,6 +1186,8 @@ Adopt a domain-oriented modular monolith with explicit module boundaries.
 
 **Implementation status (M1 Stage 4, 2026-11-12):** core platform API is mounted under `/api/v1/platform` (`/health`, `/modules`, `/jobs`), strictly separated from domain module routes (`/api/v1/{module_id}`). Request correlation is preserved across the application lifecycle.
 
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. The modular monolith is realized as one API deployable, one independent worker process, and PostgreSQL, with `core` shared and `modules` owning domain behavior. The worker does not import the API application, and no service boundary was introduced beyond the approved architecture.
+
 ---
 
 ## ADR-002 — Domain-Oriented Business Modules
@@ -1216,6 +1220,8 @@ Each module owns its domain entities, business rules, APIs, analytical definitio
 **Implementation status (M0, 2026-11-10):** realized for one module. `src/app/modules/sourcing/` owns its manifest, contract, and router; Platform Core holds only configuration and database concerns. No second module exists to test the boundary.
 
 **Implementation status (M1 Stage 3, 2026-11-12):** module permissions are enforced at the application boundary. Sourcing module routes (`/api/v1/sourcing/health`, `/api/v1/sourcing/status`) require the module-declared `sourcing.read` permission via `require_permission`.
+
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. Sourcing owns its manifest, contract, router, permissions, and health behavior. Platform Core provides registration, persistence, security, logging, and job execution without embedding Sourcing business rules. The single-module boundary was exercised at every stage gate.
 
 ---
 
@@ -1255,6 +1261,8 @@ n8n uses a separate database and credentials.
 **Implementation status (M0, 2026-11-10):** partially realized. One PostgreSQL 16 instance is used for local development and CI. The baseline migration creates only the empty `platform` schema; `sourcing` and `analytics_sourcing` are not created until the features that own them are implemented. Schema separation is therefore a design intent, not yet an enforced boundary. Migrations are operator-invoked and version-controlled (INV-015).
 
 **Implementation status (M1 Stage 2, 2026-11-12):** `0002_platform_jobs_and_metadata` adds the platform-owned registration, job, attempt, and idempotency tables. No business schema exists yet. Verification runs the migration against disposable databases only; applying it to a deployed database remains an operator step.
+
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. PostgreSQL is the authoritative store for platform jobs and metadata; the database is reached through one bounded SQLAlchemy/psycopg engine factory; migrations remain explicit and operator-invoked. No Sourcing or analytical schema was created in M1. Durable registration-state activation remains the accepted limitation S8-F1.
 
 ---
 
@@ -1325,7 +1333,9 @@ Workers claim and execute jobs independently.
 
 **Implementation status (M1 Stage 4, 2026-11-12):** asynchronous job submission boundary is operational at `POST /api/v1/platform/jobs` and `GET /api/v1/platform/jobs/{job_id}`. Submissions persist immediately into `QUEUED` status and return HTTP 201 without blocking on execution (INV-008); worker claiming loop and handler execution follow in Stage 5.
 
-**Implementation status (M1 Stage 5, 2026-11-13):** realized. `src/app/workers/runner.py` is an independent process that initializes through the shared bootstrap, claims jobs with `FOR UPDATE SKIP LOCKED`, executes registered handlers outside the claim transaction, records attempts, schedules bounded retries, and recovers expired `RUNNING` leases through `src/app/workers/sweeper.py`. The worker is a separate Docker Compose service (`worker`) and has no dependency on the API process. Controlled SIGKILL falsification remains pending for Stage 7.
+**Implementation status (M1 Stage 5, 2026-11-13):** realized. `src/app/workers/runner.py` is an independent process that initializes through the shared bootstrap, claims jobs with `FOR UPDATE SKIP LOCKED`, executes registered handlers outside the claim transaction, records attempts, schedules bounded retries, and recovers expired `RUNNING` leases through `src/app/workers/sweeper.py`. The worker is a separate Docker Compose service (`worker`) and has no dependency on the API process.
+
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. The Stage 7 controlled interruption falsification passed: a claimed job was force-terminated, its lease expired, the sweeper moved it to `RETRY_SCHEDULED`, attempt 2 succeeded, one job row remained, and correlation was preserved. No duplicate effect was observed. The worker remains a separate process with no API dependency.
 
 ---
 
@@ -1390,6 +1400,8 @@ Only modules included in the approved registry may be activated.
 **Implementation status (M0, 2026-11-10):** precursor only. `create_app()` mounts the Sourcing router explicitly, and the module exposes a frozen dataclass contract with identity and health status. There is no registry, no manifest loading or validation, no compatibility check, and no activation lifecycle. The M0 implementation deliberately stops short of the registry to avoid pre-implementing M1.
 
 **Implementation status (M1 Stage 2, 2026-11-12):** the registry, manifest validation, compatibility checks, and lifecycle are implemented. Registration state has a durable SQLAlchemy-backed store; runtime composition still defaults to in-memory registration until Stage 4/5.
+
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. Both API and worker initialize through `bootstrap_platform()`, which registers only the explicit code-defined allowlist and rejects incompatible or invalid modules before activation. The durable registration store and `platform.module_registrations` remain implemented and tested; runtime wiring is the accepted limitation S8-F1.
 
 ---
 
@@ -1514,6 +1526,8 @@ Do not implement multi-tenancy until a concrete requirement exists.
 
 **Implementation status (M1 Stage 3, 2026-11-12):** realized. The authentication and authorization model evaluates in a single-enterprise context without tenant-isolation overhead. Roles and permissions are centralized and enforced at application boundaries.
 
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. All M1 identities, roles, permissions, and jobs operate in a single-enterprise context. No tenant identifier, tenant-isolation policy, or multi-tenant routing was introduced.
+
 ---
 
 ## ADR-012 — Infrastructure Expansion by Evidence
@@ -1548,6 +1562,8 @@ Examples:
 - Simplicity must not compromise required security, reliability, or data integrity.
 
 **Implementation status (M0, 2026-11-10):** realized. The local stack is two containers (API plus PostgreSQL). No Redis, message broker, n8n instance, Kubernetes, or analytical warehouse was introduced. CI uses one Python version and no service beyond PostgreSQL.
+
+**Implementation status (M1 Stage 8, 2026-11-13):** consolidated. The local stack is API, worker, and PostgreSQL. The worker was added because independent asynchronous execution was an approved M1 requirement, not speculative infrastructure. PostgreSQL remains the job queue; no Redis, broker, n8n instance, Kubernetes, or warehouse was introduced.
 
 ---
 

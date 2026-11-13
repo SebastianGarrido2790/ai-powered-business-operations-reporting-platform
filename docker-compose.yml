@@ -1,8 +1,9 @@
 # ==============================================================================
-# BOPF Minimal Local Development Environment (M0 Stage 4)
+# BOPF Minimal Local Development Environment (M0 Stage 4; worker added in M1 Stage 5)
 #
 # Governed by:
-# - M0-D05: Local development service composition (API + PostgreSQL only).
+# - M0-D05: Local development service composition.
+# - M1-D05 / ADR-005: Independent worker process for asynchronous jobs.
 # - ADR-012: Infrastructure expansion by evidence.
 # - INV-016: Local synthetic configuration; ports bound to loopback.
 # ==============================================================================

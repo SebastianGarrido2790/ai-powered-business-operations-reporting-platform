@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M1 — Platform Foundation  
-**Status:** Approved — M1 execution authorized by the project owner on 2026-11-12; Stages 0–4 passed and acknowledged 2026-11-12; Stage 5 passed 2026-11-13 and acknowledged by the project owner 2026-11-13; Stage 6 passed 2026-11-13 and acknowledged by the project owner 2026-11-13; Stage 7 passed 2026-11-13 and acknowledged by the project owner 2026-11-13  
+**Status:** Approved — M1 execution authorized by the project owner on 2026-11-12; Stages 0–4 passed and acknowledged 2026-11-12; Stage 5 passed 2026-11-13 and acknowledged by the project owner 2026-11-13; Stage 6 passed 2026-11-13 and acknowledged by the project owner 2026-11-13; Stage 7 passed 2026-11-13 and acknowledged by the project owner 2026-11-13; Stage 8 reconciliation complete 2026-11-13, M1 sign-off pending  
 **Previous phase:** M0 — Complete, signed off 2026-11-10
 **Decision baseline:** M1-D01 through M1-D09 — Approved/confirmed 2026-11-11
 **SDD reconciliation:** 2026-11-12
@@ -82,7 +82,7 @@ The required sequence before implementation was:
 4. Approve the Execution Plan. ✅ Approved
 5. Obtain explicit M1 execution authorization. ✅ Granted 2026-11-12
 
-All five preconditions are satisfied. Stages 0–2 passed and were acknowledged by the project owner on 2026-11-12; Stage 3 is implemented and verified in `verification/stage_3_verification.md`, gate acknowledged by the project owner on 2026-11-12; Stage 4 is implemented and verified in `verification/stage_4_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 5 is implemented and verified in `verification/stage_5_verification.md`, gate acknowledged by the project owner on 2026-11-13. Stage 6 is implemented and verified in `verification/stage_6_verification.md`, gate acknowledged by the project owner on 2026-11-13. Stage 7 is implemented and verified in `verification/stage_7_verification.md` on 2026-11-13 and gate acknowledged by the project owner on 2026-11-13; Stage 8 follows upon acknowledgement.
+All five preconditions are satisfied. Stages 0–2 passed and were acknowledged by the project owner on 2026-11-12; Stage 3 is implemented and verified in `verification/stage_3_verification.md`, gate acknowledged by the project owner on 2026-11-12; Stage 4 is implemented and verified in `verification/stage_4_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 5 is implemented and verified in `verification/stage_5_verification.md`, gate acknowledged by the project owner on 2026-11-13. Stage 6 is implemented and verified in `verification/stage_6_verification.md`, gate acknowledged by the project owner on 2026-11-13. Stage 7 is implemented and verified in `verification/stage_7_verification.md` on 2026-11-13 and gate acknowledged by the project owner on 2026-11-13. Stage 8 reconciliation is complete in `verification/stage_8_verification.md`; M1 closure awaits project-owner sign-off.
 
 ### 2.2 Stage 0 verification targets
 
@@ -473,7 +473,7 @@ No separate injected failure in this stage. Normal retry, concurrency, and proce
 
 ---
 
-### Stage 6 — Logging, Correlation & Health Integration
+### Stage 6 — Logging, Correlation & Health Integration ✅ **PASSED**
 
 **Verification:** [`verification/stage_6_verification.md`](verification/stage_6_verification.md) — implementation and verification complete 2026-11-13; gate passed and acknowledged by the project owner on 2026-11-13.
 
@@ -522,7 +522,7 @@ No separate fault injection. Normal tests must verify that database unavailabili
 
 ---
 
-### Stage 7 — Integrated Acceptance & One-Time Falsification
+### Stage 7 — Integrated Acceptance & One-Time Falsification ✅ **PASSED**
 
 **Verification:** [`verification/stage_7_verification.md`](verification/stage_7_verification.md) — implementation and verification complete 2026-11-13; gate passed and acknowledged by the project owner on 2026-11-13.
 
@@ -592,7 +592,9 @@ A failed falsification test is a failed stage gate. It must not be waived merely
 
 ---
 
-### Stage 8 — ADR Consolidation & Phase Sign-Off
+### Stage 8 — ADR Consolidation & Phase Sign-Off ✅ **RECONCILIATION COMPLETE**
+
+**Verification:** [`verification/stage_8_verification.md`](verification/stage_8_verification.md) — decision reconciliation, exit-criteria verification, ADR consolidation, Post-Implementation Review, findings, and deferred work complete 2026-11-13; M1 sign-off pending.
 
 **Goal**
 
@@ -725,63 +727,65 @@ The following evidence must exist before M1 sign-off.
 
 ### Repository and engineering baseline
 
-- [ ] Starting and final commit recorded.
-- [ ] Working tree and branch state recorded.
-- [ ] Dependency lock integrity verified.
-- [ ] Formatting and lint checks pass.
-- [ ] Strict type checking passes.
-- [ ] Full automated test suite passes.
-- [ ] CI run is green.
+- [x] Starting and final commit recorded.
+- [x] Working tree and branch state recorded.
+- [x] Dependency lock integrity verified.
+- [x] Formatting and lint checks pass.
+- [x] Strict type checking passes.
+- [x] Full automated test suite passes.
+- [x] CI run is green.
 
 ### Platform bootstrap and registry
 
-- [ ] Shared bootstrap evidence.
-- [ ] Independent API and worker initialization evidence.
-- [ ] Sourcing registry registration evidence.
-- [ ] Invalid manifest and compatibility rejection tests.
-- [ ] Registry determinism and repeat-registration tests.
+- [x] Shared bootstrap evidence.
+- [x] Independent API and worker initialization evidence.
+- [x] Sourcing registry registration evidence.
+- [x] Invalid manifest and compatibility rejection tests.
+- [x] Registry determinism and repeat-registration tests.
 
 ### Persistence and job execution
 
-- [ ] Migration revision and clean-database evidence.
-- [ ] Platform table and schema ownership verification.
-- [ ] No automatic migration on process startup.
-- [ ] Job lifecycle and state-transition tests.
-- [ ] Concurrent claim tests.
-- [ ] Retry and idempotency tests.
-- [ ] Worker independence and graceful shutdown tests.
-- [ ] Interrupted-job recovery evidence.
+- [x] Migration revision and clean-database evidence.
+- [x] Platform table and schema ownership verification.
+- [x] No automatic migration on process startup.
+- [x] Job lifecycle and state-transition tests.
+- [x] Concurrent claim tests.
+- [x] Retry and idempotency tests.
+- [x] Worker independence and graceful shutdown tests.
+- [x] Interrupted-job recovery evidence.
 
 ### API and security
 
-- [ ] Platform API contract tests.
-- [ ] Job submission and status retrieval evidence.
-- [ ] Authentication tests.
-- [ ] Authorization and module permission tests.
-- [ ] Production test-identity safeguard evidence.
-- [ ] Error response and input-validation tests.
+- [x] Platform API contract tests.
+- [x] Job submission and status retrieval evidence.
+- [x] Authentication tests.
+- [x] Authorization and module permission tests.
+- [x] Production test-identity safeguard evidence.
+- [x] Error response and input-validation tests.
 
 ### Logging, correlation, and health
 
-- [ ] Structured API and worker logs.
-- [ ] API-to-job-to-worker correlation evidence.
-- [ ] Secret and sensitive-data logging checks.
-- [ ] Liveness and readiness tests.
-- [ ] Dependency readiness tests.
-- [ ] Module/platform health distinction tests.
+- [x] Structured API and worker logs.
+- [x] API-to-job-to-worker correlation evidence.
+- [x] Secret and sensitive-data logging checks.
+- [x] Liveness and readiness tests.
+- [x] Dependency readiness tests.
+- [x] Module/platform health distinction tests.
 
 ### Integrated acceptance and closure
 
-- [ ] End-to-end job execution evidence.
-- [ ] One-time worker-interruption falsification evidence.
-- [ ] Post-falsification full test run.
-- [ ] All stage records completed.
-- [ ] All findings resolved or formally accepted.
-- [ ] Decision-to-implementation reconciliation.
-- [ ] ADR consolidation.
-- [ ] Post-Implementation Review.
-- [ ] M1 exit criteria verified.
+- [x] End-to-end job execution evidence.
+- [x] One-time worker-interruption falsification evidence.
+- [x] Post-falsification full test run.
+- [x] All stage records completed.
+- [x] All findings resolved or formally accepted.
+- [x] Decision-to-implementation reconciliation.
+- [x] ADR consolidation.
+- [x] Post-Implementation Review.
+- [x] M1 exit criteria verified.
 - [ ] Project-owner phase sign-off.
+
+All items above except project-owner sign-off are verified with evidence in [`verification/stage_8_verification.md`](verification/stage_8_verification.md) and the per-stage verification records. Project-owner sign-off is recorded at the close of Stage 8.
 
 ## 9. Summary Table & Stage Record
 
@@ -797,7 +801,7 @@ The following evidence must exist before M1 sign-off.
 | 5 | Independent Worker & Job Execution | Durable asynchronous processing | ADR-005, ADR-012 | Job lifecycle and worker behavior verified | Complete — evidence recorded and acknowledged 2026-11-13 |
 | 6 | Logging, Correlation & Health Integration | Cross-process operational visibility | ADR-001 | Correlation and health semantics verified | Complete — evidence recorded and acknowledged 2026-11-13 |
 | 7 | Integrated Acceptance & One-Time Falsification | Full integration evidence and controlled recovery test | None | All acceptance tests and falsification pass | Complete — evidence recorded and acknowledged 2026-11-13 |
-| 8 | ADR Consolidation & Phase Sign-Off | Final architecture records, PIR, and M1 sign-off | As required by approved changes | Formal phase closure | Not started |
+| 8 | ADR Consolidation & Phase Sign-Off | Final architecture records, PIR, and M1 sign-off | As required by approved changes | Formal phase closure | Reconciliation complete — M1 sign-off pending 2026-11-13 |
 
 ### 9.2 Stage record
 
@@ -813,7 +817,7 @@ Maintain the following record as execution progresses:
 | 5 | 2026-11-13 | 2026-11-13 | [`verification/stage_5_verification.md`](verification/stage_5_verification.md) | **Passed** — acknowledged by project owner 2026-11-13 | S5-F1/F2 PostgreSQL and container checks environmental; S5-F3 accepted; S5-F4 zero external dependencies | Project owner |
 | 6 | 2026-11-13 | 2026-11-13 | [`verification/stage_6_verification.md`](verification/stage_6_verification.md) | **Passed** — acknowledged by project owner 2026-11-13 (gate evidence at `88bb356`) | S6-F1 health contract change approved by Stage 6 tasks; S6-F2 PostgreSQL/container checks environmental; S6-F3 redaction boundary accepted; S6-F4 correlation IDs are trace-only; S6-F5 zero external dependencies | Project owner |
 | 7 | 2026-11-13 | 2026-11-13 | [`verification/stage_7_verification.md`](verification/stage_7_verification.md) | **Passed** — acknowledged by project owner 2026-11-13 (verification commit `1ee42c3`) | S7-F1 health-probe hang resolved with bounded connect timeout and threadpool probes; S7-F2 container image not rebuilt; S7-F3 CI pending push; S7-F4 unrelated native PostgreSQL | Project owner |
-| 8 | — | — | — | Pending | — | — |
+| 8 | 2026-11-13 | 2026-11-13 | [`verification/stage_8_verification.md`](verification/stage_8_verification.md) | **Reconciliation complete** — 10/10 exit criteria, all 13 decision entries implemented (S8-F1 accepted limitation), ADRs consolidated, PIR complete; M1 sign-off pending | S8-F1 durable registration activation accepted as M1 deviation; S8-F2 CI confirmed green; S8-F3 ADR notes consolidated; S8-F4 container image not rebuilt/accepted; S8-F5–F9 informational | Pending |
 
 A stage may be marked complete only after its gate has passed and the evidence reference has been recorded.
 
@@ -833,6 +837,6 @@ A stage may be marked complete only after its gate has passed and the evidence r
 | M1 Execution Plan | Approved 2026-11-12 | No further action needed |
 | M1 execution authorization | Granted 2026-11-12 | None; implementation may begin at the project owner's direction |
 
-**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 2 is implemented and verified in `verification/stage_2_verification.md`, gate acknowledged by the project owner on 2026-11-12, and pushed as `eab8482` (implementation) and `6358c07` (verification evidence); CI run `43316145152` on `6358c07` passed. Stage 3 is implemented and verified in `verification/stage_3_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12. Stage 4 is implemented and verified in `verification/stage_4_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12. Stage 5 is implemented and verified in `verification/stage_5_verification.md`; its gate passed on 2026-11-13 and was acknowledged by the project owner on 2026-11-13. Stage 6 is implemented and verified in `verification/stage_6_verification.md`; its gate passed on 2026-11-13 and was acknowledged by the project owner on 2026-11-13. Stage 7 is implemented and verified in `verification/stage_7_verification.md`; its gate passed on 2026-11-13 and was acknowledged by the project owner on 2026-11-13.
+**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 2 is implemented and verified in `verification/stage_2_verification.md`, gate acknowledged by the project owner on 2026-11-12, and pushed as `eab8482` (implementation) and `6358c07` (verification evidence); CI run `43316145152` on `6358c07` passed. Stage 3 is implemented and verified in `verification/stage_3_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12. Stage 4 is implemented and verified in `verification/stage_4_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12. Stage 5 is implemented and verified in `verification/stage_5_verification.md`; its gate passed on 2026-11-13 and was acknowledged by the project owner on 2026-11-13. Stage 6 is implemented and verified in `verification/stage_6_verification.md`; its gate passed on 2026-11-13 and was acknowledged by the project owner on 2026-11-13. Stage 7 is implemented and verified in `verification/stage_7_verification.md`; its gate passed on 2026-11-13 and was acknowledged by the project owner on 2026-11-13. Stage 8 reconciliation is complete in `verification/stage_8_verification.md`; all M1 exit criteria are satisfied and M1 closure awaits project-owner sign-off.
 
 **Phase completion rule:** M1 remains incomplete until Stage 8 passes and the project owner signs off.

@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M1 — Platform Foundation  
-**Status:** Completed — decision record finalized (all M1 decisions approved/confirmed 2026-11-11); phase implementation pending feature SDDs and execution authorization  
+**Status:** Completed — all M1 decisions approved/confirmed 2026-11-11, implemented and reconciled at Stage 8 on 2026-11-13; phase closure pending project-owner sign-off  
 **Document type:** Living phase decision record  
 **Previous phase:** M0 — Project Scaffolding & Engineering Standards (Complete, signed off 2026-11-10)
 
@@ -1151,9 +1151,36 @@ At phase closure:
 ### Phase authorization
 
 **Implementation Plan status:** Fully approved — all decisions (Batches 1–4 and Baseline) approved/confirmed 2026-11-11.  
-**Feature SDD status:** Not yet approved.  
-**Execution Plan status:** Not yet drafted.  
-**Execution authorization:** Not granted.  
-**Phase status:** Not started.
+**Feature SDD status:** Approved — all five SDD specifications, plans, and tasks approved 2026-11-12.  
+**Execution Plan status:** Approved 2026-11-12; Stages 0–7 passed and acknowledged.  
+**Execution authorization:** Granted by the project owner 2026-11-12.  
+**Phase status:** Implementation and Stage 8 reconciliation complete 2026-11-13; M1 closure pending project-owner sign-off.
 
-M1 implementation may begin only after the applicable decisions, feature specifications, feature plans/tasks, and Execution Plan have received the required approvals, followed by explicit project-owner authorization.
+---
+
+## 10. Phase Outcome Record (Stage 8)
+
+**Reconciliation date:** 2026-11-13  
+**Evidence:** [`verification/stage_8_verification.md`](verification/stage_8_verification.md)
+
+Every approved decision is reflected in the system. The only limitation is the runtime activation of durable module-registration state, accepted by the project owner on 2026-11-13 as S8-F1 and deferred to M2. No decision was rejected, replaced, or left unimplemented; no new architectural decision required an ADR.
+
+| Decision | Outcome | Primary evidence |
+|---|---|---|
+| M1-D01 | Implemented / Verified | `src/app/core/bootstrap.py`; `tests/test_bootstrap.py`, `tests/test_worker.py` |
+| M1-D02 | Implemented / Verified | `src/app/core/registry/`; `tests/test_registry.py`, `tests/test_manifest.py` |
+| M1-D02.1 | Implemented with accepted limitation / Verified at store level | `platform.module_registrations`, `SqlAlchemyModuleRegistrationStore`; S8-F1 deferral |
+| M1-D03 | Implemented / Verified | Manifest validation, compatibility checks, module health; `tests/test_manifest.py`, `tests/test_health_endpoints.py` |
+| M1-D04 | Implemented / Verified | `/api/v1/platform` routes; Stage 4 and Stage 7 evidence |
+| M1-D05 | Implemented / Verified | `JobStore`, `app/workers/runner.py`; `tests/test_persistence.py`, `tests/test_worker_runner.py` |
+| M1-D05.1 | Implemented / Verified | State machine, bounded retries, recovery; `tests/test_job_state.py`, `tests/test_interrupted_recovery.py` |
+| M1-D06 | Implemented with accepted limitation / Verified | `0002_platform_jobs_and_metadata`; job persistence operational, registration runtime wiring deferred |
+| M1-D07 | Implemented / Verified | Token boundary and permission enforcement; `tests/test_security_enforcement.py` |
+| M1-D07.1 | Implemented / Verified | Provider-neutral boundary and production safeguard; Stage 3 evidence |
+| M1-D07.2 | Implemented / Verified | Central role-to-permission mapping; `tests/test_authorization.py` |
+| M1-D08 | Implemented / Verified | Structured logs, correlation, health semantics; Stage 6 and Stage 7 evidence |
+| M1-D09 | Implemented / Verified | Scope inspection; no excluded infrastructure introduced |
+
+**Exit criteria:** all 10 M1 criteria satisfied (Stage 8 verification §4).  
+**Findings:** no open critical or high-severity finding; S8-F1 accepted, S8-F4 accepted, S8-F2/F3/F8 resolved.  
+**Deferred work and M2 entry conditions:** recorded in Stage 8 verification §9.
