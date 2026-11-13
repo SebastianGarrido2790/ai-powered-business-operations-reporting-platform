@@ -3,7 +3,7 @@
 **Phase:** M1 — Platform Foundation  
 **Stage:** 3  
 **Verification date:** 2026-11-12  
-**Status:** Implementation and verification complete — gate passed; awaiting project-owner acknowledgement  
+**Status:** Implementation and verification complete — gate passed and acknowledged by the project owner on 2026-11-12  
 **Authorization:** M1 execution authorized by the project owner on 2026-11-12
 
 ---

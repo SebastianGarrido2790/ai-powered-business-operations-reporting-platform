@@ -1,6 +1,6 @@
 # 004 — Authentication & Authorization: Tasks
 
-**Status:** Approved — feature specification approved 2026-11-12; executed and verified 2026-11-12  
+**Status:** Approved — feature specification approved 2026-11-12; executed and verified 2026-11-12; gate passed and acknowledged by the project owner on 2026-11-12  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stage 3 (Authentication & Authorization Boundary)  
 **Governing decisions:** M1-D07 / D07.1 / D07.2, M1-D02, M1-D04  

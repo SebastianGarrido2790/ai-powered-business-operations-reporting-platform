@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M1 — Platform Foundation  
-**Status:** Approved — M1 execution authorized by the project owner on 2026-11-12; Stages 0–2 and Stage 4 passed and acknowledged 2026-11-12; Stage 3 passed (awaiting acknowledgement)
+**Status:** Approved — M1 execution authorized by the project owner on 2026-11-12; Stages 0–4 passed and acknowledged 2026-11-12
 **Previous phase:** M0 — Complete, signed off 2026-11-10
 **Decision baseline:** M1-D01 through M1-D09 — Approved/confirmed 2026-11-11
 **SDD reconciliation:** 2026-11-12
@@ -82,7 +82,7 @@ The required sequence before implementation was:
 4. Approve the Execution Plan. ✅ Approved
 5. Obtain explicit M1 execution authorization. ✅ Granted 2026-11-12
 
-All five preconditions are satisfied. Stages 0–2 passed and were acknowledged by the project owner on 2026-11-12; Stage 3 is implemented and verified in `verification/stage_3_verification.md` (awaiting acknowledgement); Stage 4 is implemented and verified in `verification/stage_4_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 5 is next at the project owner's direction.
+All five preconditions are satisfied. Stages 0–2 passed and were acknowledged by the project owner on 2026-11-12; Stage 3 is implemented and verified in `verification/stage_3_verification.md`, gate acknowledged by the project owner on 2026-11-12; Stage 4 is implemented and verified in `verification/stage_4_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 5 is next at the project owner's direction.
 
 ### 2.2 Stage 0 verification targets
 
@@ -317,7 +317,7 @@ No separate fault injection. Migration, constraint, invalid-state, and persisten
 
 ### Stage 3 — Authentication & Authorization Boundary ✅ **PASSED**
 
-**Verification:** [`verification/stage_3_verification.md`](verification/stage_3_verification.md) — implementation and verification complete 2026-11-12; gate awaiting project-owner acknowledgement.
+**Verification:** [`verification/stage_3_verification.md`](verification/stage_3_verification.md) — implementation and verification complete 2026-11-12; gate passed and acknowledged by the project owner on 2026-11-12.
 
 **Goal**
 
@@ -786,7 +786,7 @@ The following evidence must exist before M1 sign-off.
 | 0 | Pre-Implementation Verification & Dependency Check | Verified M1 baseline and readiness record | None | All preconditions and baseline checks pass | Complete — evidence recorded 2026-11-12 |
 | 1 | Platform Bootstrap & Module Registry | Shared bootstrap and validated Sourcing registration | ADR-001, ADR-005, ADR-007 | Registry and independent initialization verified | Complete — evidence recorded and acknowledged 2026-11-12 |
 | 2 | Platform Persistence Foundation | Platform migrations and persistence layer | ADR-003, ADR-005, ADR-007 | Durable platform persistence verified | Complete — evidence recorded and acknowledged 2026-11-12 |
-| 3 | Authentication & Authorization Boundary | Enforceable authentication and permission boundary | ADR-002, ADR-011 | Security tests pass | Implemented and verified 2026-11-12 — awaiting owner acknowledgement |
+| 3 | Authentication & Authorization Boundary | Enforceable authentication and permission boundary | ADR-002, ADR-011 | Security tests pass | Complete — evidence recorded and acknowledged 2026-11-12 |
 | 4 | Core Platform API | Versioned platform endpoints and job contracts | ADR-001, ADR-005 | API contracts and security verified | Complete — evidence recorded and acknowledged 2026-11-12 |
 | 5 | Independent Worker & Job Execution | Durable asynchronous processing | ADR-005, ADR-012 | Job lifecycle and worker behavior verified | Not started |
 | 6 | Logging, Correlation & Health Integration | Cross-process operational visibility | ADR-001 | Correlation and health semantics verified | Not started |
@@ -802,7 +802,7 @@ Maintain the following record as execution progresses:
 | 0 | 2026-11-12 | 2026-11-12 | [`verification/stage_0_verification.md`](verification/stage_0_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | F1/F2 resolved; F3 resolved; F4 expected | Project owner |
 | 1 | 2026-11-12 | 2026-11-12 | [`verification/stage_1_verification.md`](verification/stage_1_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S1-F1/F2/F5 expected; no architectural deviation | Project owner |
 | 2 | 2026-11-12 | 2026-11-12 | [`verification/stage_2_verification.md`](verification/stage_2_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 (`eab8482`, `6358c07`; CI run `43316145152` green) | S2-F1/F2 deferred by decision; S2-F3 fixed; no architectural deviation | Project owner |
-| 3 | 2026-11-12 | 2026-11-12 | [`verification/stage_3_verification.md`](verification/stage_3_verification.md) | **Passed** — awaiting project-owner acknowledgement | S3-F1 platform routes in Stage 4; S3-F2 zero external dependencies | — |
+| 3 | 2026-11-12 | 2026-11-12 | [`verification/stage_3_verification.md`](verification/stage_3_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S3-F1 platform routes in Stage 4; S3-F2 zero external dependencies | Project owner |
 | 4 | 2026-11-12 | 2026-11-12 | [`verification/stage_4_verification.md`](verification/stage_4_verification.md) | **Passed** — acknowledged by project owner 2026-11-12 | S4-F1 worker deferred to Stage 5; S4-F2 zero external dependencies | Project owner |
 | 5 | — | — | — | Pending | — | — |
 | 6 | — | — | — | Pending | — | — |
@@ -827,6 +827,6 @@ A stage may be marked complete only after its gate has passed and the evidence r
 | M1 Execution Plan | Approved 2026-11-12 | No further action needed |
 | M1 execution authorization | Granted 2026-11-12 | None; implementation may begin at the project owner's direction |
 
-**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 2 is implemented and verified in `verification/stage_2_verification.md`, gate acknowledged by the project owner on 2026-11-12, and pushed as `eab8482` (implementation) and `6358c07` (verification evidence); CI run `43316145152` on `6358c07` passed. Stage 3 is implemented and verified in `verification/stage_3_verification.md`; its gate awaits project-owner acknowledgement. Stage 4 is implemented and verified in `verification/stage_4_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12.
+**M1 execution is authorized as of 2026-11-12.** The project owner granted explicit authorization for M1 implementation. Stage 0 passed on 2026-11-12. Stage 1 is implemented and verified in `verification/stage_1_verification.md`, gate acknowledged by the project owner on 2026-11-12. Stage 2 is implemented and verified in `verification/stage_2_verification.md`, gate acknowledged by the project owner on 2026-11-12, and pushed as `eab8482` (implementation) and `6358c07` (verification evidence); CI run `43316145152` on `6358c07` passed. Stage 3 is implemented and verified in `verification/stage_3_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12. Stage 4 is implemented and verified in `verification/stage_4_verification.md`; its gate was passed and acknowledged by the project owner on 2026-11-12.
 
 **Phase completion rule:** M1 remains incomplete until Stage 8 passes and the project owner signs off.
