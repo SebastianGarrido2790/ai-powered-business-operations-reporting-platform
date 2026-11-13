@@ -1,6 +1,6 @@
 # 003 — Persistent Job Execution: Plan
 
-**Status:** Approved — feature specification approved 2026-11-12; Phase 1 (Stage 2) executed 2026-11-12; Phases 2–4 pending  
+**Status:** Approved — feature specification approved 2026-11-12; Phase 1 (Stage 2) executed 2026-11-12; Phases 2–4 (Stage 5) executed and verified 2026-11-13; Stage 5 gate acknowledged by the project owner 2026-11-13  
 **Parent:** [`spec.md`](spec.md)  
 **Execution stage:** Stage 2 (Platform Persistence Foundation) & Stage 5 (Independent Worker & Job Execution), with integration in Stages 6, 7  
 **Governing decisions:** M1-D05 / D05.1, M1-D06, M1-D01, M1-D08, ADR-003, ADR-005, ADR-012  

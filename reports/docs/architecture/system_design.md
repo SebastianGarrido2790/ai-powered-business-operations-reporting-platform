@@ -570,7 +570,9 @@ The job record should include:
 
 Attempt history should be persisted separately or represented through a suitable execution-history structure.
 
-**M1 Stage 2 status:** implemented. `0002_platform_jobs_and_metadata` creates `platform.jobs`, `platform.job_attempts`, and `platform.idempotency_keys`; `JobStore` supports submission, read, guarded status updates, `FOR UPDATE SKIP LOCKED` claiming, and stale-lease recovery. Worker-side orchestration, full state-machine enforcement, and retry scheduling remain Stage 5.
+**M1 Stage 2 status:** implemented. `0002_platform_jobs_and_metadata` creates `platform.jobs`, `platform.job_attempts`, and `platform.idempotency_keys`; `JobStore` supports submission, read, guarded status updates, `FOR UPDATE SKIP LOCKED` claiming, and stale-lease recovery.
+
+**M1 Stage 5 status:** complete. The approved lifecycle graph is enforced in `src/app/core/persistence/job_state.py` and by `JobStore.update_job_status`; retry scheduling uses the approved bounded backoff (30s → 120s → 480s). Worker-side orchestration, handler dispatch, attempt recording, and stale-lease recovery run in `src/app/workers/` (`runner.py`, `dispatcher.py`, `sweeper.py`).
 
 ### 5.4 Worker Concurrency
 
@@ -991,6 +993,8 @@ Target services:
 
 **M0 status:** the implemented stack is `api` and `db` only, defined in `docker-compose.yml`. The worker, n8n, and the LLM provider shown in the diagram are targets introduced in later milestones; no container or configuration exists for them.
 
+**M1 Stage 5 status:** a `worker` service now exists in `docker-compose.yml`, built from the same image and running `python -m app.workers.runner` with a `db` health dependency. n8n and the LLM provider remain targets.
+
 Optional services should be introduced only when required.
 
 ### 12.2 Staging
@@ -1164,6 +1168,8 @@ Adopt a domain-oriented modular monolith with explicit module boundaries.
 
 **Implementation status (M0, 2026-11-10):** realized. One FastAPI deployable under `src/app/`, with `core` and `modules` separated in code and a single module mounted. No worker process exists, so the "with independent workers" half of the style is not yet in operation.
 
+**Implementation status (M1 Stage 5, 2026-11-13):** the "with independent workers" half is now in operation. `src/app/workers/` provides a separately started process (API + worker + PostgreSQL), sharing `core` contracts without importing the API application.
+
 **Implementation status (M1 Stage 4, 2026-11-12):** core platform API is mounted under `/api/v1/platform` (`/health`, `/modules`, `/jobs`), strictly separated from domain module routes (`/api/v1/{module_id}`). Request correlation is preserved across the application lifecycle.
 
 ---
@@ -1306,6 +1312,8 @@ Workers claim and execute jobs independently.
 **Implementation status (M1 Stage 2, 2026-11-12):** durable job state and atomic claiming are implemented in `JobStore` with `FOR UPDATE SKIP LOCKED`. The independent worker process still only initializes; claiming loop, dispatch, and retry orchestration are Stage 5.
 
 **Implementation status (M1 Stage 4, 2026-11-12):** asynchronous job submission boundary is operational at `POST /api/v1/platform/jobs` and `GET /api/v1/platform/jobs/{job_id}`. Submissions persist immediately into `QUEUED` status and return HTTP 201 without blocking on execution (INV-008); worker claiming loop and handler execution follow in Stage 5.
+
+**Implementation status (M1 Stage 5, 2026-11-13):** realized. `src/app/workers/runner.py` is an independent process that initializes through the shared bootstrap, claims jobs with `FOR UPDATE SKIP LOCKED`, executes registered handlers outside the claim transaction, records attempts, schedules bounded retries, and recovers expired `RUNNING` leases through `src/app/workers/sweeper.py`. The worker is a separate Docker Compose service (`worker`) and has no dependency on the API process. Controlled SIGKILL falsification remains pending for Stage 7.
 
 ---
 
