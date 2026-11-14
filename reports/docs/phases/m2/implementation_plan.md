@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Partially approved — Batches 1 and 2 (M2-D01 to M2-D05, including nested decisions) approved 2026-11-13/2026-11-14; batch 3 pending project-owner decision; no implementation authorized  
+**Status:** Partially approved — Batches 1–3 (M2-D01 to M2-D07.1, including nested decisions) approved 2026-11-13/2026-11-14; baseline D08 pending project-owner confirmation; no implementation authorized  
 **Document type:** Living phase decision record  
 **Previous phase:** M1 — Platform Foundation (Complete, signed off 2026-11-13)
 
@@ -435,6 +435,7 @@ Do not automatically create all three files for every package. A capability full
 
 > **Batch 1 approval note (2026-11-13):** M2-D01 (including nested decision M2-D01.1) and M2-D02 (including nested decisions M2-D02.1 and M2-D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 > **Batch 2 approval note (2026-11-14):** D03 (incl. D03.1), D04 (incl. D04.1), D05 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+> **Batch 3 approval note (2026-11-14):** D06, D07 (incl. D07.1) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ### 5.2 Decision register
 
@@ -450,9 +451,9 @@ Do not automatically create all three files for every package. A capability full
 | M2-D04 | Validation, quarantine, and data-quality semantics | Yes | **✅ Approved — Batch 2 (2026-11-14)** |
 | M2-D04.1 | Validation rule authority and change control (nested in D04) | Yes (as part of D04) | **✅ Approved — Batch 2 (2026-11-14)** |
 | M2-D05 | Normalization and canonical representation | Yes | **✅ Approved — Batch 2 (2026-11-14)** |
-| M2-D06 | Deduplication, reconciliation, and source authority | Yes | **Proposed** |
-| M2-D07 | Ingestion and data-quality API surface | Yes | **Proposed** |
-| M2-D07.1 | Ingestion permissions (nested in D07) | Yes (as part of D07) | **Proposed** |
+| M2-D06 | Deduplication, reconciliation, and source authority | Yes | **✅ Approved — Batch 3 (2026-11-14)** |
+| M2-D07 | Ingestion and data-quality API surface | Yes | **✅ Approved — Batch 3 (2026-11-14)** |
+| M2-D07.1 | Ingestion permissions (nested in D07) | Yes (as part of D07) | **✅ Approved — Batch 3 (2026-11-14)** |
 | M2-D08 | M2 scope exclusions and implementation boundaries | No — determined by approved roadmap | **Pending confirmation** |
 
 ### 5.3 Approval batching
@@ -461,13 +462,14 @@ Do not automatically create all three files for every package. A capability full
 |---|---|---|---|
 | 1 — Acquisition and execution | D01 (incl. D01.1), D02 (incl. D02.1, D02.2) | Establishes how data enters the platform and how ingestion work executes | **✅ Approved 2026-11-13** |
 | 2 — Data foundation | D03 (incl. D03.1), D04 (incl. D04.1), D05 | Establishes storage, provenance, validation, and normalization | **✅ Approved 2026-11-14** |
-| 3 — Reconciliation and access | D06, D07 (incl. D07.1) | Establishes matching and the external Sourcing API | **Pending** |
+| 3 — Reconciliation and access | D06, D07 (incl. D07.1) | Establishes matching and the external Sourcing API | **✅ Approved 2026-11-14** |
 | Baseline | D08 | Records scope constraints; no new architectural choice | **Pending confirmation** |
 
 Batching reduces fragmented approval requests. It does not remove the requirement to approve each material decision.
 
 **Batch 1 approval note (2026-11-13):** D01 (including nested decision D01.1) and D02 (including nested decisions D02.1 and D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 **Batch 2 approval note (2026-11-14):** D03 (including nested decision D03.1), D04 (including nested decision D04.1), and D05 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+**Batch 3 approval note (2026-11-14):** D06, D07 (including nested decision D07.1) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ---
 
@@ -938,7 +940,7 @@ FR-DAT-04 requires duplicate and potential-duplicate detection. FR-DAT-05 requir
 | B. Deterministic cascade: source-qualified external identifier, then exact normalized business key, then exact unique normalized name with corroborating attributes; ambiguous candidates flagged, never auto-linked | Balances safety and usability; requires a documented rule order |
 | C. Fuzzy or probabilistic matching with confidence-based auto-linking | Higher match rate, but requires evaluation, threshold approval, and a much larger correctness surface |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-14 — Batch 3; alternatives A and C retained above for traceability)*
 
 **Duplicate detection**
 
@@ -984,7 +986,7 @@ This is constrained by the PRD’s source-of-truth ownership, not a new architec
 
 M2 treats ingestion as additive/upsert. Absence from a source snapshot does not delete or deactivate a curated record. Deletion and tombstone propagation are deferred until a source contract and business rule justify them.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **✅ Approved 2026-11-14 — Batch 3.**
 
 **Consequences**
 
@@ -1023,7 +1025,7 @@ The system design lists ingestion and sourcing entity endpoints as M2 targets. T
 | B. Expose a focused Sourcing API for ingestion submission, run status, issues, and entity retrieval | Meets M2 with a bounded, domain-oriented surface |
 | C. Build a full data-quality dashboard, remediation, and bulk-correction API | Exceeds M2 and introduces workflow and authorization complexity not yet specified |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-14 — Batch 3; alternatives A and C retained above for traceability)*
 
 Expose the following Sourcing endpoints:
 
@@ -1058,7 +1060,7 @@ Contract rules:
 - Errors use the existing uniform envelope with code, message, correlation ID, and safe details.
 - No exception, alert, approval, report, or analytics endpoint is added in M2.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **✅ Approved 2026-11-14 — Batch 3.**
 
 **Consequences**
 
@@ -1077,7 +1079,7 @@ Options:
 | B. Use `sourcing.manage` for ingestion and `sourcing.read` for inspection | No new permission, but `sourcing.manage` is broad and the integration service does not hold it |
 | C. Add `sourcing.ingest` for initiation; use `sourcing.read` for status, issues, and entity retrieval; reserve `sourcing.manage` for future record management | Least privilege and an explicit machine-integration permission; adds one permission |
 
-**Recommendation — C.** *(Proposed; no approval yet)*
+**Recommendation — C.** *(✅ Approved 2026-11-14 — Batch 3, as part of D07; alternatives A and B retained above for traceability)*
 
 - Add `sourcing.ingest` to the Sourcing manifest and the canonical role mapping.
 - Grant it to `integration_service`, `operations_manager`, and `platform_admin`.
@@ -1087,7 +1089,7 @@ Options:
 - Enforce permissions at the API boundary. The worker still validates the job payload and source definition even though submission was authorized.
 - Bump the Sourcing manifest version to reflect the added capabilities and permissions; keep the platform minimum compatible with the M1 runtime.
 
-**Approval required:** Yes, as part of D07. **Proposed.**
+**Approval required:** Yes, as part of D07. **✅ Approved 2026-11-14 — Batch 3 (D07).**
 
 ---
 
@@ -1258,14 +1260,14 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 | M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D04 |
 | M2-D04.1 | B — Versioned code-defined rule catalog | **Approved — Batch 2 (as part of D04)** | 2026-11-14 | Approved as part of D04; §6 M2-D04.1 |
 | M2-D05 | B — Preserve raw values; deterministic canonical normalization | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D05 |
-| M2-D06 | B — Deterministic matching cascade; ambiguous links remain unresolved | **Proposed** | — | Awaiting project-owner decision |
-| M2-D07 | B — Focused Sourcing ingestion, issue, and entity API | **Proposed** | — | Awaiting project-owner decision |
-| M2-D07.1 | C — New `sourcing.ingest` permission; `sourcing.read` for inspection | **Proposed** | — | Awaiting decision as part of D07 |
+| M2-D06 | B — Deterministic matching cascade; ambiguous links remain unresolved | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D06 |
+| M2-D07 | B — Focused Sourcing ingestion, issue, and entity API | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D07 |
+| M2-D07.1 | C — New `sourcing.ingest` permission; `sourcing.read` for inspection | **Approved — Batch 3 (as part of D07)** | 2026-11-14 | Approved as part of D07; §6 M2-D07.1 |
 | M2-D08 | Constrained by approved scope — M2 boundaries upheld | **Pending confirmation** | — | Follows the approved roadmap; any exception requires a scope change |
 
 ### Phase authorization
 
-**Implementation Plan status:** Partially approved — Batches 1 and 2 approved 2026-11-13/2026-11-14; batch 3 pending project-owner decision.  
+**Implementation Plan status:** Partially approved — Batches 1–3 approved 2026-11-13/2026-11-14; baseline D08 pending project-owner confirmation.  
 **Feature SDD status:** Not started.  
 **Execution Plan status:** Not started.  
 **Execution authorization:** Not granted.  
