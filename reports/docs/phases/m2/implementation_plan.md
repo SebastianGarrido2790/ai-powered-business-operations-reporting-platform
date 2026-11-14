@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Partially approved — Batch 1 (M2-D01, M2-D01.1, M2-D02, M2-D02.1, M2-D02.2) approved 2026-11-13; batches 2 and 3 pending project-owner decision; no implementation authorized  
+**Status:** Partially approved — Batches 1 and 2 (M2-D01 to M2-D05, including nested decisions) approved 2026-11-13/2026-11-14; batch 3 pending project-owner decision; no implementation authorized  
 **Document type:** Living phase decision record  
 **Previous phase:** M1 — Platform Foundation (Complete, signed off 2026-11-13)
 
@@ -433,7 +433,8 @@ Do not automatically create all three files for every package. A capability full
 - **Verified:** Implementation checked against acceptance evidence.
 - **Superseded:** Replaced by a later approved decision.
 
-> **Batch 1 approval note (2026-11-13):** M2-D01 (including nested decision M2-D01.1) and M2-D02 (including nested decisions M2-D02.1 and M2-D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved. Batches 2 and 3 remain **Proposed**.
+> **Batch 1 approval note (2026-11-13):** M2-D01 (including nested decision M2-D01.1) and M2-D02 (including nested decisions M2-D02.1 and M2-D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+> **Batch 2 approval note (2026-11-14):** D03 (incl. D03.1), D04 (incl. D04.1), D05 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ### 5.2 Decision register
 
@@ -444,11 +445,11 @@ Do not automatically create all three files for every package. A capability full
 | M2-D02 | Ingestion execution and module-contributed job handlers | Yes | **✅ Approved — Batch 1 (2026-11-13)** |
 | M2-D02.1 | Ingestion submission idempotency (nested in D02) | Yes (as part of D02) | **✅ Approved — Batch 1 (2026-11-13)** |
 | M2-D02.2 | Ingestion execution budget and claim-lease safety (nested in D02) | Yes (as part of D02) | **✅ Approved — Conditional (2026-11-13); timed qualification before implementation** |
-| M2-D03 | Sourcing data model, layers, and provenance | Yes | **Proposed** |
-| M2-D03.1 | Record identity and update semantics (nested in D03) | Yes (as part of D03) | **Proposed** |
-| M2-D04 | Validation, quarantine, and data-quality semantics | Yes | **Proposed** |
-| M2-D04.1 | Validation rule authority and change control (nested in D04) | Yes (as part of D04) | **Proposed** |
-| M2-D05 | Normalization and canonical representation | Yes | **Proposed** |
+| M2-D03 | Sourcing data model, layers, and provenance | Yes | **✅ Approved — Batch 2 (2026-11-14)** |
+| M2-D03.1 | Record identity and update semantics (nested in D03) | Yes (as part of D03) | **✅ Approved — Batch 2 (2026-11-14)** |
+| M2-D04 | Validation, quarantine, and data-quality semantics | Yes | **✅ Approved — Batch 2 (2026-11-14)** |
+| M2-D04.1 | Validation rule authority and change control (nested in D04) | Yes (as part of D04) | **✅ Approved — Batch 2 (2026-11-14)** |
+| M2-D05 | Normalization and canonical representation | Yes | **✅ Approved — Batch 2 (2026-11-14)** |
 | M2-D06 | Deduplication, reconciliation, and source authority | Yes | **Proposed** |
 | M2-D07 | Ingestion and data-quality API surface | Yes | **Proposed** |
 | M2-D07.1 | Ingestion permissions (nested in D07) | Yes (as part of D07) | **Proposed** |
@@ -459,13 +460,14 @@ Do not automatically create all three files for every package. A capability full
 | Batch | Decisions | Reason | Status |
 |---|---|---|---|
 | 1 — Acquisition and execution | D01 (incl. D01.1), D02 (incl. D02.1, D02.2) | Establishes how data enters the platform and how ingestion work executes | **✅ Approved 2026-11-13** |
-| 2 — Data foundation | D03 (incl. D03.1), D04 (incl. D04.1), D05 | Establishes storage, provenance, validation, and normalization | **Pending** |
+| 2 — Data foundation | D03 (incl. D03.1), D04 (incl. D04.1), D05 | Establishes storage, provenance, validation, and normalization | **✅ Approved 2026-11-14** |
 | 3 — Reconciliation and access | D06, D07 (incl. D07.1) | Establishes matching and the external Sourcing API | **Pending** |
 | Baseline | D08 | Records scope constraints; no new architectural choice | **Pending confirmation** |
 
 Batching reduces fragmented approval requests. It does not remove the requirement to approve each material decision.
 
 **Batch 1 approval note (2026-11-13):** D01 (including nested decision D01.1) and D02 (including nested decisions D02.1 and D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+**Batch 2 approval note (2026-11-14):** D03 (including nested decision D03.1), D04 (including nested decision D04.1), and D05 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ---
 
@@ -698,7 +700,7 @@ The `sourcing` schema does not exist. The PRD lists nine domain entities, while 
 | B. Persist append-only ingestion runs and raw source records, validation issues, and curated current-state entities | Meets reproducibility and auditability; more tables and storage |
 | C. Persist raw payloads in external object storage and keep references in PostgreSQL | Separates large artifacts, but adds infrastructure and lifecycle complexity not justified for M2 |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-14 — Batch 2; alternatives A and C retained above for traceability)*
 
 Create the `sourcing` schema through module-owned Alembic revisions and implement three logical layers.
 
@@ -732,7 +734,7 @@ SupplierMessage, Exception, Alert, and Approval are not created in M2. They depe
 - The application continues to use the existing database role in M2. Separate schema grants are a deployment-hardening item and must be resolved before production reliance.
 - No startup DDL and no ORM `create_all()`.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **✅ Approved 2026-11-14 — Batch 2.**
 
 **Consequences**
 
@@ -753,7 +755,7 @@ Options:
 | B. Use an internal UUID primary key plus a unique source-qualified external identifier; append source records and upsert curated entities by resolved identity | Supports multiple sources and missing identifiers; preserves history; requires joins |
 | C. Insert every observation and deduplicate only at query time | Preserves all history, but complicates every consumer and risks duplicate business effects |
 
-**Recommendation — B.** *(Proposed; no approval yet)*
+**Recommendation — B.** *(✅ Approved 2026-11-14 — Batch 2, as part of D03; alternatives A and C retained above for traceability)*
 
 - Every curated entity uses an internal UUID primary key.
 - Within each entity table, where an external identifier exists, enforce uniqueness on `(source_id, external_record_id)`.
@@ -764,7 +766,7 @@ Options:
 - Provenance points to the latest source record and run; historical source records remain append-only.
 - M2 treats sources as additive/upsert. Absence from a snapshot does not delete or deactivate a curated record. Deletion and tombstone handling are deferred.
 
-**Approval required:** Yes, as part of D03. **Proposed.**
+**Approval required:** Yes, as part of D03. **✅ Approved 2026-11-14 — Batch 2.**
 
 ---
 
@@ -795,7 +797,7 @@ FR-ING-07 requires invalid records to be separated from valid records without si
 | B. Validate per record, persist valid and invalid records, quarantine invalid records with issues, and continue the batch | Meets the requirements; requires an issue model and careful transaction boundaries |
 | C. Accept all records and attach warnings | Maximizes throughput, but allows invalid data into the curated layer and violates the requirements |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-14 — Batch 2; alternatives A and C retained above for traceability)*
 
 Apply two validation stages:
 
@@ -823,7 +825,7 @@ Outcome rules:
 
 Quarantine is a state, not a separate database or schema. M2 exposes issues through the API; it does not implement a remediation workflow, bulk correction, or manual release action.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **✅ Approved 2026-11-14 — Batch 2.**
 
 **Consequences**
 
@@ -842,7 +844,7 @@ Options:
 | B. A versioned, code-defined rule catalog with stable codes, severities, and tests; changes go through code review and deployment | Deterministic and reviewable; business changes require a release |
 | C. A runtime-configurable YAML or rule engine editable by administrators | Business-editable, but adds an engine, governance, versioning, and testing burden not justified in M2 |
 
-**Recommendation — B.** *(Proposed; no approval yet)*
+**Recommendation — B.** *(✅ Approved 2026-11-14 — Batch 2, as part of D04; alternatives A and C retained above for traceability)*
 
 - Maintain a versioned rule catalog grouped by entity and validation stage.
 - Each rule has a stable code, description, severity, and deterministic predicate.
@@ -851,7 +853,7 @@ Options:
 - Rule changes are versioned and deployed; M2 does not permit runtime rule editing.
 - Tests cover each rule, including boundary and malformed-input cases.
 
-**Approval required:** Yes, as part of D04. **Proposed.**
+**Approval required:** Yes, as part of D04. **✅ Approved 2026-11-14 — Batch 2 (D04).**
 
 ---
 
@@ -882,7 +884,7 @@ FR-DAT-03 requires normalization of dates, currencies, and identifiers. The disc
 | B. Preserve raw values in source records and write normalized values to curated entities under explicit rules | Meets traceability and repeatability; increases storage and mapping work |
 | C. Defer normalization to M3 or the BI layer | Shifts inconsistency downstream and fails FR-DAT-03 |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-14 — Batch 2; alternatives A and C retained above for traceability)*
 
 Apply the following canonical rules:
 
@@ -898,7 +900,7 @@ Apply the following canonical rules:
 
 Record the normalization rule version on the ingestion run or source record so that reprocessing can be reproduced. Normalization changes that alter stored values require a re-ingestion or explicit reprocessing procedure.
 
-**Approval required:** Yes.
+**Approval required:** Yes. **✅ Approved 2026-11-14 — Batch 2.**
 
 **Consequences**
 
@@ -1251,11 +1253,11 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 | M2-D02 | B — Explicit module job-handler registration; `sourcing.ingestion` job | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D02 |
 | M2-D02.1 | D — Required idempotency key plus content-hash duplicate warning | **Approved — Batch 1 (as part of D02)** | 2026-11-13 | Approved as part of D02; §6 M2-D02.1 |
 | M2-D02.2 | A — Bounded execution budget below the claim lease, subject to timed qualification | **Approved — Conditional (Batch 1)** | 2026-11-13 | Project-owner approval; timed qualification required before implementation; §6 M2-D02.2 |
-| M2-D03 | B — Append-only raw/staging records plus curated entities | **Proposed** | — | Awaiting project-owner decision |
-| M2-D03.1 | B — Internal UUID plus source-qualified external identity; idempotent upsert | **Proposed** | — | Awaiting decision as part of D03 |
-| M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Proposed** | — | Awaiting project-owner decision |
-| M2-D04.1 | B — Versioned code-defined rule catalog | **Proposed** | — | Awaiting decision as part of D04 |
-| M2-D05 | B — Preserve raw values; deterministic canonical normalization | **Proposed** | — | Awaiting project-owner decision |
+| M2-D03 | B — Append-only raw/staging records plus curated entities | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D03 |
+| M2-D03.1 | B — Internal UUID plus source-qualified external identity; idempotent upsert | **Approved — Batch 2 (as part of D03)** | 2026-11-14 | Approved as part of D03; §6 M2-D03.1 |
+| M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D04 |
+| M2-D04.1 | B — Versioned code-defined rule catalog | **Approved — Batch 2 (as part of D04)** | 2026-11-14 | Approved as part of D04; §6 M2-D04.1 |
+| M2-D05 | B — Preserve raw values; deterministic canonical normalization | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D05 |
 | M2-D06 | B — Deterministic matching cascade; ambiguous links remain unresolved | **Proposed** | — | Awaiting project-owner decision |
 | M2-D07 | B — Focused Sourcing ingestion, issue, and entity API | **Proposed** | — | Awaiting project-owner decision |
 | M2-D07.1 | C — New `sourcing.ingest` permission; `sourcing.read` for inspection | **Proposed** | — | Awaiting decision as part of D07 |
@@ -1263,7 +1265,7 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 
 ### Phase authorization
 
-**Implementation Plan status:** Partially approved — Batch 1 approved 2026-11-13; batches 2 and 3 pending project-owner decision.  
+**Implementation Plan status:** Partially approved — Batches 1 and 2 approved 2026-11-13/2026-11-14; batch 3 pending project-owner decision.  
 **Feature SDD status:** Not started.  
 **Execution Plan status:** Not started.  
 **Execution authorization:** Not granted.  
