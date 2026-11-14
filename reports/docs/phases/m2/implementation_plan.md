@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Proposed — all M2 decisions pending project-owner decision; no implementation authorized  
+**Status:** Partially approved — Batch 1 (M2-D01, M2-D01.1, M2-D02, M2-D02.1, M2-D02.2) approved 2026-11-13; batches 2 and 3 pending project-owner decision; no implementation authorized  
 **Document type:** Living phase decision record  
 **Previous phase:** M1 — Platform Foundation (Complete, signed off 2026-11-13)
 
@@ -427,20 +427,23 @@ Do not automatically create all three files for every package. A capability full
 - **Proposed:** Recommendation prepared; no approval yet.
 - **Under Review:** Evidence or human input is pending.
 - **Approved:** Authorized decision.
+- **Approved — Conditional:** Authorized, pending a defined qualification or test before final confirmation.
 - **Rejected:** Option explicitly rejected.
 - **Implemented:** Approved decision reflected in code/configuration.
 - **Verified:** Implementation checked against acceptance evidence.
 - **Superseded:** Replaced by a later approved decision.
 
+> **Batch 1 approval note (2026-11-13):** M2-D01 (including nested decision M2-D01.1) and M2-D02 (including nested decisions M2-D02.1 and M2-D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved. Batches 2 and 3 remain **Proposed**.
+
 ### 5.2 Decision register
 
 | ID | Decision | Approval requirement | Status |
 |---|---|---|---|
-| M2-D01 | Connector boundary and source acquisition | Yes | **Proposed** |
-| M2-D01.1 | File ingestion boundary (nested in D01) | Yes (as part of D01) | **Proposed** |
-| M2-D02 | Ingestion execution and module-contributed job handlers | Yes | **Proposed** |
-| M2-D02.1 | Ingestion submission idempotency (nested in D02) | Yes (as part of D02) | **Proposed** |
-| M2-D02.2 | Ingestion execution budget and claim-lease safety (nested in D02) | Yes (as part of D02) | **Proposed** |
+| M2-D01 | Connector boundary and source acquisition | Yes | **✅ Approved — Batch 1 (2026-11-13)** |
+| M2-D01.1 | File ingestion boundary (nested in D01) | Yes (as part of D01) | **✅ Approved — Batch 1 (2026-11-13)** |
+| M2-D02 | Ingestion execution and module-contributed job handlers | Yes | **✅ Approved — Batch 1 (2026-11-13)** |
+| M2-D02.1 | Ingestion submission idempotency (nested in D02) | Yes (as part of D02) | **✅ Approved — Batch 1 (2026-11-13)** |
+| M2-D02.2 | Ingestion execution budget and claim-lease safety (nested in D02) | Yes (as part of D02) | **✅ Approved — Conditional (2026-11-13); timed qualification before implementation** |
 | M2-D03 | Sourcing data model, layers, and provenance | Yes | **Proposed** |
 | M2-D03.1 | Record identity and update semantics (nested in D03) | Yes (as part of D03) | **Proposed** |
 | M2-D04 | Validation, quarantine, and data-quality semantics | Yes | **Proposed** |
@@ -455,12 +458,14 @@ Do not automatically create all three files for every package. A capability full
 
 | Batch | Decisions | Reason | Status |
 |---|---|---|---|
-| 1 — Acquisition and execution | D01 (incl. D01.1), D02 (incl. D02.1, D02.2) | Establishes how data enters the platform and how ingestion work executes | **Pending** |
+| 1 — Acquisition and execution | D01 (incl. D01.1), D02 (incl. D02.1, D02.2) | Establishes how data enters the platform and how ingestion work executes | **✅ Approved 2026-11-13** |
 | 2 — Data foundation | D03 (incl. D03.1), D04 (incl. D04.1), D05 | Establishes storage, provenance, validation, and normalization | **Pending** |
 | 3 — Reconciliation and access | D06, D07 (incl. D07.1) | Establishes matching and the external Sourcing API | **Pending** |
 | Baseline | D08 | Records scope constraints; no new architectural choice | **Pending confirmation** |
 
 Batching reduces fragmented approval requests. It does not remove the requirement to approve each material decision.
+
+**Batch 1 approval note (2026-11-13):** D01 (including nested decision D01.1) and D02 (including nested decisions D02.1 and D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 
 ---
 
@@ -493,7 +498,7 @@ PF-07 requires a connector foundation, and the system design defines a connector
 | B. Define a minimal platform-owned connector contract; implement source adapters in Sourcing; select adapters through named, validated source configuration | Reusable boundary with no speculative service; adds a small contract and configuration surface |
 | C. Introduce a separate connector service or plugin framework | Flexible, but adds deployment, security, and operational complexity without an M2 requirement |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-13 — Batch 1; alternatives A and C retained above for traceability)*
 
 Define a small platform-owned `DataConnector` contract and keep source-specific adapters in Sourcing.
 
@@ -541,7 +546,7 @@ Options:
 | B. Multipart upload to a controlled landing area with size, extension, and content checks | Safe and realistic; adds `python-multipart` and requires storage and cleanup rules |
 | C. External object storage with presigned URLs | Scales independently, but adds infrastructure and credentials not justified for M2 |
 
-**Recommendation — B.** *(Proposed; no approval yet)*
+**Recommendation — B.** *(✅ Approved 2026-11-13 — Batch 1, as part of D01; alternatives A and C retained above for traceability)*
 
 File sources are submitted through a multipart upload under the Sourcing ingestion resource. The platform:
 
@@ -554,7 +559,7 @@ File sources are submitted through a multipart upload under the Sourcing ingesti
 
 The exact route shape and cleanup policy belong in the API SDD. Raw record payloads in PostgreSQL remain the audit source; the uploaded file is a transient acquisition artifact.
 
-**Approval required:** Yes, as part of D01. **Proposed.**
+**Approval required:** Yes, as part of D01. **✅ Approved 2026-11-13 — Batch 1 (D01).**
 
 ---
 
@@ -585,7 +590,7 @@ M1 provides a durable job store, an independent worker, bounded retries, and sta
 | B. Extend the typed module contract with an explicit job-handler registration method and compose handlers during worker bootstrap | Reusable and controlled; requires a small, approved M1 contract extension |
 | C. Resolve handlers dynamically from the job payload or manifest | Arbitrary code loading and an unacceptable security boundary |
 
-**Recommendation — B** *(Proposed; no approval yet)*
+**Recommendation — B** *(✅ Approved 2026-11-13 — Batch 1; alternatives A and C retained above for traceability)*
 
 Extend `BusinessModuleContract` with an explicit, typed handler-registration method, for example:
 
@@ -630,7 +635,7 @@ Options:
 | C. Deduplicate only by content hash | Cannot deduplicate database/API requests before fetching, and may suppress legitimate refreshes |
 | D. Require a caller key and also record a content hash for files; the same key deduplicates, while identical content under a different key is flagged but not blocked | Explicit control plus accidental-reupload detection; slightly more metadata |
 
-**Recommendation — D.** *(Proposed; no approval yet)*
+**Recommendation — D.** *(✅ Approved 2026-11-13 — Batch 1, as part of D02; alternatives A, B, and C retained above for traceability)*
 
 - Require `idempotency_key` on every ingestion submission.
 - Persist the key on the job and the ingestion run.
@@ -639,7 +644,7 @@ Options:
 - Do not use content hash alone to suppress a legitimate refresh.
 - A retry of the same job reuses the same run; record-level idempotency is defined in D03.1 and D04.
 
-**Approval required:** Yes, as part of D02. **Proposed.**
+**Approval required:** Yes, as part of D02. **✅ Approved 2026-11-13 — Batch 1 (D02).**
 
 **Nested decision M2-D02.2 — Ingestion execution budget and claim-lease safety**
 
@@ -654,7 +659,7 @@ Options:
 | C. Increase the global claim lease for all jobs | Simple, but slows crash recovery for every job type |
 | D. **Unresolved** — run a timed qualification test with the largest agreed M2 dataset, then choose A or B | Evidence-based, but defers the decision until the harness exists |
 
-**Recommendation — A, with the qualification test described in option D performed before implementation.** *(Proposed; no approval yet)*
+**Recommendation — A, with the qualification test described in option D performed before implementation.** *(✅ Approved conditionally 2026-11-13 — Batch 1 (D02.2); alternatives B, C, and D retained above for traceability; timed qualification test required before implementation)*
 
 - Define an explicit per-run execution budget below the five-minute lease, with a safety margin.
 - Check the budget between pages, files, and record batches.
@@ -664,9 +669,7 @@ Options:
 - Record-level idempotency (D03.1) still protects against duplicate effects if an unexpected overrun triggers stale-lease recovery.
 - Heartbeat renewal, chunked multi-job ingestion, and larger-volume tuning are deferred until measured data justifies them.
 
-**Approval required:** Yes, as part of D02. **Proposed.**
-
----
+**Approval required:** Yes, as part of D02. **✅ Approved conditionally 2026-11-13 — Batch 1 (D02.2).**
 
 ### M2-D03 — Sourcing data model, layers, and provenance
 
@@ -1243,11 +1246,11 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 
 | Decision | Selected option | Status | Approval date | Evidence / qualification |
 |---|---|---|---|---|
-| M2-D01 | B — Platform-owned connector contract; Sourcing adapters; named source configuration | **Proposed** | — | Awaiting project-owner decision |
-| M2-D01.1 | B — Multipart upload to a controlled landing area | **Proposed** | — | Awaiting decision as part of D01 |
-| M2-D02 | B — Explicit module job-handler registration; `sourcing.ingestion` job | **Proposed** | — | Awaiting project-owner decision |
-| M2-D02.1 | D — Required idempotency key plus content-hash duplicate warning | **Proposed** | — | Awaiting decision as part of D02 |
-| M2-D02.2 | A — Bounded execution budget below the claim lease, subject to timed qualification | **Proposed** | — | Qualification test required before final confirmation |
+| M2-D01 | B — Platform-owned connector contract; Sourcing adapters; named source configuration | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D01 |
+| M2-D01.1 | B — Multipart upload to a controlled landing area | **Approved — Batch 1 (as part of D01)** | 2026-11-13 | Approved as part of D01; §6 M2-D01.1 |
+| M2-D02 | B — Explicit module job-handler registration; `sourcing.ingestion` job | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D02 |
+| M2-D02.1 | D — Required idempotency key plus content-hash duplicate warning | **Approved — Batch 1 (as part of D02)** | 2026-11-13 | Approved as part of D02; §6 M2-D02.1 |
+| M2-D02.2 | A — Bounded execution budget below the claim lease, subject to timed qualification | **Approved — Conditional (Batch 1)** | 2026-11-13 | Project-owner approval; timed qualification required before implementation; §6 M2-D02.2 |
 | M2-D03 | B — Append-only raw/staging records plus curated entities | **Proposed** | — | Awaiting project-owner decision |
 | M2-D03.1 | B — Internal UUID plus source-qualified external identity; idempotent upsert | **Proposed** | — | Awaiting decision as part of D03 |
 | M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Proposed** | — | Awaiting project-owner decision |
@@ -1260,7 +1263,7 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 
 ### Phase authorization
 
-**Implementation Plan status:** Proposed — all decisions pending project-owner decision.  
+**Implementation Plan status:** Partially approved — Batch 1 approved 2026-11-13; batches 2 and 3 pending project-owner decision.  
 **Feature SDD status:** Not started.  
 **Execution Plan status:** Not started.  
 **Execution authorization:** Not granted.  
