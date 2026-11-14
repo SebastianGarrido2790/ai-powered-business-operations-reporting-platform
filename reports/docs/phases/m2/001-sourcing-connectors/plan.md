@@ -1,6 +1,6 @@
 # 001 — Sourcing Connectors: Plan
 
-**Status:** DRAFT — feature specification approved 2026-11-14; plan and tasks pending approval; no implementation authorized  
+**Status:** Approved — feature plan approved by the project owner 2026-11-14; implementation authorization not yet granted  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** First M2 stage per `../implementation_plan.md` §7.2; exact stage assignment in the M2 execution plan  
 **Governing decisions:** M2-D01, M2-D01.1  
@@ -248,6 +248,6 @@ Downstream consumers:
 
 ## 6. Approval
 
-**Plan:** DRAFT — pending project-owner approval.  
-**Tasks:** DRAFT — pending project-owner approval.  
+**Plan:** Approved — 2026-11-14 by the project owner.  
+**Tasks:** Approved — 2026-11-14 by the project owner.  
 **Implementation authorization:** Not granted. Approval of this plan and `tasks.md` is required, followed by the M2 execution plan and explicit execution authorization.

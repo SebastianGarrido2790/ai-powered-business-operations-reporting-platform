@@ -1,7 +1,7 @@
 # 002 — Ingestion Execution
 
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Draft — feature specification under review; feature plan and tasks not yet drafted; no implementation authorized  
+**Status:** Approved — feature specification, plan, and tasks approved by the project owner 2026-11-14; implementation authorization not yet granted  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M2-D02, M2-D02.1, M2-D02.2; M2-D01 for source references  
 **Execution stage:** Stage 3 per §7.2; SDD 003 precedes this feature per the confirmed sequencing resolution in §15
@@ -300,6 +300,6 @@ Resolution confirmed by the project owner:
 ## 17. Approval
 
 **Feature scope:** Accepted in the M2 decision record (M2-D02, M2-D02.1, M2-D02.2; M2-D01 for source references).  
-**Feature SDD:** Draft — pending project-owner approval.  
+**Feature SDD:** Approved — 2026-11-14 by the project owner.  
 **Implementation authorization:** Not granted. The feature plan and tasks must be approved, the M2 execution plan must be approved, and explicit execution authorization must be issued before implementation may begin.  
 **Qualification condition:** M2-D02.2 remains conditionally approved until the timed qualification test is completed and recorded.

@@ -1,6 +1,6 @@
 # 001 — Sourcing Connectors: Tasks
 
-**Status:** DRAFT — pending approval; no implementation authorized  
+**Status:** Approved — feature tasks approved by the project owner 2026-11-14; implementation authorization not yet granted  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** First M2 stage per `../implementation_plan.md` §7.2; exact stage assignment in the M2 execution plan  
 **Governing decisions:** M2-D01, M2-D01.1
@@ -112,5 +112,5 @@
 
 ## Approval
 
-**Tasks:** DRAFT — pending project-owner approval.  
+**Tasks:** Approved — 2026-11-14 by the project owner.  
 **Implementation authorization:** Not granted. Approval of this task list and the plan is required, followed by the M2 execution plan and explicit execution authorization.

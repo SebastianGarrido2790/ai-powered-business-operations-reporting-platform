@@ -1,7 +1,7 @@
 # 001 — Sourcing Connectors
 
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Approved — feature specification approved by the project owner 2026-11-14; feature plan and tasks not yet approved; no implementation authorized  
+**Status:** Approved — feature specification, plan, and tasks approved by the project owner 2026-11-14; implementation authorization not yet granted  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M2-D01, M2-D01.1  
 **Execution stage:** First M2 stage per §7.2; exact stage assignment in the M2 execution plan
