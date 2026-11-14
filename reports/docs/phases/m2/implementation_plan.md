@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Partially approved — Batches 1–3 (M2-D01 to M2-D07.1, including nested decisions) approved 2026-11-13/2026-11-14; baseline D08 pending project-owner confirmation; no implementation authorized  
+**Status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14; no implementation authorized  
 **Document type:** Living phase decision record  
 **Previous phase:** M1 — Platform Foundation (Complete, signed off 2026-11-13)
 
@@ -454,7 +454,7 @@ Do not automatically create all three files for every package. A capability full
 | M2-D06 | Deduplication, reconciliation, and source authority | Yes | **✅ Approved — Batch 3 (2026-11-14)** |
 | M2-D07 | Ingestion and data-quality API surface | Yes | **✅ Approved — Batch 3 (2026-11-14)** |
 | M2-D07.1 | Ingestion permissions (nested in D07) | Yes (as part of D07) | **✅ Approved — Batch 3 (2026-11-14)** |
-| M2-D08 | M2 scope exclusions and implementation boundaries | No — determined by approved roadmap | **Pending confirmation** |
+| M2-D08 | M2 scope exclusions and implementation boundaries | No — determined by approved roadmap | **✅ Confirmed baseline (2026-11-14)** |
 
 ### 5.3 Approval batching
 
@@ -463,13 +463,14 @@ Do not automatically create all three files for every package. A capability full
 | 1 — Acquisition and execution | D01 (incl. D01.1), D02 (incl. D02.1, D02.2) | Establishes how data enters the platform and how ingestion work executes | **✅ Approved 2026-11-13** |
 | 2 — Data foundation | D03 (incl. D03.1), D04 (incl. D04.1), D05 | Establishes storage, provenance, validation, and normalization | **✅ Approved 2026-11-14** |
 | 3 — Reconciliation and access | D06, D07 (incl. D07.1) | Establishes matching and the external Sourcing API | **✅ Approved 2026-11-14** |
-| Baseline | D08 | Records scope constraints; no new architectural choice | **Pending confirmation** |
+| Baseline | D08 | Records scope constraints; no new architectural choice | **✅ Confirmed 2026-11-14** |
 
 Batching reduces fragmented approval requests. It does not remove the requirement to approve each material decision.
 
 **Batch 1 approval note (2026-11-13):** D01 (including nested decision D01.1) and D02 (including nested decisions D02.1 and D02.2) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 **Batch 2 approval note (2026-11-14):** D03 (including nested decision D03.1), D04 (including nested decision D04.1), and D05 were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
 **Batch 3 approval note (2026-11-14):** D06, D07 (including nested decision D07.1) were approved as recommended. The evaluated alternatives and their trade-off text remain in §6 unaltered for traceability; only the recommended option is marked approved.
+**Baseline confirmation note (2026-11-14):** D08 was confirmed as the M2 scope baseline. The approved roadmap and existing architecture determine the exclusions; any exception requires an explicit scope change and renewed approval.
 
 ---
 
@@ -1107,7 +1108,7 @@ The approved roadmap defines M2 as Data Integration & Processing. M3 owns busine
 
 There is no competing implementation option consistent with the approved phase scope. Expanding M2 would require a formal scope change.
 
-**Recommendation — Constrained** *(Pending confirmation; determined by the approved roadmap)*
+**Recommendation — Constrained** *(✅ Confirmed 2026-11-14 — Baseline scope boundaries)*
 
 Do not implement:
 
@@ -1263,11 +1264,11 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 | M2-D06 | B — Deterministic matching cascade; ambiguous links remain unresolved | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D06 |
 | M2-D07 | B — Focused Sourcing ingestion, issue, and entity API | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D07 |
 | M2-D07.1 | C — New `sourcing.ingest` permission; `sourcing.read` for inspection | **Approved — Batch 3 (as part of D07)** | 2026-11-14 | Approved as part of D07; §6 M2-D07.1 |
-| M2-D08 | Constrained by approved scope — M2 boundaries upheld | **Pending confirmation** | — | Follows the approved roadmap; any exception requires a scope change |
+| M2-D08 | Constrained by approved scope — M2 boundaries upheld | **Confirmed (Baseline)** | 2026-11-14 | Approved roadmap and architecture constraints; §6 M2-D08 |
 
 ### Phase authorization
 
-**Implementation Plan status:** Partially approved — Batches 1–3 approved 2026-11-13/2026-11-14; baseline D08 pending project-owner confirmation.  
+**Implementation Plan status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14.  
 **Feature SDD status:** Not started.  
 **Execution Plan status:** Not started.  
 **Execution authorization:** Not granted.  
