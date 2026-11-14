@@ -378,13 +378,13 @@ Candidates are implementation work packages, not automatic approvals. Their fina
 
 | ID | Candidate feature | Requirement / need | Dependencies | Acceptance evidence | SDD depth | Disposition |
 |---|---|---|---|---|---|---|
-| 001 | Sourcing Connector Foundation | PF-07, FR-ING-01..03, MVP-01 | D01, D01.1 | CSV, XLSX, PostgreSQL, and REST sources fetch into a standard envelope; named sources are validated; no arbitrary credentials or paths | Substantive integration contract spec | Proposed |
-| 002 | Ingestion Execution & Module Job Handlers | FR-ING-04, FR-ING-06, FR-OPS-02..05 | 001; D02, D02.1, D02.2 | Submission creates a durable job/run; worker executes Sourcing handler; status is traceable; duplicate key returns the existing run; lease budget is enforced | Substantive behavioral spec | Proposed |
-| 003 | Sourcing Data Model & Provenance | FR-ING-05, FR-DAT-06, MVP-04, NFR-DAT-01 | 002; D03, D03.1 | `sourcing` migration applies; raw/staging/curated layers exist; provenance is queryable; retries do not duplicate records | Substantive data spec | Proposed |
-| 004 | Validation, Normalization & Quarantine | FR-ING-07, FR-DAT-01..03, FR-DAT-07, MVP-02 | 003; D04, D04.1, D05 | Rule catalog; invalid records quarantined; issues persisted; normalization repeatable; raw values retained | Substantive data-quality spec | Proposed |
-| 005 | Deduplication & Entity Reconciliation | FR-DAT-04, FR-DAT-05, FR-DAT-08, MVP-03 | 003, 004; D06 | Exact duplicates detected; ambiguous links flagged; source authority enforced; confirmed links traceable | Substantive matching spec | Proposed |
-| 006 | Ingestion & Data-Quality API | FR-ING-04, FR-DAT-07, MVP-04; system design §10.2 | 002–005; D07, D07.1 | Ingestion status, issues, and entity endpoints behave as specified; permissions enforced; pagination and error envelope consistent | Lightweight contract spec | Proposed |
-| 007 | Synthetic Dataset & Acceptance Harness | M2 exit criteria; product charter §8.B | 001–006 | Deterministic CSV/XLSX fixtures, seeded PostgreSQL source, simulated ERP/CRM stub, end-to-end acceptance scenario | Lightweight acceptance spec | Proposed; may be managed as tasks within 001 and 006 |
+| 001 | Sourcing Connector Foundation | PF-07, FR-ING-01..03, MVP-01 | D01, D01.1 | CSV, XLSX, PostgreSQL, and REST sources fetch into a standard envelope; named sources are validated; no arbitrary credentials or paths | Substantive integration contract spec | **Confirmed — 2026-11-14** |
+| 002 | Ingestion Execution & Module Job Handlers | FR-ING-04, FR-ING-06, FR-OPS-02..05 | 001; D02, D02.1, D02.2 | Submission creates a durable job/run; worker executes Sourcing handler; status is traceable; duplicate key returns the existing run; lease budget is enforced | Substantive behavioral spec | **Confirmed — 2026-11-14** |
+| 003 | Sourcing Data Model & Provenance | FR-ING-05, FR-DAT-06, MVP-04, NFR-DAT-01 | 002; D03, D03.1 | `sourcing` migration applies; raw/staging/curated layers exist; provenance is queryable; retries do not duplicate records | Substantive data spec | **Confirmed — 2026-11-14** |
+| 004 | Validation, Normalization & Quarantine | FR-ING-07, FR-DAT-01..03, FR-DAT-07, MVP-02 | 003; D04, D04.1, D05 | Rule catalog; invalid records quarantined; issues persisted; normalization repeatable; raw values retained | Substantive data-quality spec | **Confirmed — 2026-11-14** |
+| 005 | Deduplication & Entity Reconciliation | FR-DAT-04, FR-DAT-05, FR-DAT-08, MVP-03 | 003, 004; D06 | Exact duplicates detected; ambiguous links flagged; source authority enforced; confirmed links traceable | Substantive matching spec | **Confirmed — 2026-11-14** |
+| 006 | Ingestion & Data-Quality API | FR-ING-04, FR-DAT-07, MVP-04; system design §10.2 | 002–005; D07, D07.1 | Ingestion status, issues, and entity endpoints behave as specified; permissions enforced; pagination and error envelope consistent | Lightweight contract spec | **Confirmed — 2026-11-14** |
+| 007 | Synthetic Dataset & Acceptance Harness | M2 exit criteria; product charter §8.B | 001–006 | Deterministic CSV/XLSX fixtures, seeded PostgreSQL source, simulated ERP/CRM stub, end-to-end acceptance scenario | Lightweight acceptance spec | **Confirmed — 2026-11-14; delivered as tasks within packages 001, 002, 004, and 006** |
 
 ### 4.1 Candidate boundary rules
 
@@ -1144,7 +1144,7 @@ The next steps are:
 
 1. **Revalidate the current repository.** Reconcile the audit baseline with the current branch, commit, and working tree. Update this document if the actual state differs. *(Completed for this draft on 2026-11-13 at `b14952a`; recheck before execution.)*
 2. **Record decision outcomes.** Record approved, rejected, or unresolved options, including nested-decision approvals and any qualification evidence.
-3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state.
+3. **Confirm candidate dispositions.** Accept, merge, split, or reject candidates based on the approved decisions and actual repository state. *(Completed 2026-11-14: six SDD packages confirmed; candidate 007 confirmed as distributed acceptance tasks.)*
 4. **Draft the necessary feature SDDs.** Specify only independently meaningful behavior, contracts, persistence, and acceptance criteria.
 5. **Obtain SDD approval.** Candidate acceptance does not approve the detailed feature specification.
 6. **Draft feature plans and tasks.** Only after their respective specifications are approved.
