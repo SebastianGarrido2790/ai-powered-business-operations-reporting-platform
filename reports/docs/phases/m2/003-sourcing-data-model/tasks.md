@@ -44,7 +44,7 @@
 - [ ] **Task 4.1:** Create `persistence/records.py` with `NewIngestionRun`, `IngestionRun`, `SourceRecordDraft`, `SourceRecord`, `ValidationIssueDraft`, `ValidationIssue`, `EntityProvenance`, `CuratedEntity`, `EntityIdentity`, and `UpdateMode`.
 - [ ] **Task 4.2:** Create `persistence/errors.py` with `SourcingNotFoundError`, `SourcingStateConflictError`, `UnknownEntityTypeError`, and `SourcingValidationError`.
 - [ ] **Task 4.3:** Create `persistence/run_store.py` with the `SourcingRunStore` protocol and `PostgresSourcingRunStore`; implement create, id, job, principal-key, and content-hash lookup, `mark_running`, `record_attempt_error`, and `complete_run` with count and warning validation.
-- [ ] **Task 4.4:** Create `persistence/record_store.py` with the `SourcingRecordStore` protocol and `PostgresSourcingRecordStore`; implement append upsert, normalized update, issue upsert, and bounded listing.
+- [ ] **Task 4.4:** Create `persistence/record_store.py` with the `SourcingRecordStore` protocol and `PostgresSourcingRecordStore`; implement append upsert, normalized update (`set_normalized` with optional caller session), status-only terminal update (`set_validation_status`, no normalized payload, preserves existing payload), issue upsert, and bounded listing. When a caller session is supplied, flush and never commit; when omitted, keep the short store-owned session.
 - [ ] **Task 4.5:** Create `persistence/entity_store.py` with the `SourcingEntityStore` protocol and `PostgresSourcingEntityStore`; implement the explicit entity-type map, `REPLACE`/`FILL_MISSING`, immutable origin identity, `get_entity`, `find_by_source_identity`, and `find_candidates`.
 - [ ] **Task 4.6:** Add `tests/support/sourcing_stores.py` with in-memory doubles implementing the same protocols for SDDs 002, 004, and 005.
 - [ ] **Task 4.7:** Add PostgreSQL-gated `tests/test_sourcing_run_store.py`, `tests/test_sourcing_record_store.py`, and `tests/test_sourcing_entity_store.py` covering the semantics in the plan.
@@ -52,10 +52,10 @@
 ### Phase 5: Settings and Raw-Capture Pipeline
 
 - [ ] **Task 5.1:** Add `raw_payload_max_bytes` to `SourcingSettings` (alias `SOURCING_RAW_PAYLOAD_MAX_BYTES`, default `262144`, range `4096..1048576`) and to `.env.example`.
-- [ ] **Task 5.2:** Create `src/app/modules/sourcing/ingestion/raw_capture.py` with `CaptureResult` and `RawCapturePipeline`.
+- [ ] **Task 5.2:** Create `src/app/modules/sourcing/ingestion/raw_capture.py` with `CapturedRecord` (`record`, `capture_quarantined`), `CaptureResult` (`counts`, `warnings`, `records: tuple[CapturedRecord, ...]`), and `RawCapturePipeline`. Return every persisted record, including capture-level quarantines.
 - [ ] **Task 5.3:** Implement entity-type validation, canonical serialization, digest and occurrence counting, and provenance assembly including connector type, source revision, acquisition reference, content hash, and cursor.
 - [ ] **Task 5.4:** Implement the payload bound, deterministic truncation envelope, `QUARANTINED` status, and the `VALIDATION:RAW_PAYLOAD_TOO_LARGE:-:0` issue.
-- [ ] **Task 5.5:** Implement one transaction per page through the session factory, budget checks, count aggregation, and the absence of validation, normalization, deduplication, reconciliation, or curated writes.
+- [ ] **Task 5.5:** Implement one transaction per page through the session factory, budget checks, count aggregation, the returned `records` collection, and the absence of validation, normalization, deduplication, reconciliation, or curated writes. The pipeline composes SDD 003's capture identity and must not recompute record keys, provenance, or the payload bound; SDD 004 amends this contract for its composition, not the capture mechanics.
 - [ ] **Task 5.6:** Add `tests/test_sourcing_raw_capture.py` covering `PENDING` records, truncation and issue, budget exceed, unknown entity type, provenance, counts, and no curated writes.
 
 ### Phase 6: Integration and Handoff
@@ -85,7 +85,7 @@
 | `source_records` stores raw and normalized payloads, external id, record key, source timestamp, status, normalization version, and provenance | 1.1, 2.1, 3.1, 4.4, 4.7 |
 | `validation_issues` traces to the run and record and carries rule code, type, severity, field, message, and value excerpt | 1.1, 2.1, 4.4, 4.7 |
 | Curated tables use internal UUID keys, unique source-qualified origin identity, nullable relationships, and provenance | 1.2, 2.2, 4.5, 4.7 |
-| Raw, normalized, and curated representations remain distinguishable; raw survives promotion | 1.1–1.2, 4.4, 6.1 |
+| Raw, normalized, and curated representations remain distinguishable; raw survives promotion; capture-level quarantines and status-only updates are pipeline capabilities, not curated-table changes | 1.1–1.2, 4.4, 6.1 |
 | Re-running the same job upserts records and issues without duplication | 3.2, 4.4, 4.7, 6.2 |
 | Curated upserts are idempotent; the first run is immutable; the last run and latest record update | 4.5, 4.7, 6.2 |
 | A repeated external identifier with different content produces distinct record keys; the issue path is available to SDD 005 | 3.1, 3.2, 4.4, 4.7 |
@@ -105,7 +105,7 @@
 - [ ] `SourcingRunStore`, `SourcingRecordStore`, and `SourcingEntityStore` satisfy the approved ports, and in-memory doubles exist for downstream SDDs.
 - [ ] Record and issue keys are deterministic; retries do not duplicate records or issues.
 - [ ] Curated upserts honor origin identity, `REPLACE`, `FILL_MISSING`, and immutable first-run provenance.
-- [ ] `RawCapturePipeline` persists raw records with `PENDING` status, quarantines oversized payloads with an issue, and respects the budget.
+- [ ] `RawCapturePipeline` persists raw records with `PENDING` status, quarantines oversized payloads with an issue, respects the budget, and returns the persisted record set with capture-level quarantine flags.
 - [ ] Provenance traces from a curated row to the latest source record, run, and platform job.
 - [ ] No platform schema, manifest, permission, capability, dependency, or analytics change is present.
 - [ ] Ruff, Mypy, and Pytest results are recorded with skipped checks and residual risks.
