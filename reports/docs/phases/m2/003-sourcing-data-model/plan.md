@@ -266,7 +266,7 @@ The store protocols live beside their implementations:
 | Port | Concrete store | Notes |
 |---|---|---|
 | `SourcingRunStore` | `PostgresSourcingRunStore` | `create_run` uses the caller's session; reads and terminal updates open short store-owned sessions. `find_by_content_hash` returns the most recent run by `created_at DESC`. `mark_running` sets `started_at` only if null. `complete_run` validates the outcome, count keys, and non-negative values, and unions warning codes. `record_attempt_error` is a no-op once terminal. |
-| `SourcingRecordStore` | `PostgresSourcingRecordStore` | `append_source_record` and `add_issue` use the caller's session and upsert. `set_normalized` rejects `PENDING`. List operations are bounded and stably ordered by `(received_at, id)` or `(created_at, id)`. |
+| `SourcingRecordStore` | `PostgresSourcingRecordStore` | `append_source_record` and `add_issue` use the caller's session and upsert. `set_normalized` and `set_validation_status` reject `PENDING`; both accept an optional caller session and never commit it. List operations are bounded and stably ordered by `(received_at, id)` or `(created_at, id)`. |
 | `SourcingEntityStore` | `PostgresSourcingEntityStore` | Explicit `entity_type → model` map; no interpolation. `REPLACE` writes supplied fields and provenance; `FILL_MISSING` writes only null fields and still refreshes provenance. Origin identity is written once and never updated. |
 
 ```python
@@ -303,6 +303,16 @@ class SourcingRecordStore(Protocol):
         normalized_payload: Mapping[str, Any],
         validation_status: str,
         normalization_version: str,
+        *,
+        session: Session | None = None,
+    ) -> SourceRecord: ...
+    def set_validation_status(
+        self,
+        record_id: UUID,
+        validation_status: str,
+        normalization_version: str,
+        *,
+        session: Session | None = None,
     ) -> SourceRecord: ...
     def add_issue(self, session: Session, issue: ValidationIssueDraft) -> None: ...
     def list_source_records(
@@ -347,15 +357,31 @@ class SourcingEntityStore(Protocol):
 
 `SourcingEntityStore.find_candidates(entity_type, *, business_identifier=None, normalized_name_key=None, limit=50)` requires at least one filter, caps `limit` at `200`, and orders by `updated_at DESC, id`. `business_identifier` maps to `requisition_number`, `quote_number`, `purchase_order_number`, or `delivery_number`; `normalized_name_key` applies to suppliers. A filter that does not apply to the entity type raises `SourcingValidationError`.
 
+#### 1.6.1 Additive SDD 004 port amendment
+
+SDD 004's approved plan (Appendix A) adds two additive capabilities and one signature refinement to these ports. None changes the schema, the tables, the write semantics of `append_source_record` or `set_normalized`, or this feature's acceptance criteria:
+
+1. **Capture result records.** `CaptureResult` carries `records: tuple[CapturedRecord, ...]`, where `CapturedRecord` pairs a persisted `SourceRecord` with `capture_quarantined: bool`. The pipeline returns every record persisted by the call, including capture-level quarantines. The default empty tuple preserves callers that ignore the records.
+2. **Status-only terminal update.** `SourcingRecordStore.set_validation_status(record_id, validation_status, normalization_version, *, session=None)` writes a terminal status and version without a normalized payload and leaves any existing normalized payload unchanged. SDD 004 uses it when structural or normalization validation fails before a payload exists.
+3. **Optional caller session.** `set_normalized` and `set_validation_status` accept `session: Session | None = None`. When supplied, the store flushes and never commits; the caller owns commit and rollback. When omitted, the short store-owned session behavior is unchanged.
+
+The capture pipeline owns identity, provenance, and the payload bound; SDD 004 composes `CaptureResult` and does not recompute them.
+
 ### 1.7 Raw-capture pipeline
 
 `ingestion/raw_capture.py`:
 
 ```python
 @dataclass(frozen=True)
+class CapturedRecord:
+    record: SourceRecord
+    capture_quarantined: bool
+
+@dataclass(frozen=True)
 class CaptureResult:
     counts: Mapping[str, int]
     warnings: tuple[str, ...] = ()
+    records: tuple[CapturedRecord, ...] = ()
 
 class RawCapturePipeline:
     def __init__(
@@ -378,6 +404,8 @@ Flow:
 5. Otherwise persist with `validation_status = PENDING`.
 6. Open one transaction per page through `session_factory`, appending records and issues through the store with that session.
 7. Return `received`, `valid = 0`, `quarantined`, `warning = 0`, `duplicate = 0`, and `unresolved = 0`.
+
+8. Return `records` alongside the counts; mark capture-quarantined records and note that the pipeline composes SDD 003's capture result.
 
 Provenance is assembled from `fetch_result.connector_type`, `fetch_result.metadata["source_revision"]` defaulting to `1`, and the run's `acquisition_ref` and `content_hash`; `cursor` or `next_cursor` is included when present.
 
