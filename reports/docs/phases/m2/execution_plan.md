@@ -725,7 +725,7 @@ The following evidence must exist before M2 sign-off at Stage 9:
 
 | Stage | Name | Primary deliverable | ADRs | Gate | Status |
 |---|---|---|---|---|---|
-| 0 | Pre-Implementation Verification & Dependency Check | Verified M2 baseline and readiness record | None | All preconditions and baseline checks pass | Not started |
+| 0 | Pre-Implementation Verification & Dependency Check | Verified M2 baseline and readiness record | None | All preconditions and baseline checks pass | **Passed** |
 | 1 | Sourcing Connectors, Named Sources & Acquisition | `app/core/connectors`, `sources.yaml`, file acquisition, CSV/XLSX/PG/REST adapters, ERP stub | ADR-001, ADR-002, ADR-012 | Connector, acquisition, and stub tests pass | Not started |
 | 2 | Sourcing Schema, Persistence & Raw Capture | Migrations `0003`–`0004`, run/record/entity stores, `record_key`, `RawCapturePipeline` | ADR-003 | Clean migrations and PostgreSQL store tests pass | Not started |
 | 3 | Execution-Budget Qualification & Ingestion Execution | D02.2 qualification record, handler registration, atomic submission, `sourcing.ingest`, handler & budget | ADR-002, ADR-005, ADR-007 | Qualification passes first; submission and worker tests pass | Not started |
@@ -742,7 +742,7 @@ Maintain the following record as execution progresses:
 
 | Stage | Start date | Completion date | Commit / evidence reference | Gate result | Findings | Approved by |
 |---|---|---|---|---|---|---|
-| 0 | — | — | `verification/stage_0_verification.md` | Pending | — | — |
+| 0 | 2026-11-17 | 2026-11-17 | `01cb29d` — `docs(M2): Record Stage 0 pre-implementation verification pass` · evidence in `verification/stage_0_verification.md` | **Passed** (2026-11-17) | S0-F1 (Low/Resolved), S0-F2 (Low/Resolved), S0-F3 (Info/Expected), S0-F4 (Info/Expected) | Project owner acknowledged Stage 0 pass; approved commit and Stage 0 execution plan 2026-11-17 |
 | 1 | — | — | `verification/stage_1_verification.md` | Pending | — | — |
 | 2 | — | — | `verification/stage_2_verification.md` | Pending | — | — |
 | 3 | — | — | `verification/002_budget_qualification.md`, `verification/stage_3_verification.md` | Pending | — | — |
