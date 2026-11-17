@@ -28,9 +28,9 @@
 ### Phase 3: File Acquisition Boundary
 
 - [ ] **Task 3.1:** Create `src/app/modules/sourcing/acquisition/files.py` with `LandingFileRef`, extension/content-type allowlists, streamed size enforcement, generated filename, SHA-256 hashing, and landing-directory validation outside `src/`.
-- [ ] **Task 3.2:** Implement `delete(ref)` and `sweep(older_than_hours)` helpers; remove partial files on rejection.
+- [ ] **Task 3.2:** Implement `delete(ref)` and `sweep(older_than_hours, *, exclude_refs=())` helpers; remove partial files on rejection. `exclude_refs` skips protected landing references and defaults to empty, preserving age-only behavior.
 - [ ] **Task 3.3:** Add the `SOURCING_LANDING_DIR` and limit entries to `.env.example` with safe local defaults.
-- [ ] **Task 3.4:** Write `tests/test_file_acquisition.py` covering valid CSV/XLSX, wrong extension, wrong content type, oversize stream, filename generation, hash correctness, partial-file cleanup, path rejection, and orphan sweep.
+- [ ] **Task 3.4:** Write `tests/test_file_acquisition.py` covering valid CSV/XLSX, wrong extension, wrong content type, oversize stream, filename generation, hash correctness, partial-file cleanup, path rejection, orphan sweep, and `exclude_refs` protection.
 
 ### Phase 4: CSV and XLSX Adapters
 
@@ -113,4 +113,5 @@
 ## Approval
 
 **Tasks:** Approved — 2026-11-14 by the project owner.  
+**SDD 006 `sweep(exclude_refs)` amendment:** Approved — 2026-11-17 by the project owner; applied to these tasks and to `plan.md`.  
 **Implementation authorization:** Not granted. Approval of this task list and the plan is required, followed by the M2 execution plan and explicit execution authorization.

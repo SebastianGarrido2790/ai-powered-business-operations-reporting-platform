@@ -277,7 +277,7 @@ The store protocols live beside their implementations:
 | Port | Concrete store | Notes |
 |---|---|---|
 | `SourcingRunStore` | `PostgresSourcingRunStore` | `create_run` uses the caller's session; reads and terminal updates open short store-owned sessions. `find_by_content_hash` returns the most recent run by `created_at DESC`. `mark_running` sets `started_at` only if null. `complete_run` validates the outcome, count keys, and non-negative values, and unions warning codes. `record_attempt_error` is a no-op once terminal. |
-| `SourcingRecordStore` | `PostgresSourcingRecordStore` | `append_source_record` and `add_issue` use the caller's session and upsert. `set_normalized` and `set_validation_status` reject `PENDING`; `set_content_fingerprint` writes only the fingerprint. All three never commit a caller session. `find_by_content_fingerprint` and `find_run_records_by_source_identity` return bounded, `(received_at, id)`-ordered `RecordReference` projections. List operations are bounded and stably ordered by `(received_at, id)` or `(created_at, id)`. |
+| `SourcingRecordStore` | `PostgresSourcingRecordStore` | `append_source_record` and `add_issue` use the caller's session and upsert. `set_normalized` and `set_validation_status` reject `PENDING`; `set_content_fingerprint` writes only the fingerprint. All three never commit a caller session. `find_by_content_fingerprint` and `find_run_records_by_source_identity` return bounded, `(received_at, id)`-ordered `RecordReference` projections. `list_issues` returns bounded `(created_at, id)`-ordered `IssueView` rows with AND-composed optional filters and joins only `record_key` and `entity_type` from the source record. List operations are bounded and stably ordered. |
 | `SourcingEntityStore` | `PostgresSourcingEntityStore` | Explicit `entity_type → model` map; no interpolation. `REPLACE` writes supplied fields and provenance; `FILL_MISSING` writes only null fields and still refreshes provenance. Origin identity is written once and never updated. |
 
 ```python
@@ -359,10 +359,14 @@ class SourcingRecordStore(Protocol):
         self,
         ingestion_run_id: UUID,
         *,
+        issue_type: str | None = None,
         severity: str | None = None,
+        rule_code: str | None = None,
+        field_name: str | None = None,
+        entity_type: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> Sequence[ValidationIssue]: ...
+    ) -> Sequence[IssueView]: ...
 
 class SourcingEntityStore(Protocol):
     def upsert_entity(
@@ -421,6 +425,17 @@ SDD 005's approved amendment adds the persisted content key required by M2-D06's
 5. **Sessions** — `set_content_fingerprint` and both lookups accept an optional caller session; `find_by_source_identity` and `find_candidates` also accept one. A supplied session is flushed and never committed, so SDD 005 can read its own page's uncommitted fingerprints and curated rows.
 
 The column is nullable so capture, SDD 004, and existing rows are unaffected. M2 does not backfill fingerprints.
+
+#### 1.6.3 Additive SDD 006 issue-read amendment
+
+SDD 006's approved amendment extends the issue read used by its issue endpoint. It changes no column, constraint, index, write semantic, or acceptance criterion:
+
+1. **Signature** — `list_issues(ingestion_run_id, *, issue_type=None, severity=None, rule_code=None, field_name=None, entity_type=None, limit=100, offset=0)`. Every filter is optional and filters compose with AND.
+2. **Projection** — returns `IssueView` rows carrying the issue columns plus `record_key` and `entity_type` from the issuing source record. The join reads no payload column.
+3. **Ordering** — `(created_at, id)` ascending, with `limit` capped at `201` so SDD 006 can request one extra row and compute `has_more` exactly.
+4. **Validation** — `issue_type`, `severity`, and `entity_type` are checked against their allowed values before the query; an unknown value raises a validation error.
+
+`list_source_records` is unchanged and remains unused by SDD 006, which exposes no source-record endpoint.
 
 ### 1.7 Raw-capture pipeline
 
@@ -504,7 +519,7 @@ No other setting is introduced. The execution budget, connector limits, and land
 | `tests/test_sourcing_migrations.py` | PostgreSQL-gated: revisions apply and downgrade; eight tables; columns, types, nullability, constraints, indexes, foreign-key delete rules; `sourcing` absent after downgrade; no `platform` or `analytics_sourcing` change. |
 | `tests/test_sourcing_record_key.py` | Canonical JSON, determinism, unicode, null versus empty external id, identical and distinct records, bounded key length. |
 | `tests/test_sourcing_run_store.py` | PostgreSQL-gated: create, lookup by id/job/principal-key/content hash, lifecycle transitions, terminal idempotency and conflict, count and warning validation. |
-| `tests/test_sourcing_record_store.py` | PostgreSQL-gated: append upsert, preserved capture metadata, normalized update, content-fingerprint write and shape validation, both fingerprint lookups with ordering and limits, issue upsert, bounded listing. |
+| `tests/test_sourcing_record_store.py` | PostgreSQL-gated: append upsert, preserved capture metadata, normalized update, content-fingerprint write and shape validation, both fingerprint lookups with ordering and limits, issue upsert, bounded listing, and filtered `list_issues` ordering, projection, and limit cap. |
 | `tests/test_sourcing_entity_store.py` | PostgreSQL-gated: insert, origin identity uniqueness, `REPLACE`, `FILL_MISSING`, provenance refresh, candidate filters and limits, unknown type rejection. |
 | `tests/test_sourcing_raw_capture.py` | Unit tests with in-memory doubles: `PENDING` records, truncation and issue, budget exceed, unknown entity type, provenance, counts, and absence of curated writes. |
 | `tests/support/sourcing_stores.py` | In-memory `SourcingRunStore`, `SourcingRecordStore`, and `SourcingEntityStore` doubles for SDDs 002, 004, and 005. |
@@ -518,7 +533,7 @@ Quality gates: `uv run ruff format --check .`, `uv run ruff check .`, `uv run my
 - **SDD 002** consumes `SourcingRunStore` and `RawCapturePipeline`; it adapts `CaptureResult` to its `ProcessingResult` and calls `process(run=..., fetch_result=..., budget=...)` per its keyword-only protocol.
 - **SDD 004** extends the pipeline, calls `set_normalized` and `add_issue`, and owns the rule catalog and `issue_key` format beyond capture-level issues.
 - **SDD 005** consumes `SourcingEntityStore`, `find_candidates`, and the update modes; it owns the matching cascade and source authority. It also writes and queries `content_fingerprint` through the additive SDD 005 amendment.
-- **SDD 006** consumes the bounded read operations; it may add read-only store methods without a schema change.
+- **SDD 006** consumes the bounded read operations and adds `list_runs` and `list_entities` without a schema change; it extends `list_issues` with its filters and `IssueView` projection through the additive SDD 006 amendment.
 - **SDD 001** must populate `FetchResult.metadata["source_revision"]` from the source definition's effective `revision`; `1` is the documented default.
 - **Manifest:** unchanged. SDD 002 owns the `0.2.0` bump, the `ingestion` capability, and `sourcing.ingest`.
 
@@ -537,7 +552,7 @@ Quality gates: `uv run ruff format --check .`, `uv run ruff check .`, `uv run my
 | `updated_at` maintenance | Store-maintained; no database trigger |
 | `issue_key` format | `<type>:<code>:<field or '-'>:<ordinal>`; capture issues use `VALIDATION:RAW_PAYLOAD_TOO_LARGE:-:0`; SDD 004 owns the catalog |
 | Candidate filters for SDD 005 | At least one of `business_identifier` or `normalized_name_key`; limit `1..200`, default `50`; ordered by `updated_at DESC, id` |
-| SDD 006 read additions | 006 may add read-only methods without schema change; 003 provides bounded run, record, issue, entity, identity, and candidate reads |
+| SDD 006 read additions | `list_runs` and `list_entities` are new read-only methods; `list_issues` gains AND-composed optional filters and the `IssueView` projection (SDD 006 amendment); no schema change |
 | Content fingerprint | `source_records.content_fingerprint VARCHAR(64) NULL` with a shape check and a partial `(source_id, content_fingerprint)` index in `0003`; `RecordReference` projection; `set_content_fingerprint` and two bounded lookups with optional caller sessions (SDD 005 amendment) |
 
 ---
@@ -562,4 +577,5 @@ Quality gates: `uv run ruff format --check .`, `uv run ruff check .`, `uv run my
 **Plan:** Approved — 2026-11-14 by the project owner.  
 **Tasks:** Approved — 2026-11-14 by the project owner.  
 **SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to this plan and to `spec.md` and `tasks.md`.  
+**SDD 006 issue-read amendment:** Approved — 2026-11-16 by the project owner; applied to this plan and to `spec.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.

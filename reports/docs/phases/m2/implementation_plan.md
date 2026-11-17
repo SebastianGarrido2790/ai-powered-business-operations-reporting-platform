@@ -1271,7 +1271,7 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 ### Phase authorization
 
 **Implementation Plan status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14.  
-**Feature SDD status:** Specifications 001–005 approved; plans and tasks 001–005 approved; 006 not drafted.  
+**Feature SDD status:** Specifications 001–006 approved; plans and tasks 001–006 approved.  
 **Execution Plan status:** Not started.  
 **Execution authorization:** Not granted.  
 **Phase status:** Not started.

@@ -158,7 +158,7 @@ The Sourcing module loads and validates configuration during construction at sta
 - SHA-256 computed during streaming and returned with the reference.
 - Storage under `SOURCING_LANDING_DIR` (default `data/sourcing/landing`), created on demand. The resolved path must not be inside `src/`.
 - `LandingFileRef.ref` is the opaque acquisition reference. CSV/XLSX adapters resolve it through a landing store; no caller supplies a path.
-- `delete(ref)` and `sweep(older_than_hours)` helpers. SDD 006 defines the cleanup policy; SDD 002 invokes cleanup when a run succeeds. Failed runs retain the file for diagnosis until the module-startup sweep removes orphans older than `SOURCING_LANDING_RETENTION_HOURS` (default 24).
+- `delete(ref)` and `sweep(older_than_hours, *, exclude_refs: Collection[str] = ())` helpers. SDD 006 defines the cleanup policy; SDD 002 invokes cleanup when a run succeeds. Failed runs retain the file for diagnosis until the module-startup sweep removes orphans older than `SOURCING_LANDING_RETENTION_HOURS` (default 24). `exclude_refs` protects files still referenced by a non-terminal run; the empty default preserves age-only behavior (additive SDD 006 amendment, approved 2026-11-17).
 
 Row limits are enforced by the CSV/XLSX adapters while reading, so a file is parsed once. The multipart route itself belongs to SDD 006; this feature accepts a binary stream and metadata, and SDD 006 maps `UploadFile` onto it. `python-multipart` is therefore introduced by SDD 006, not here.
 
@@ -186,7 +186,7 @@ The local Compose environment mounts one named volume at `/app/data` for both `a
 | Spec open question | Decision |
 |---|---|
 | Source-configuration format, location, versioning | YAML at `config/sourcing/sources.yaml`; `SOURCING_SOURCES_FILE` override; file `version: 1`; stable `source_id` |
-| Landing-directory path, cleanup, retention | `data/sourcing/landing`; `SOURCING_LANDING_DIR` override; 001 provides `delete`/`sweep` and a 24 h orphan sweep; SDD 006 defines the cleanup policy; SDD 002 invokes it after success; shared API/worker volume in Compose |
+| Landing-directory path, cleanup, retention | `data/sourcing/landing`; `SOURCING_LANDING_DIR` override; 001 provides `delete`/`sweep` (with SDD 006's `exclude_refs`) and a 24 h orphan sweep; SDD 006 defines the cleanup policy; SDD 002 invokes it after success; shared API/worker volume in Compose |
 | Maximum file size, row count, content types | 50 MiB; 100,000 rows per file; 50,000 rows per database fetch; strict extension/content-type allowlist |
 | REST stub routes, pagination, failure injection | Fixed `/api/erp/v1/<entity>` routes; `page`/`page_size`/`next_page`; `?fail=` injection |
 | Missing external identifier in PostgreSQL | `external_record_id = None`; no invented identifier; later validation quarantines it |
@@ -250,4 +250,5 @@ Downstream consumers:
 
 **Plan:** Approved — 2026-11-14 by the project owner.  
 **Tasks:** Approved — 2026-11-14 by the project owner.  
+**SDD 006 `sweep(exclude_refs)` amendment:** Approved — 2026-11-17 by the project owner; applied to this plan and to `tasks.md`.  
 **Implementation authorization:** Not granted. Approval of this plan and `tasks.md` is required, followed by the M2 execution plan and explicit execution authorization.

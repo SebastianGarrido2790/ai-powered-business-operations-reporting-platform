@@ -41,10 +41,10 @@
 
 ### Phase 4: Persistence Ports and Stores
 
-- [ ] **Task 4.1:** Create `persistence/records.py` with `NewIngestionRun`, `IngestionRun`, `SourceRecordDraft`, `SourceRecord`, `RecordReference`, `ValidationIssueDraft`, `ValidationIssue`, `EntityProvenance`, `CuratedEntity`, `EntityIdentity`, and `UpdateMode`; include the `content_fingerprint` fields.
+- [ ] **Task 4.1:** Create `persistence/records.py` with `NewIngestionRun`, `IngestionRun`, `SourceRecordDraft`, `SourceRecord`, `RecordReference`, `ValidationIssueDraft`, `ValidationIssue`, `IssueView`, `EntityProvenance`, `CuratedEntity`, `EntityIdentity`, and `UpdateMode`; include the `content_fingerprint` fields and the `IssueView` projection used by the amended `list_issues`.
 - [ ] **Task 4.2:** Create `persistence/errors.py` with `SourcingNotFoundError`, `SourcingStateConflictError`, `UnknownEntityTypeError`, and `SourcingValidationError`.
 - [ ] **Task 4.3:** Create `persistence/run_store.py` with the `SourcingRunStore` protocol and `PostgresSourcingRunStore`; implement create, id, job, principal-key, and content-hash lookup, `mark_running`, `record_attempt_error`, and `complete_run` with count and warning validation.
-- [ ] **Task 4.4:** Create `persistence/record_store.py` with the `SourcingRecordStore` protocol and `PostgresSourcingRecordStore`; implement append upsert, normalized update (`set_normalized` with optional caller session), status-only terminal update (`set_validation_status`, no normalized payload, preserves existing payload), content-fingerprint write (`set_content_fingerprint`, shape-validated, column-only), both bounded `RecordReference` lookups ordered by `(received_at, id)`, issue upsert, and bounded listing. When a caller session is supplied, flush and never commit; when omitted, keep the short store-owned session.
+- [ ] **Task 4.4:** Create `persistence/record_store.py` with the `SourcingRecordStore` protocol and `PostgresSourcingRecordStore`; implement append upsert, normalized update (`set_normalized` with optional caller session), status-only terminal update (`set_validation_status`, no normalized payload, preserves existing payload), content-fingerprint write (`set_content_fingerprint`, shape-validated, column-only), both bounded `RecordReference` lookups ordered by `(received_at, id)`, issue upsert, bounded listing, and the filtered `list_issues` returning `IssueView` rows with `(created_at, id)` ordering and a `201` limit cap. When a caller session is supplied, flush and never commit; when omitted, keep the short store-owned session.
 - [ ] **Task 4.5:** Create `persistence/entity_store.py` with the `SourcingEntityStore` protocol and `PostgresSourcingEntityStore`; implement the explicit entity-type map, `REPLACE`/`FILL_MISSING`, immutable origin identity, `get_entity`, `find_by_source_identity`, and `find_candidates`, with optional caller sessions on the reads.
 - [ ] **Task 4.6:** Add `tests/support/sourcing_stores.py` with in-memory doubles implementing the same protocols for SDDs 002, 004, and 005, including the fingerprint operations, `RecordReference`, and optional caller sessions.
 - [ ] **Task 4.7:** Add PostgreSQL-gated `tests/test_sourcing_run_store.py`, `tests/test_sourcing_record_store.py`, and `tests/test_sourcing_entity_store.py` covering the semantics in the plan, including fingerprint shape validation, lookup ordering, exclusion, limit caps, and caller-session reads.
@@ -85,6 +85,7 @@
 | `ingestion_runs` stores the job, source, entity types, principal key, correlation, content hash or reference, outcome, counts, warnings, timestamps, and sanitized error | 1.1, 2.1, 4.3, 4.7 |
 | `source_records` stores raw and normalized payloads, external id, record key, content fingerprint, source timestamp, status, normalization version, and provenance | 1.1, 2.1, 3.1, 4.1, 4.4, 4.7 |
 | `validation_issues` traces to the run and record and carries rule code, type, severity, field, message, and value excerpt | 1.1, 2.1, 4.4, 4.7 |
+| `list_issues` supports the SDD 006 filters and returns `record_key` and `entity_type` without loading a payload | 4.1, 4.4, 4.7 |
 | `content_fingerprint` and its partial index exist; SDD 005 can write and query fingerprints | 1.1, 1.4, 4.1, 4.4, 4.6, 4.7, 6.6 |
 | Curated tables use internal UUID keys, unique source-qualified origin identity, nullable relationships, and provenance | 1.2, 2.2, 4.5, 4.7 |
 | Raw, normalized, and curated representations remain distinguishable; raw survives promotion; capture-level quarantines and status-only updates are pipeline capabilities, not curated-table changes | 1.1–1.2, 4.4, 6.1 |
@@ -120,4 +121,5 @@
 **Tasks:** Approved — 2026-11-14 by the project owner.  
 **Plan:** Approved — 2026-11-14 by the project owner.  
 **SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to these tasks and to `spec.md` and `plan.md`.  
+**SDD 006 issue-read amendment:** Approved — 2026-11-16 by the project owner; applied to these tasks and to `spec.md` and `plan.md`.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.

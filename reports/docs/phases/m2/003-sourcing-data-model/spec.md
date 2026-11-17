@@ -351,8 +351,10 @@ The concrete stores live in `src/app/modules/sourcing/persistence/`. Ports are t
 | `find_by_content_fingerprint(source_id, fingerprint, *, exclude_source_record_id, limit, session=None)` | Bounded, ordered `RecordReference` lookup for SDD 005's potential-duplicate detection. |
 | `find_run_records_by_source_identity(ingestion_run_id, source_id, external_record_id, *, exclude_source_record_id, limit, session=None)` | Bounded, ordered `RecordReference` lookup for SDD 005's exact-duplicate and identity/content detection. |
 | `add_issue(session, issue)` | Upsert by `(source_record_id, issue_key)`; preserve the original creation timestamp. |
-| `list_source_records(ingestion_run_id, limit, offset)` | Bounded, stable-ordered read for SDD 006. |
-| `list_issues(ingestion_run_id, severity, limit, offset)` | Bounded, stable-ordered read for SDD 006. |
+| `list_source_records(ingestion_run_id, limit, offset)` | Bounded, stable-ordered read. Not consumed by SDD 006, which exposes no source-record endpoint. |
+| `list_issues(ingestion_run_id, *, issue_type, severity, rule_code, field_name, entity_type, limit, offset)` | Bounded, stable-ordered `IssueView` read for SDD 006; optional filters compose with AND (additive SDD 006 amendment). |
+
+`IssueView` projects the issue columns plus `record_key` and `entity_type` from the issuing source record; it never loads a raw or normalized payload. SDD 006 owns the filter parameters and the page defaults.
 
 ### 7.3 `SourcingEntityStore`
 
@@ -477,7 +479,7 @@ class CaptureResult:
 - **SDD 002** — consumes `SourcingRunStore` for atomic run creation, lookup, lifecycle updates, and completion; consumes the raw-capture pipeline through its handler.
 - **SDD 004** — consumes `source_records` and `validation_issues`, sets normalized payloads and statuses, and extends the pipeline.
 - **SDD 005** — consumes the record and entity stores, sets reconciliation status and links, chooses the update mode from source authority, and writes content fingerprints through the additive SDD 005 amendment.
-- **SDD 006** — consumes the run, record, and entity read operations for listing, issues, and entity retrieval.
+- **SDD 006** — consumes the run, record, and entity read operations for listing, issues, and entity retrieval, and extends `list_issues` with its filters and the `IssueView` projection through the additive SDD 006 amendment.
 - **M1** — provides `platform.jobs` and `platform.job_attempts`; the run references the job and does not duplicate attempt history.
 
 **Sequencing resolution (confirmed 2026-11-14)**
@@ -499,7 +501,7 @@ Because 003 precedes 002, 003 does not import SDD 002's `IngestionPipeline` or `
 - Whether `updated_at` is maintained only by the store, with no database trigger.
 - The exact `issue_key` format supplied by SDD 004.
 - The exact candidate-lookup filters and limits used by SDD 005.
-- Which read operations SDD 006 adds beyond the bounded list and lookup methods defined here.
+- Which read operations SDD 006 adds beyond the bounded list and lookup methods defined here; resolved by the SDD 006 amendment to `list_issues` and by 006's new `list_runs` and `list_entities` reads.
 
 These questions are resolved in [`plan.md`](plan.md) §2.
 
@@ -509,4 +511,5 @@ These questions are resolved in [`plan.md`](plan.md) §2.
 **Feature SDD:** Approved — 2026-11-14 by the project owner.  
 **Feature plan and tasks:** Approved — 2026-11-14 by the project owner.  
 **SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to this specification and to `plan.md` and `tasks.md`.  
+**SDD 006 issue-read amendment:** Approved — 2026-11-16 by the project owner; applied to this specification and to `plan.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. The feature plan and tasks must be approved, the M2 execution plan must be approved, and explicit execution authorization must be issued before implementation may begin.
