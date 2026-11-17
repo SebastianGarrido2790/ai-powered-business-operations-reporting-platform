@@ -297,6 +297,7 @@ class RestConnector(DataConnector):
             truncated=truncated,
             started_at=started_at,
             finished_at=finished_at,
+            source_revision=self._source_def.revision,
         )
         return FetchResult(
             source_id=self._source_def.source_id,

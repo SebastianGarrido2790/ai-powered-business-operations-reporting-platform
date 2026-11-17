@@ -63,6 +63,7 @@ class ExecutionMetadata:
     truncated: bool
     started_at: datetime
     finished_at: datetime
+    source_revision: int = 1
 
 
 @dataclass(frozen=True)

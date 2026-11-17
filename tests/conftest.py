@@ -2,8 +2,12 @@
 
 import os
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import Engine, create_engine, text
 
 from app.core.config import Settings
 from app.core.correlation import reset_correlation_id, set_correlation_id
@@ -62,3 +66,46 @@ def isolate_correlation_context() -> Iterator[None]:
         yield
     finally:
         reset_correlation_id(token)
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
+MIGRATIONS_DIR = PROJECT_ROOT / "database" / "migrations"
+
+requires_database = pytest.mark.skipif(
+    not os.environ.get("BOPF_TEST_DATABASE_URL"),
+    reason="Set BOPF_TEST_DATABASE_URL to run PostgreSQL integration checks.",
+)
+
+# `sourcing` rows reference `platform.jobs` with ON DELETE RESTRICT, so the
+# referencing tables and the referenced platform tables are truncated together.
+SOURCING_TRUNCATE_STATEMENT = text(
+    "TRUNCATE TABLE "
+    "sourcing.validation_issues, sourcing.source_records, "
+    "sourcing.deliveries, sourcing.purchase_orders, sourcing.quotes, "
+    "sourcing.requisitions, sourcing.suppliers, sourcing.ingestion_runs, "
+    "platform.job_attempts, platform.idempotency_keys, platform.jobs"
+)
+
+
+@pytest.fixture(scope="module")
+def sourcing_engine() -> Iterator[Engine]:
+    """Apply migrations to the disposable database and yield an engine."""
+    url = os.environ["BOPF_TEST_DATABASE_URL"]
+    config = Config(str(ALEMBIC_INI))
+    config.set_main_option("script_location", str(MIGRATIONS_DIR))
+    config.set_main_option("sqlalchemy.url", url)
+    command.upgrade(config, "head")
+
+    database_engine = create_engine(url)
+    try:
+        yield database_engine
+    finally:
+        database_engine.dispose()
+
+
+@pytest.fixture
+def clean_sourcing_tables(sourcing_engine: Engine) -> None:
+    """Start each sourcing persistence test from empty sourcing and job tables."""
+    with sourcing_engine.begin() as connection:
+        connection.execute(SOURCING_TRUNCATE_STATEMENT)

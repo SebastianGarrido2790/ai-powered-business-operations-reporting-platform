@@ -238,6 +238,7 @@ class CsvConnector(DataConnector):
             truncated=False,
             started_at=started_at,
             finished_at=finished_at,
+            source_revision=self._source_def.revision,
         )
 
         return FetchResult(

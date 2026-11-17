@@ -86,11 +86,19 @@ def engine() -> Iterator[Engine]:
 
 @pytest.fixture(autouse=True)
 def clean_platform_tables(engine: Engine) -> None:
-    """Start each persistence test from empty platform tables."""
+    """Start each persistence test from empty platform and sourcing tables.
+
+    Sourcing rows reference `platform.jobs` with ON DELETE RESTRICT, so the
+    referencing tables must be truncated in the same statement.
+    """
     with engine.begin() as connection:
         connection.execute(
             text(
-                "TRUNCATE TABLE platform.idempotency_keys, "
+                "TRUNCATE TABLE "
+                "sourcing.validation_issues, sourcing.source_records, "
+                "sourcing.deliveries, sourcing.purchase_orders, "
+                "sourcing.quotes, sourcing.requisitions, sourcing.suppliers, "
+                "sourcing.ingestion_runs, platform.idempotency_keys, "
                 "platform.job_attempts, platform.jobs, "
                 "platform.module_registrations"
             )

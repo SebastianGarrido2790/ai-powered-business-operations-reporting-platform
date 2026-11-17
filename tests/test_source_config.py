@@ -31,14 +31,26 @@ def test_sourcing_settings_defaults() -> None:
     assert settings.connector_timeout_seconds == 30.0
     assert settings.max_rest_pages == 100
     assert settings.landing_retention_hours == 24
+    assert settings.raw_payload_max_bytes == 262_144
 
 
 def test_sourcing_settings_env_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("SOURCING_MAX_FILE_ROWS", "25000")
     monkeypatch.setenv("SOURCING_CONNECTOR_TIMEOUT_SECONDS", "15.5")
+    monkeypatch.setenv("SOURCING_RAW_PAYLOAD_MAX_BYTES", "4096")
     settings = SourcingSettings()
     assert settings.max_file_rows == 25_000
     assert settings.connector_timeout_seconds == 15.5
+    assert settings.raw_payload_max_bytes == 4096
+
+
+def test_sourcing_raw_payload_bound_is_range_checked(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for value in ("4095", "1048577"):
+        monkeypatch.setenv("SOURCING_RAW_PAYLOAD_MAX_BYTES", value)
+        with pytest.raises(ValueError):
+            SourcingSettings()
 
 
 def test_sourcing_settings_landing_dir_inside_src_rejected(

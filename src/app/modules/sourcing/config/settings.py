@@ -54,6 +54,15 @@ class SourcingSettings(BaseSettings):
         default=24,
         description="Retention period in hours for orphan landing files",
     )
+    raw_payload_max_bytes: int = Field(
+        default=262144,
+        ge=4096,
+        le=1048576,
+        description=(
+            "Maximum persisted raw payload size in bytes; larger payloads are "
+            "truncated and quarantined"
+        ),
+    )
 
     @field_validator("landing_dir")
     @classmethod

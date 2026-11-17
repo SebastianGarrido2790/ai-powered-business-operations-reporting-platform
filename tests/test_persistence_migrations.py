@@ -12,7 +12,7 @@ from sqlalchemy import Engine, create_engine, text
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
 MIGRATIONS_DIR = PROJECT_ROOT / "database" / "migrations"
-REVISION_0002 = "0002_platform_jobs_and_metadata"
+REVISION_HEAD = "0004_sourcing_curated_entities"
 EXPECTED_TABLES = {
     "idempotency_keys",
     "job_attempts",
@@ -72,16 +72,16 @@ def test_platform_tables_are_created_by_the_migration(engine: Engine) -> None:
 
 
 def test_alembic_revision_and_schema_ownership(engine: Engine) -> None:
-    """Verify the revision and that no business schema or tables were created."""
+    """Verify the head revision and that no analytical schema was created."""
     revision = _query(engine, "SELECT version_num FROM public.alembic_version")[0][0]
-    business_tables = _query(
+    analytical_tables = _query(
         engine,
         "SELECT table_schema, table_name FROM information_schema.tables "
-        "WHERE table_schema IN ('sourcing', 'analytics_sourcing')",
+        "WHERE table_schema = 'analytics_sourcing'",
     )
 
-    assert revision == REVISION_0002
-    assert business_tables == []
+    assert revision == REVISION_HEAD
+    assert analytical_tables == []
 
 
 def test_job_table_columns_and_nulls(engine: Engine) -> None:

@@ -208,13 +208,14 @@ def test_alembic_upgrade_produces_expected_schema_state() -> None:
         schemas, platform_tables, revision = schema_snapshot()
 
         assert "platform" in schemas
+        assert "sourcing" in schemas
         assert sorted(platform_tables) == [
             "idempotency_keys",
             "job_attempts",
             "jobs",
             "module_registrations",
         ]
-        assert revision == "0002_platform_jobs_and_metadata"
+        assert revision == "0004_sourcing_curated_entities"
 
         # Repeatability: a clean re-upgrade must succeed without manual repair.
         command.downgrade(alembic_config, "base")
@@ -227,6 +228,6 @@ def test_alembic_upgrade_produces_expected_schema_state() -> None:
             "jobs",
             "module_registrations",
         ]
-        assert revision == "0002_platform_jobs_and_metadata"
+        assert revision == "0004_sourcing_curated_entities"
     finally:
         engine.dispose()
