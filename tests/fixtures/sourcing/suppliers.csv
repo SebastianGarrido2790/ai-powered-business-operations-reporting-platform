@@ -1,0 +1,4 @@
+supplier_code,name,tax_id,contact_email,country,created_at
+SUP-001,Acme Industrial,US123456789,contact@acme.com,USA,2026-01-15T08:30:00Z
+SUP-002,Global Logistics,GB987654321,ops@globallogistics.co.uk,GBR,2026-02-10T11:45:00Z
+SUP-003,Pacific Components,JP112233445,sales@pacificcomp.jp,JPN,2026-03-05T14:20:00Z

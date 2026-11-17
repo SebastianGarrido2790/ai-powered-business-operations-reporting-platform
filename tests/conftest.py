@@ -1,11 +1,13 @@
 """Shared pytest configuration for the BOPF test suite."""
 
+import os
 from collections.abc import Iterator
 
 import pytest
 
 from app.core.config import Settings
 from app.core.correlation import reset_correlation_id, set_correlation_id
+from app.modules.sourcing.config.settings import SourcingSettings
 
 _SETTINGS_ENV_VARS = (
     "APP_NAME",
@@ -36,10 +38,19 @@ def isolate_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in _SETTINGS_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
 
+    for key in list(os.environ.keys()):
+        if key.startswith("SOURCING_"):
+            monkeypatch.delenv(key, raising=False)
+
     monkeypatch.setattr(
         Settings,
         "model_config",
         {**Settings.model_config, "env_file": None},
+    )
+    monkeypatch.setattr(
+        SourcingSettings,
+        "model_config",
+        {**SourcingSettings.model_config, "env_file": None},
     )
 
 

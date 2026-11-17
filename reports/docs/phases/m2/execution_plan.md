@@ -162,7 +162,7 @@ The phase sequence does not replace feature-level task order.
 
 ## 6. Implementation Stages
 
-### Stage 0 — Pre-Implementation Verification & Dependency Check
+### Stage 0 — Pre-Implementation Verification & Dependency Check ✅ **PASSED**
 
 **Goal**
 
@@ -203,7 +203,7 @@ None. Baseline inspection requires no artificial failure.
 
 ---
 
-### Stage 1 — Sourcing Connectors, Named Sources & File Acquisition
+### Stage 1 — Sourcing Connectors, Named Sources & File Acquisition ✅ **PASSED**
 
 **Goal**
 

@@ -1,0 +1,43 @@
+version: 1
+sources:
+  - source_id: supplier_file
+    connector_type: csv
+    authoritative_entities: [supplier]
+    external_id_field: supplier_code
+    options:
+      encoding: utf-8-sig
+      delimiter: ","
+      has_header: true
+
+  - source_id: legacy_requisitions
+    connector_type: postgresql
+    authoritative_entities: [requisition]
+    external_id_field: requisition_no
+    options:
+      host: localhost
+      port: 5432
+      database: sourcing_source
+      user: readonly
+      query: SELECT requisition_no, supplier_code, requested_at, amount, currency FROM public.requisitions
+      max_rows: 50000
+    secret_refs:
+      password: SOURCING_LEGACY_DB_PASSWORD
+
+  - source_id: erp_master_data
+    connector_type: rest
+    authoritative_entities: [supplier, requisition, quote, purchase_order, delivery]
+    external_id_field: id
+    source_timestamp_field: updated_at
+    options:
+      base_url: http://erp-stub/api/erp/v1
+      entity_paths:
+        supplier: /suppliers
+        requisition: /requisitions
+        quote: /quotes
+        purchase_order: /purchase-orders
+        delivery: /deliveries
+      page_size: 25
+      max_pages: 20
+      timeout_seconds: 10
+    secret_refs:
+      token: SOURCING_ERP_API_TOKEN

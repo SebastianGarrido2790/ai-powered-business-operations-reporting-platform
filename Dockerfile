@@ -30,11 +30,15 @@ RUN uv sync --locked --no-dev --no-install-project
 # Migrations run only through explicit operator commands, never at startup
 # (INV-015), but the files must be present for an operator to invoke them.
 COPY src/ /app/src/
+COPY config/ /app/config/
 COPY alembic.ini /app/alembic.ini
 COPY database/ /app/database/
 
 # Install application package itself in locked mode
 RUN uv sync --locked --no-dev
+
+# Create the shared landing directory for acquired source files (SDD 001).
+RUN mkdir -p /app/data/sourcing/landing
 
 # Create non-root system user for security hardening
 RUN useradd --create-home --uid 10001 --shell /bin/bash appuser \

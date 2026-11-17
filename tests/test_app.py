@@ -148,11 +148,16 @@ def test_sourcing_contract_interface() -> None:
     assert sourcing_module.get_declared_capabilities() == ["health"]
     assert sourcing_module.get_declared_permissions() == ["sourcing.read"]
     assert isinstance(sourcing_module.get_router(), APIRouter)
-    assert sourcing_module.get_health_status() == {
-        "status": "ok",
-        "module": "sourcing",
-        "version": "0.1.0",
-    }
+    health = sourcing_module.get_health_status()
+    assert health["module"] == "sourcing"
+    assert health["version"] == "0.1.0"
+    assert health["source_configuration"] in {"ok", "invalid"}
+    if health["source_configuration"] == "ok":
+        assert health["status"] == "ok"
+        assert health["configured_sources"] >= 1
+    else:
+        assert health["status"] == "degraded"
+        assert "diagnostic" in health
 
 
 def test_sourcing_manifest_conformance() -> None:

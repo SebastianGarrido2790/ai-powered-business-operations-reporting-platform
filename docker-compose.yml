@@ -47,6 +47,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - sourcing_landing:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s
@@ -72,6 +74,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - sourcing_landing:/app/data
     # The image healthcheck probes the API port; the worker exposes no HTTP server.
     healthcheck:
       disable: true
@@ -79,3 +83,4 @@ services:
 
 volumes:
   postgres_data:
+  sourcing_landing:
