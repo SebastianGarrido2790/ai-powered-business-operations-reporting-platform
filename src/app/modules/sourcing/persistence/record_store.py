@@ -8,9 +8,14 @@ Governed by:
   the persisted content fingerprint used for duplicate detection.
 - INV-015: no schema creation and no caller-session commit.
 
-`append_source_record` and `add_issue` use the caller's session and never
-commit. The update operations and reads use a short store-owned session unless
-the caller supplies one; a supplied session is flushed and never committed.
+`append_source_record`, `append_source_records`, and `add_issue` use the
+caller's session and never commit. The update operations and reads use a short
+store-owned session unless the caller supplies one; a supplied session is
+flushed and never committed.
+
+Batched appends exist because one statement round trip per record dominates the
+ingestion budget at the approved 100,000-record dataset; see
+`reports/docs/phases/m2/verification/002_budget_qualification.md`.
 """
 
 import re
@@ -48,6 +53,10 @@ from app.modules.sourcing.persistence.records import (
 _SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 _LOOKUP_LIMIT = 200
 _LIST_LIMIT = 201
+
+#: Maximum drafts accepted by one `append_source_records` call. The bound caps
+#: statement size; it does not change the caller's transaction boundary.
+RECORD_BATCH_LIMIT = 1000
 _TERMINAL_STATUSES = frozenset(
     {
         ValidationStatus.VALID.value,
@@ -61,7 +70,8 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def _record_snapshot(record: SourceRecordModel) -> SourceRecord:
+def _record_snapshot(record: Any) -> SourceRecord:
+    """Build a detached snapshot from an ORM instance or a `RETURNING` row."""
     return SourceRecord(
         id=record.id,
         ingestion_run_id=record.ingestion_run_id,
@@ -122,10 +132,53 @@ def _bounded_limit(limit: int, maximum: int) -> int:
     return min(limit, maximum)
 
 
+def _draft_values(draft: SourceRecordDraft) -> dict[str, Any]:
+    if draft.entity_type not in ENTITY_TYPES:
+        raise SourcingValidationError(f"Unknown entity type '{draft.entity_type}'.")
+    if not draft.record_key:
+        raise SourcingValidationError("record_key must not be empty.")
+    if draft.external_record_id == "":
+        raise SourcingValidationError("external_record_id must be null or non-empty.")
+    return {
+        "ingestion_run_id": draft.ingestion_run_id,
+        "source_id": draft.source_id,
+        "entity_type": draft.entity_type,
+        "external_record_id": draft.external_record_id,
+        "record_key": draft.record_key,
+        "raw_payload": dict(draft.raw_payload),
+        "content_fingerprint": draft.content_fingerprint,
+        "source_timestamp": draft.source_timestamp,
+        "validation_status": draft.validation_status,
+        "provenance": dict(draft.provenance),
+    }
+
+
+def _batch_values(drafts: Sequence[SourceRecordDraft]) -> list[dict[str, Any]]:
+    """Validate a batch and return its insert values in draft order."""
+    if len(drafts) > RECORD_BATCH_LIMIT:
+        raise SourcingValidationError(
+            f"append_source_records accepts at most {RECORD_BATCH_LIMIT} drafts per batch."
+        )
+    values = [_draft_values(draft) for draft in drafts]
+    seen: set[tuple[uuid.UUID, str]] = set()
+    for row in values:
+        key = (row["ingestion_run_id"], row["record_key"])
+        if key in seen:
+            raise SourcingValidationError(
+                "A batch must not repeat an (ingestion_run_id, record_key) pair."
+            )
+        seen.add(key)
+    return values
+
+
 class SourcingRecordStore(Protocol):
     """Operations SDDs 002, 004, 005, and 006 require for source records."""
 
     def append_source_record(self, session: Session, draft: SourceRecordDraft) -> SourceRecord: ...
+
+    def append_source_records(
+        self, session: Session, drafts: Sequence[SourceRecordDraft]
+    ) -> Sequence[SourceRecord]: ...
 
     def set_normalized(
         self,
@@ -214,43 +267,40 @@ class PostgresSourcingRecordStore:
             yield owned
 
     def append_source_record(self, session: Session, draft: SourceRecordDraft) -> SourceRecord:
-        """Upsert by `(ingestion_run_id, record_key)` using the caller's session."""
-        if draft.entity_type not in ENTITY_TYPES:
-            raise SourcingValidationError(f"Unknown entity type '{draft.entity_type}'.")
-        if not draft.record_key:
-            raise SourcingValidationError("record_key must not be empty.")
-        if draft.external_record_id == "":
-            raise SourcingValidationError("external_record_id must be null or non-empty.")
-
-        values: dict[str, Any] = {
-            "ingestion_run_id": draft.ingestion_run_id,
-            "source_id": draft.source_id,
-            "entity_type": draft.entity_type,
-            "external_record_id": draft.external_record_id,
-            "record_key": draft.record_key,
-            "raw_payload": dict(draft.raw_payload),
-            "content_fingerprint": draft.content_fingerprint,
-            "source_timestamp": draft.source_timestamp,
-            "validation_status": draft.validation_status,
-            "provenance": dict(draft.provenance),
-        }
-        statement = (
-            pg_insert(SourceRecordModel)
-            .values(**values)
-            .on_conflict_do_update(
-                index_elements=["ingestion_run_id", "record_key"],
-                set_={
-                    "raw_payload": values["raw_payload"],
-                    "source_timestamp": values["source_timestamp"],
-                    "provenance": values["provenance"],
-                    "updated_at": func.now(),
-                },
-            )
-            .returning(SourceRecordModel)
-        )
-        record = session.scalars(statement).one()
+        """Upsert one record by `(ingestion_run_id, record_key)`."""
+        record = self.append_source_records(session, (draft,))[0]
         session.flush()
-        return _record_snapshot(record)
+        return record
+
+    def append_source_records(
+        self, session: Session, drafts: Sequence[SourceRecordDraft]
+    ) -> Sequence[SourceRecord]:
+        """Upsert a bounded batch by `(ingestion_run_id, record_key)`.
+
+        Returns one snapshot per draft, in draft order. A conflict updates the
+        raw payload, source timestamp, and provenance, and preserves the
+        received timestamp, normalized payload, validation status, and content
+        fingerprint, so a retry never resets a normalized record to `PENDING`.
+        """
+        values = _batch_values(drafts)
+        if not values:
+            return ()
+        insert_statement = pg_insert(SourceRecordModel).values(values)
+        statement = insert_statement.on_conflict_do_update(
+            index_elements=["ingestion_run_id", "record_key"],
+            set_={
+                "raw_payload": insert_statement.excluded.raw_payload,
+                "source_timestamp": insert_statement.excluded.source_timestamp,
+                "provenance": insert_statement.excluded.provenance,
+                "updated_at": func.now(),
+            },
+        ).returning(*SourceRecordModel.__table__.c)
+        rows = session.execute(statement).all()
+        persisted = {(row.ingestion_run_id, row.record_key): row for row in rows}
+        return [
+            _record_snapshot(persisted[(row["ingestion_run_id"], row["record_key"])])
+            for row in values
+        ]
 
     def _update_record(
         self,

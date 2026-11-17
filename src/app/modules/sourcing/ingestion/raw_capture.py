@@ -29,7 +29,10 @@ from app.modules.sourcing.ingestion.record_key import (
     record_digest,
 )
 from app.modules.sourcing.persistence.errors import UnknownEntityTypeError
-from app.modules.sourcing.persistence.record_store import SourcingRecordStore
+from app.modules.sourcing.persistence.record_store import (
+    RECORD_BATCH_LIMIT,
+    SourcingRecordStore,
+)
 from app.modules.sourcing.persistence.records import (
     ENTITY_TYPES,
     IngestionRun,
@@ -80,7 +83,7 @@ def _group_pages(records: Sequence[FetchedRecord]) -> list[list[FetchedRecord]]:
 
 
 class RawCapturePipeline:
-    """Persist raw source records in one transaction per page."""
+    """Persist raw source records in one transaction per page, in bounded batches."""
 
     def __init__(
         self,
@@ -123,23 +126,36 @@ class RawCapturePipeline:
 
             with self._session_factory() as session:
                 try:
+                    drafts: list[SourceRecordDraft] = []
+                    quarantined_flags: list[bool] = []
                     for record in page_records:
                         draft, quarantined = self._build_draft(
                             run, fetch_result, record, occurrences
                         )
-                        persisted = self._record_store.append_source_record(session, draft)
-                        if quarantined:
-                            self._record_store.add_issue(
-                                session,
-                                self._truncation_issue(run, persisted, draft),
+                        drafts.append(draft)
+                        quarantined_flags.append(quarantined)
+
+                    for start in range(0, len(drafts), RECORD_BATCH_LIMIT):
+                        batch = drafts[start : start + RECORD_BATCH_LIMIT]
+                        flags = quarantined_flags[start : start + RECORD_BATCH_LIMIT]
+                        for draft, persisted, quarantined in zip(
+                            batch,
+                            self._record_store.append_source_records(session, batch),
+                            flags,
+                            strict=True,
+                        ):
+                            if quarantined:
+                                self._record_store.add_issue(
+                                    session,
+                                    self._truncation_issue(run, persisted, draft),
+                                )
+                            captured.append(
+                                CapturedRecord(record=persisted, capture_quarantined=quarantined)
                             )
-                        captured.append(
-                            CapturedRecord(record=persisted, capture_quarantined=quarantined)
-                        )
-                        processed += 1
-                        counts["received"] += 1
-                        if quarantined:
-                            counts["quarantined"] += 1
+                            processed += 1
+                            counts["received"] += 1
+                            if quarantined:
+                                counts["quarantined"] += 1
                     session.commit()
                 except Exception:
                     session.rollback()

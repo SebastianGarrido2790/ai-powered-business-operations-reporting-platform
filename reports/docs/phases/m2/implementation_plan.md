@@ -676,7 +676,9 @@ Options:
 - Record-level idempotency (D03.1) still protects against duplicate effects if an unexpected overrun triggers stale-lease recovery.
 - Heartbeat renewal, chunked multi-job ingestion, and larger-volume tuning are deferred until measured data justifies them.
 
-**Approval required:** Yes, as part of D02. **✅ Approved conditionally 2026-11-13 — Batch 1 (D02.2).**
+**Qualification amendment (2026-11-17).** The timed qualification at 100,000 records failed: the slowest run took 258.2 s (single page) and 260.6 s (100 pages), because the write path issued one `INSERT … ON CONFLICT … RETURNING` per record. The project owner reopened this decision and approved a performance remediation of the measured bottleneck instead of heartbeat renewal (B) or dataset reduction: bounded multi-row batch upsert in SDD 003's record store, with SDD 002 Task 1.4 extended to admit that third resolution path. The 240-second budget, the 60-second margin, the 300-second lease, and the 100,000-record dataset are unchanged. The re-run passed at 69.3 s and 72.6 s. Evidence: `reports/docs/phases/m2/verification/002_budget_qualification.md`.
+
+**Approval required:** Yes, as part of D02. **✅ Approved conditionally 2026-11-13 — Batch 1 (D02.2); qualification remediation approved 2026-11-17.**
 
 ### M2-D03 — Sourcing data model, layers, and provenance
 
@@ -1257,7 +1259,7 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 | M2-D01.1 | B — Multipart upload to a controlled landing area | **Approved — Batch 1 (as part of D01)** | 2026-11-13 | Approved as part of D01; §6 M2-D01.1 |
 | M2-D02 | B — Explicit module job-handler registration; `sourcing.ingestion` job | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D02 |
 | M2-D02.1 | D — Required idempotency key plus content-hash duplicate warning | **Approved — Batch 1 (as part of D02)** | 2026-11-13 | Approved as part of D02; §6 M2-D02.1 |
-| M2-D02.2 | A — Bounded execution budget below the claim lease, subject to timed qualification | **Approved — Conditional (Batch 1)** | 2026-11-13 | Project-owner approval; timed qualification required before implementation; §6 M2-D02.2 |
+| M2-D02.2 | A - Bounded execution budget below the claim lease, subject to timed qualification | **Approved - Conditional (Batch 1)** | 2026-11-13 | Project-owner approval; timed qualification required before implementation; §6 M2-D02.2. Qualification remediation approved 2026-11-17: batch write path, budget, lease, and dataset unchanged |
 | M2-D03 | B — Append-only raw/staging records plus curated entities | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D03 |
 | M2-D03.1 | B — Internal UUID plus source-qualified external identity; idempotent upsert | **Approved — Batch 2 (as part of D03)** | 2026-11-14 | Approved as part of D03; §6 M2-D03.1 |
 | M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D04 |

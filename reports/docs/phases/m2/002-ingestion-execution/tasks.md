@@ -24,7 +24,7 @@
 - [ ] **Task 1.1:** Agree with the project owner the qualification harness, the largest M2 synthetic dataset, the representative processing workload, and the measurement method; record the agreement in `reports/docs/phases/m2/verification/002_budget_qualification.md`.
 - [ ] **Task 1.2:** Build the harness against the available SDD 001 connector and SDD 003 run store, or an explicitly approved in-memory equivalent; the harness must exercise fetch, processing, and the persistence boundary.
 - [ ] **Task 1.3:** Run the harness and record wall-clock duration, remaining margin against 240 seconds, dataset size, record counts, environment, and command.
-- [ ] **Task 1.4:** If the dataset cannot complete within 240 seconds with the 60-second margin, stop implementation and reopen M2-D02.2 for heartbeat lease renewal or dataset reduction.
+- [ ] **Task 1.4:** If the dataset cannot complete within 240 seconds with the 60-second margin, stop implementation and reopen M2-D02.2 to evaluate heartbeat lease renewal, dataset reduction, or an approved performance remediation of the measured bottleneck; any of the three requires a project-owner decision and a re-run of the qualification.
 
 ### Phase 2: Module Job-Handler Contract and Worker Composition
 
@@ -111,7 +111,7 @@
 | Record-level validation failures are outcomes, not job failures | 7.1, 7.4, 7.6 |
 | Connector, configuration, and persistence failures map to the correct class | 7.4, 7.6 |
 | Execution budget is enforced; over-budget run fails permanently and reaches a terminal outcome | 1.1–1.4, 7.2, 7.6 |
-| Timed qualification is recorded; dataset completes within budget or M2-D02.2 is reopened | 1.1–1.4 |
+| Timed qualification is recorded; the dataset completes within budget, or M2-D02.2 is reopened and the approved remediation is re-qualified | 1.1-1.4 |
 | Landing cleanup is invoked after a successful file-based run; failures retain the file | 7.3, 7.6, 8.4 |
 | `sourcing.ingest` granted to the three roles only; `sourcing.read` covers status; manifest version bumped | 3.1–3.5 |
 | Unauthenticated and unauthorized requests are rejected; no raw payloads, secrets, or stack traces | 6.2, 6.6, 9.4 |

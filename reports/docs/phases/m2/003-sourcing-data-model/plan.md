@@ -282,7 +282,7 @@ class UpdateMode(StrEnum):
 
 `SourceRecord` and `ValidationIssue` add the persisted identifier and timestamps. Their fields mirror the approved tables.
 
-On an append conflict, `append_source_record` updates the raw payload, source timestamp, and provenance, and preserves `received_at`, `normalized_payload`, `validation_status`, and `normalization_version`, so a retry never resets a normalized record to `PENDING`. On an issue conflict, `add_issue` updates the message, severity, and value excerpt while preserving `created_at`.
+On an append conflict, `append_source_record` and `append_source_records` update the raw payload, source timestamp, and provenance, and preserve `received_at`, `normalized_payload`, `validation_status`, and `normalization_version`, so a retry never resets a normalized record to `PENDING`. A batch carries at most `RECORD_BATCH_LIMIT = 1000` drafts, returns one record per draft in draft order, and rejects a repeated `(ingestion_run_id, record_key)` pair. On an issue conflict, `add_issue` updates the message, severity, and value excerpt while preserving `created_at`.
 
 `persistence/errors.py` defines `SourcingNotFoundError`, `SourcingStateConflictError`, `UnknownEntityTypeError`, and `SourcingValidationError`. Error text carries identifiers and safe messages only.
 
@@ -291,7 +291,7 @@ The store protocols live beside their implementations:
 | Port | Concrete store | Notes |
 |---|---|---|
 | `SourcingRunStore` | `PostgresSourcingRunStore` | `create_run` uses the caller's session; reads and terminal updates open short store-owned sessions. `find_by_content_hash` returns the most recent run by `created_at DESC`. `mark_running` sets `started_at` only if null. `complete_run` validates the outcome, count keys, and non-negative values, and unions warning codes. `record_attempt_error` is a no-op once terminal. |
-| `SourcingRecordStore` | `PostgresSourcingRecordStore` | `append_source_record` and `add_issue` use the caller's session and upsert. `set_normalized` and `set_validation_status` reject `PENDING`; `set_content_fingerprint` writes only the fingerprint. All three never commit a caller session. `find_by_content_fingerprint` and `find_run_records_by_source_identity` return bounded, `(received_at, id)`-ordered `RecordReference` projections. `list_issues` returns bounded `(created_at, id)`-ordered `IssueView` rows with AND-composed optional filters and joins only `record_key` and `entity_type` from the source record. List operations are bounded and stably ordered. |
+| `SourcingRecordStore` | `PostgresSourcingRecordStore` | `append_source_record`, `append_source_records`, and `add_issue` use the caller's session and upsert. `set_normalized` and `set_validation_status` reject `PENDING`; `set_content_fingerprint` writes only the fingerprint. All three never commit a caller session. `find_by_content_fingerprint` and `find_run_records_by_source_identity` return bounded, `(received_at, id)`-ordered `RecordReference` projections. `list_issues` returns bounded `(created_at, id)`-ordered `IssueView` rows with AND-composed optional filters and joins only `record_key` and `entity_type` from the source record. List operations are bounded and stably ordered. |
 | `SourcingEntityStore` | `PostgresSourcingEntityStore` | Explicit `entity_type → model` map; no interpolation. `REPLACE` writes supplied fields and provenance; `FILL_MISSING` writes only null fields and still refreshes provenance. Origin identity is written once and never updated. |
 
 ```python
@@ -319,6 +319,9 @@ class SourcingRunStore(Protocol):
 
 class SourcingRecordStore(Protocol):
     def append_source_record(self, session: Session, draft: SourceRecordDraft) -> SourceRecord: ...
+    def append_source_records(
+        self, session: Session, drafts: Sequence[SourceRecordDraft]
+    ) -> Sequence[SourceRecord]: ...
     def set_normalized(
         self,
         record_id: UUID,
@@ -484,7 +487,7 @@ Flow:
 3. Serialize the payload canonically, compute the digest and occurrence, and build the record key.
 4. Enforce the payload bound. When exceeded, persist a bounded truncation envelope, set `validation_status = QUARANTINED`, and add `VALIDATION:RAW_PAYLOAD_TOO_LARGE:-:0`.
 5. Otherwise persist with `validation_status = PENDING`.
-6. Open one transaction per page through `session_factory`, appending records and issues through the store with that session.
+6. Open one transaction per page through `session_factory`, appending the page's records in batches of at most `RECORD_BATCH_LIMIT` through `append_source_records` and the issues through `add_issue`, all with that session.
 7. Return `received`, `valid = 0`, `quarantined`, `warning = 0`, `duplicate = 0`, and `unresolved = 0`.
 
 8. Return `records` alongside the counts; mark capture-quarantined records and note that the pipeline composes SDD 003's capture result.

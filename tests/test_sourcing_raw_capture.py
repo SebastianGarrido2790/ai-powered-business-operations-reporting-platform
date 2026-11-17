@@ -2,7 +2,7 @@
 
 import hashlib
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -29,8 +29,11 @@ from app.modules.sourcing.ingestion import (
 from app.modules.sourcing.persistence import (
     IngestionRun,
     NewIngestionRun,
+    SourceRecord,
+    SourceRecordDraft,
     UnknownEntityTypeError,
 )
+from app.modules.sourcing.persistence.record_store import RECORD_BATCH_LIMIT
 
 SOURCE_ID = "supplier_feed"
 
@@ -64,6 +67,20 @@ class RecordingSessionFactory:
         return cast(Session, session)
 
 
+class RecordingRecordStore(InMemorySourcingRecordStore):
+    """Record store that records the size of every append batch."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.batch_sizes: list[int] = []
+
+    def append_source_records(
+        self, session: Session | None, drafts: Sequence[SourceRecordDraft]
+    ) -> Sequence[SourceRecord]:
+        self.batch_sizes.append(len(drafts))
+        return super().append_source_records(session, drafts)
+
+
 @pytest.fixture
 def run() -> IngestionRun:
     store = InMemorySourcingRunStore()
@@ -84,6 +101,11 @@ def run() -> IngestionRun:
 @pytest.fixture
 def record_store() -> InMemorySourcingRecordStore:
     return InMemorySourcingRecordStore()
+
+
+@pytest.fixture
+def recording_store() -> RecordingRecordStore:
+    return RecordingRecordStore()
 
 
 def _fetch(
@@ -248,6 +270,54 @@ def test_capture_keeps_identical_records_distinct(
     assert keys[0].endswith(":0")
     assert keys[1].endswith(":1")
     assert result.counts["received"] == 2
+
+
+def test_capture_persists_a_large_page_in_bounded_batches(
+    run: IngestionRun, recording_store: RecordingRecordStore
+) -> None:
+    """Verify a page above the batch bound is appended in bounded statements."""
+    factory = RecordingSessionFactory()
+    records = [
+        _record({"name": f"Supplier {index}"}, external_record_id=f"ext-{index}")
+        for index in range(RECORD_BATCH_LIMIT + 1)
+    ]
+
+    result = _pipeline(recording_store, factory).process(
+        run=run,
+        fetch_result=_fetch(records),
+        budget=RecordingBudget(),
+    )
+
+    assert recording_store.batch_sizes == [RECORD_BATCH_LIMIT, 1]
+    assert result.counts["received"] == RECORD_BATCH_LIMIT + 1
+    assert len(result.records) == RECORD_BATCH_LIMIT + 1
+    assert len(factory.sessions) == 1
+    assert [session.commits for session in factory.sessions] == [1]
+
+
+def test_capture_quarantines_a_record_in_a_later_batch(
+    run: IngestionRun, recording_store: RecordingRecordStore
+) -> None:
+    """Verify truncation issues are written for records in any batch."""
+    factory = RecordingSessionFactory()
+    records = [
+        _record({"name": f"Supplier {index}"}, external_record_id=f"ext-{index}")
+        for index in range(RECORD_BATCH_LIMIT)
+    ]
+    records.append(_record({"description": "x" * 20000}, external_record_id="ext-large"))
+
+    result = _pipeline(recording_store, factory, max_payload_bytes=4096).process(
+        run=run,
+        fetch_result=_fetch(records),
+        budget=RecordingBudget(),
+    )
+
+    assert recording_store.batch_sizes == [RECORD_BATCH_LIMIT, 1]
+    assert result.counts["quarantined"] == 1
+    assert result.records[-1].capture_quarantined is True
+    issues = recording_store.list_issues(run.id)
+    assert len(issues) == 1
+    assert issues[0].source_record_id == result.records[-1].record.id
 
 
 def test_capture_opens_one_transaction_per_page(

@@ -166,7 +166,7 @@ The run record shall reference the job, source, idempotency key, correlation ide
 - The run shall never be left in progress after a budget exceed.
 - Before implementation, a timed qualification test shall run the largest agreed M2 synthetic dataset through the handler and record the measured duration and remaining margin.
 - The qualification harness shall exercise the largest agreed dataset through the handler and the approved processing path available at the time of the test. If the full downstream pipeline is not yet implemented, it shall use an approved representative processing workload; the harness, dataset, and measurement method must be agreed before the test.
-- If the largest dataset cannot complete within the budget, implementation shall stop and M2-D02.2 shall be reopened to evaluate heartbeat lease renewal.
+- If the largest dataset cannot complete within the budget, implementation shall stop and M2-D02.2 shall be reopened to evaluate a remediation: heartbeat lease renewal, dataset reduction, or an approved performance remediation of the measured bottleneck, followed by a re-run of the qualification.
 - Heartbeat renewal, chunked multi-job ingestion, and larger-volume tuning shall not be implemented in this feature.
 
 ## 9. API boundary

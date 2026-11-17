@@ -21,6 +21,7 @@ from app.modules.sourcing.persistence import (
     SourcingValidationError,
     ValidationIssueDraft,
 )
+from app.modules.sourcing.persistence.record_store import RECORD_BATCH_LIMIT
 
 requires_database = pytest.mark.skipif(
     not os.environ.get("BOPF_TEST_DATABASE_URL"),
@@ -98,6 +99,15 @@ def _append(
 ) -> SourceRecord:
     with Session(engine) as session, session.begin():
         return store.append_source_record(session, draft)
+
+
+def _append_batch(
+    store: PostgresSourcingRecordStore,
+    engine: Engine,
+    drafts: list[SourceRecordDraft],
+) -> list[SourceRecord]:
+    with Session(engine) as session, session.begin():
+        return list(store.append_source_records(session, drafts))
 
 
 def _add_issue(
@@ -223,6 +233,125 @@ def test_append_rejects_invalid_identity_values(
         _append(record_store, engine, _draft(run, record_key=""))
     with pytest.raises(SourcingValidationError):
         _append(record_store, engine, _draft(run, external_record_id=""))
+
+
+def test_batch_append_persists_every_draft_in_draft_order(
+    record_store: PostgresSourcingRecordStore, engine: Engine, run: IngestionRun
+) -> None:
+    """Verify one statement persists a batch and returns it in draft order."""
+    drafts = [
+        _draft(
+            run,
+            record_key=f"rec:{index}:0",
+            external_record_id=f"ext-{index}",
+            payload={"name": f"Supplier {index}"},
+        )
+        for index in range(3)
+    ]
+
+    records = _append_batch(record_store, engine, drafts)
+
+    assert [record.record_key for record in records] == ["rec:0:0", "rec:1:0", "rec:2:0"]
+    assert [record.raw_payload["name"] for record in records] == [
+        "Supplier 0",
+        "Supplier 1",
+        "Supplier 2",
+    ]
+    assert [record.external_record_id for record in records] == ["ext-0", "ext-1", "ext-2"]
+    assert len({record.id for record in records}) == 3
+    assert all(record.validation_status == "PENDING" for record in records)
+    assert {record.id for record in record_store.list_source_records(run.id)} == {
+        record.id for record in records
+    }
+
+
+def test_batch_append_upsert_preserves_capture_metadata(
+    record_store: PostgresSourcingRecordStore, engine: Engine, run: IngestionRun
+) -> None:
+    """Verify a retried batch refreshes raw data without resetting normalization."""
+    original = _append_batch(
+        record_store,
+        engine,
+        [
+            _draft(run, record_key="rec:0:0", payload={"name": "Acme"}),
+            _draft(run, record_key="rec:1:0", payload={"name": "Globex"}),
+        ],
+    )
+    normalized = record_store.set_normalized(original[0].id, {"name": "Acme"}, "VALID", "norm-1")
+    retried = _append_batch(
+        record_store,
+        engine,
+        [
+            _draft(
+                run,
+                record_key="rec:0:0",
+                payload={"name": "Acme Updated"},
+                source_timestamp=datetime(2026, 11, 2, tzinfo=UTC),
+                provenance={"connector_type": "csv", "source_revision": 2},
+            ),
+            _draft(run, record_key="rec:1:0", payload={"name": "Globex Updated"}),
+        ],
+    )
+
+    assert [record.id for record in retried] == [record.id for record in original]
+    assert retried[0].received_at == original[0].received_at
+    assert retried[0].raw_payload == {"name": "Acme Updated"}
+    assert retried[0].provenance == {"connector_type": "csv", "source_revision": 2}
+    assert retried[0].normalized_payload == {"name": "Acme"}
+    assert retried[0].validation_status == "VALID"
+    assert retried[0].normalization_version == "norm-1"
+    assert retried[0].updated_at >= normalized.updated_at
+    assert retried[1].raw_payload == {"name": "Globex Updated"}
+    assert retried[1].validation_status == "PENDING"
+    assert len(record_store.list_source_records(run.id)) == 2
+
+
+def test_batch_append_scopes_keys_per_run(
+    record_store: PostgresSourcingRecordStore,
+    run_store: PostgresSourcingRunStore,
+    engine: Engine,
+    run: IngestionRun,
+) -> None:
+    """Verify one batch may reuse a record key under a different run."""
+    job_id = JobStore(engine).create_job("sourcing.ingest", {"source_id": SOURCE_ID}).id
+    with Session(engine) as session, session.begin():
+        other_run = run_store.create_run(
+            session,
+            NewIngestionRun(
+                job_id=job_id,
+                source_id=SOURCE_ID,
+                entity_types=("supplier",),
+                idempotency_key=f"key-{uuid.uuid4()}",
+                submitted_by="user-1",
+            ),
+        )
+
+    records = _append_batch(
+        record_store,
+        engine,
+        [_draft(run, record_key="rec:0:0"), _draft(other_run, record_key="rec:0:0")],
+    )
+
+    assert records[0].ingestion_run_id == run.id
+    assert records[1].ingestion_run_id == other_run.id
+    assert records[0].id != records[1].id
+
+
+def test_batch_append_rejects_repeated_keys_and_oversized_batches(
+    record_store: PostgresSourcingRecordStore, engine: Engine, run: IngestionRun
+) -> None:
+    """Verify the batch contract rejects duplicates and the statement bound."""
+    with pytest.raises(SourcingValidationError):
+        _append_batch(record_store, engine, [_draft(run), _draft(run)])
+    with pytest.raises(SourcingValidationError):
+        _append_batch(
+            record_store,
+            engine,
+            [_draft(run, record_key=f"rec:{index}:0") for index in range(RECORD_BATCH_LIMIT + 1)],
+        )
+
+    assert _append_batch(record_store, engine, []) == []
+    assert record_store.list_source_records(run.id) == []
 
 
 def test_set_normalized_writes_terminal_state(

@@ -346,6 +346,7 @@ The concrete stores live in `src/app/modules/sourcing/persistence/`. Ports are t
 | Operation | Semantics |
 |---|---|
 | `append_source_record(session, record)` | Upsert by `(ingestion_run_id, record_key)`; preserve `received_at`, normalized payload, and validation status for an identical re-capture. |
+| `append_source_records(session, drafts)` | Bounded batch upsert by `(ingestion_run_id, record_key)` with the same preservation semantics; at most 1000 drafts per call; returns one record per draft in draft order; rejects a repeated run/key pair within the batch. |
 | `set_normalized(record_id, normalized_payload, validation_status, normalization_version)` | Persist the normalized representation and the resulting status; reject `PENDING`. |
 | `set_content_fingerprint(record_id, fingerprint, *, session=None)` | Persist the content fingerprint for a promoted record; never commits a caller session. |
 | `find_by_content_fingerprint(source_id, fingerprint, *, exclude_source_record_id, limit, session=None)` | Bounded, ordered `RecordReference` lookup for SDD 005's potential-duplicate detection. |
@@ -384,9 +385,9 @@ class CaptureResult:
 
 - `run` is the ingestion run record; `fetch_result` is SDD 001's source-neutral envelope; `budget` exposes `check(records_processed=0)`, which raises when the deadline passes.
 - `counts` uses the same keys as the run counts; `warnings` carries stable, sanitized codes.
-- For each record, the pipeline validates the entity type, computes the record key, enforces the raw-payload bound, and appends the source record with `validation_status = PENDING`.
+- For each record, the pipeline validates the entity type, computes the record key, and enforces the raw-payload bound; the page's records are then appended with `validation_status = PENDING` in bounded batches of at most 1000 drafts.
 - A record exceeding the raw-payload bound is persisted with a bounded, explicitly truncated payload, marked `QUARANTINED`, and given a capture-level issue with a stable code; it is not silently dropped.
-- Records are persisted in short transactions per fetch page. A transient persistence failure rolls back the page and propagates to the handler; the store does not retry internally.
+- Records are persisted in one short transaction per fetch page, written as bounded batches through `append_source_records`. A transient persistence failure rolls back the page and propagates to the handler; the store does not retry internally.
 - The result reports at least `received` and `quarantined`; validation, warning, duplicate, and unresolved counts remain zero until SDDs 004 and 005 populate them. SDD 002 may pass `warnings` to `complete_run` for persistence.
 - The pipeline performs no validation rules, normalization, deduplication, reconciliation, or curated upserts.
 

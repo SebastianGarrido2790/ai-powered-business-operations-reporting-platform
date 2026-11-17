@@ -23,6 +23,7 @@ from app.modules.sourcing.persistence.errors import (
     SourcingValidationError,
     UnknownEntityTypeError,
 )
+from app.modules.sourcing.persistence.record_store import RECORD_BATCH_LIMIT
 from app.modules.sourcing.persistence.records import (
     COUNT_KEYS,
     ENTITY_TYPES,
@@ -288,6 +289,28 @@ class InMemorySourcingRecordStore:
     def append_source_record(
         self, session: Session | None, draft: SourceRecordDraft
     ) -> SourceRecord:
+        return self.append_source_records(session, (draft,))[0]
+
+    def append_source_records(
+        self, session: Session | None, drafts: Sequence[SourceRecordDraft]
+    ) -> Sequence[SourceRecord]:
+        if len(drafts) > RECORD_BATCH_LIMIT:
+            raise SourcingValidationError(
+                f"append_source_records accepts at most {RECORD_BATCH_LIMIT} drafts per batch."
+            )
+        seen: set[tuple[uuid.UUID, str]] = set()
+        appended: list[SourceRecord] = []
+        for draft in drafts:
+            key = (draft.ingestion_run_id, draft.record_key)
+            if key in seen:
+                raise SourcingValidationError(
+                    "A batch must not repeat an (ingestion_run_id, record_key) pair."
+                )
+            seen.add(key)
+            appended.append(self._upsert(draft))
+        return tuple(appended)
+
+    def _upsert(self, draft: SourceRecordDraft) -> SourceRecord:
         if draft.entity_type not in ENTITY_TYPES:
             raise SourcingValidationError(f"Unknown entity type '{draft.entity_type}'.")
         now = _now()
