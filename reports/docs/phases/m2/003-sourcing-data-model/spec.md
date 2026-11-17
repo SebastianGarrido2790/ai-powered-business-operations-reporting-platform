@@ -375,6 +375,7 @@ The feature provides a raw-capture implementation consumed by SDD 002's handler:
 class RawCapturePipeline:
     def process(self, *, run, fetch_result, budget) -> CaptureResult: ...
 
+
 @dataclass(frozen=True)
 class CaptureResult:
     counts: Mapping[str, int]

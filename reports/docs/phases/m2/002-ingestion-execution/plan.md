@@ -179,6 +179,7 @@ class ProcessingResult:
     counts: dict[str, int]
     warnings: tuple[str, ...] = ()
 
+
 class IngestionPipeline(Protocol):
     def process(self, *, run, fetch_result, budget) -> ProcessingResult: ...
 ```

@@ -38,14 +38,17 @@ config/sourcing/validation.yaml
 ```python
 RULESET_VERSION = "1.0.0"
 
+
 class RuleStage(StrEnum):
     STRUCTURAL = "STRUCTURAL"
     NORMALIZATION = "NORMALIZATION"
     BUSINESS = "BUSINESS"
 
+
 class RuleSeverity(StrEnum):
     ERROR = "ERROR"
     WARNING = "WARNING"
+
 
 @dataclass(frozen=True)
 class Rule:
@@ -57,8 +60,11 @@ class Rule:
     description: str
     evaluate: Callable[[RuleContext], Sequence[RuleFinding]]
 
+
 RULES: tuple[Rule, ...]
 RULES_BY_CODE: Mapping[str, Rule]
+
+
 def rules_for(entity_type: str, stage: RuleStage) -> tuple[Rule, ...]: ...
 ```
 
@@ -70,6 +76,7 @@ class RuleFinding:
     field_name: str | None
     raw_value: str | None = None
 
+
 @dataclass
 class RuleContext:
     entity_type: str
@@ -79,6 +86,7 @@ class RuleContext:
     source_timestamp: datetime | None
     normalized: Mapping[str, Any] = field(default_factory=dict)
     parsed: dict[str, ParsedField] = field(default_factory=dict)
+
 
 @dataclass(frozen=True)
 class ParsedField:
@@ -106,6 +114,7 @@ class DecimalConvention(BaseModel):
     separator: Literal[".", ","]
     thousands: Literal[".", ","] | None = None
 
+
 class FieldDeclaration(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     target: str
@@ -122,12 +131,14 @@ class FieldDeclaration(BaseModel):
     enum: Mapping[str, str] | None = None
     sensitive: bool = False
 
+
 class EntitySchema(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     source_timestamp: Literal["required", "optional", "absent"]
     timezone: str | None = None
     decimal: DecimalConvention = DecimalConvention(separator=".", thousands=None)
     fields: Mapping[str, FieldDeclaration]
+
 
 class ValidationConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -330,11 +341,13 @@ class RecordOutcome:
     capture_quarantined: bool
     issues: tuple[ValidationIssueDraft, ...]
 
+
 @dataclass(frozen=True)
 class PageOutcome:
     counts: Mapping[str, int]
     warnings: tuple[str, ...]
     records: tuple[RecordOutcome, ...]
+
 
 class ValidationNormalizationPipeline:
     def __init__(
@@ -504,6 +517,7 @@ class CapturedRecord:
     record: SourceRecord
     capture_quarantined: bool
 
+
 @dataclass(frozen=True)
 class CaptureResult:
     counts: Mapping[str, int]
@@ -527,6 +541,7 @@ def set_normalized(
     *,
     session: Session | None = None,
 ) -> SourceRecord: ...
+
 
 def set_validation_status(
     self,

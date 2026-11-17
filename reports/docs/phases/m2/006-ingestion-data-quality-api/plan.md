@@ -60,10 +60,12 @@ class PageParams:
     limit: int
     offset: int
 
+
 def page_params(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> PageParams: ...
+
 
 def split_page(rows: Sequence[T], params: PageParams) -> tuple[list[T], bool]:
     return list(rows[: params.limit]), len(rows) > params.limit
@@ -146,7 +148,8 @@ async def list_issues(
     severity: Literal["ERROR", "WARNING"] | None = None,
     rule_code: str | None = None,
     field_name: str | None = None,
-    entity_type: Literal["supplier", "requisition", "quote", "purchase_order", "delivery"] | None = None,
+    entity_type: Literal["supplier", "requisition", "quote", "purchase_order", "delivery"]
+    | None = None,
     params: PageParams = Depends(page_params),
 ) -> IssuePage: ...
 ```
@@ -163,18 +166,22 @@ One factory builds all ten routes:
 ```python
 @dataclass(frozen=True)
 class EntityResource:
-    segment: str          # "purchase-orders"
-    entity_type: str      # "purchase_order"
-    label_field: str      # "purchase_order_number"
+    segment: str  # "purchase-orders"
+    entity_type: str  # "purchase_order"
+    label_field: str  # "purchase_order_number"
     detail_model: type[BaseModel]
+
 
 ENTITY_RESOURCES: tuple[EntityResource, ...] = (
     EntityResource("suppliers", "supplier", "name", SupplierDetail),
     EntityResource("requisitions", "requisition", "requisition_number", RequisitionDetail),
     EntityResource("quotes", "quote", "quote_number", QuoteDetail),
-    EntityResource("purchase-orders", "purchase_order", "purchase_order_number", PurchaseOrderDetail),
+    EntityResource(
+        "purchase-orders", "purchase_order", "purchase_order_number", PurchaseOrderDetail
+    ),
     EntityResource("deliveries", "delivery", "delivery_number", DeliveryDetail),
 )
+
 
 def build_entity_routers() -> list[APIRouter]: ...
 ```
@@ -219,6 +226,7 @@ def list_runs(
     offset: int = 0,
 ) -> Sequence[IngestionRun]: ...
 
+
 def list_issues(
     self,
     ingestion_run_id: UUID,
@@ -231,6 +239,7 @@ def list_issues(
     limit: int = 100,
     offset: int = 0,
 ) -> Sequence[IssueView]: ...
+
 
 def list_entities(
     self,
@@ -297,6 +306,7 @@ class SweepResult:
     skipped: bool
     protected_refs: int
     removed: int
+
 
 def sweep_landing(
     *,

@@ -99,9 +99,8 @@ BUSINESS_IDENTIFIERS: Mapping[str, str] = {
     "delivery": "delivery_number",
 }
 
-def resolve_identity(
-    entity_store, *, run, record, payload, session
-) -> IdentityResolution: ...
+
+def resolve_identity(entity_store, *, run, record, payload, session) -> IdentityResolution: ...
 ```
 
 1. **Source-qualified external identity** — when `external_record_id` is not null, `find_by_source_identity(entity_type, run.source_id, external_record_id, session=session)`. A hit returns `ResolvedEntityIdentity(existing.id)`.
@@ -299,10 +298,12 @@ class SourceRecordDraft:
     ...
     content_fingerprint: str | None = None
 
+
 @dataclass(frozen=True)
 class SourceRecord:
     ...
     content_fingerprint: str | None
+
 
 @dataclass(frozen=True)
 class RecordReference:
@@ -323,6 +324,7 @@ def set_content_fingerprint(
     self, record_id: UUID, fingerprint: str, *, session: Session | None = None
 ) -> SourceRecord: ...
 
+
 def find_by_content_fingerprint(
     self,
     source_id: str,
@@ -332,6 +334,7 @@ def find_by_content_fingerprint(
     limit: int = 50,
     session: Session | None = None,
 ) -> Sequence[RecordReference]: ...
+
 
 def find_run_records_by_source_identity(
     self,

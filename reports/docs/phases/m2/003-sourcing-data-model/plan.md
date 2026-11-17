@@ -102,6 +102,7 @@ def canonical_json(payload: Mapping[str, Any]) -> bytes:
         default=str,
     ).encode("utf-8")
 
+
 def record_digest(
     entity_type: str, external_record_id: str | None, payload: Mapping[str, Any]
 ) -> str:
@@ -112,6 +113,7 @@ def record_digest(
     hasher.update(b"\x00")
     hasher.update(canonical_json(payload))
     return hasher.hexdigest()
+
 
 def compute_record_key(
     entity_type: str,
@@ -144,6 +146,7 @@ class NewIngestionRun:
     acquisition_ref: str | None = None
     warnings: tuple[str, ...] = ()
 
+
 @dataclass(frozen=True)
 class IngestionRun:
     id: UUID
@@ -164,6 +167,7 @@ class IngestionRun:
     created_at: datetime
     updated_at: datetime
 
+
 @dataclass(frozen=True)
 class SourceRecordDraft:
     ingestion_run_id: UUID
@@ -176,6 +180,7 @@ class SourceRecordDraft:
     provenance: Mapping[str, Any]
     content_fingerprint: str | None = None
     validation_status: str = "PENDING"
+
 
 @dataclass(frozen=True)
 class SourceRecord:
@@ -196,6 +201,7 @@ class SourceRecord:
     created_at: datetime
     updated_at: datetime
 
+
 @dataclass(frozen=True)
 class RecordReference:
     id: UUID
@@ -204,6 +210,7 @@ class RecordReference:
     external_record_id: str | None
     content_fingerprint: str | None
     received_at: datetime
+
 
 @dataclass(frozen=True)
 class ValidationIssueDraft:
@@ -216,6 +223,7 @@ class ValidationIssueDraft:
     message: str
     field_name: str | None = None
     raw_value: str | None = None
+
 
 @dataclass(frozen=True)
 class ValidationIssue:
@@ -231,6 +239,7 @@ class ValidationIssue:
     raw_value: str | None
     created_at: datetime
 
+
 @dataclass(frozen=True)
 class EntityProvenance:
     origin_source_id: str
@@ -243,6 +252,7 @@ class EntityProvenance:
     validation_status: str
     reconciliation_status: str = "UNRESOLVED"
 
+
 @dataclass(frozen=True)
 class CuratedEntity:
     entity_type: str
@@ -250,16 +260,20 @@ class CuratedEntity:
     values: Mapping[str, Any]
     provenance: EntityProvenance
 
+
 @dataclass(frozen=True)
 class ResolvedEntityIdentity:
     entity_id: UUID
+
 
 @dataclass(frozen=True)
 class SourceEntityIdentity:
     source_id: str
     external_record_id: str | None
 
+
 EntityIdentity = ResolvedEntityIdentity | SourceEntityIdentity
+
 
 class UpdateMode(StrEnum):
     REPLACE = "REPLACE"
@@ -288,9 +302,7 @@ class SourcingRunStore(Protocol):
     def get_run_by_idempotency_key(
         self, submitted_by: str, idempotency_key: str
     ) -> IngestionRun | None: ...
-    def find_by_content_hash(
-        self, source_id: str, content_hash: str
-    ) -> IngestionRun | None: ...
+    def find_by_content_hash(self, source_id: str, content_hash: str) -> IngestionRun | None: ...
     def mark_running(self, ingestion_id: UUID, started_at: datetime) -> IngestionRun: ...
     def record_attempt_error(self, ingestion_id: UUID, error_summary: str) -> None: ...
     def complete_run(
@@ -304,10 +316,9 @@ class SourcingRunStore(Protocol):
         warnings: tuple[str, ...] = (),
     ) -> IngestionRun: ...
 
+
 class SourcingRecordStore(Protocol):
-    def append_source_record(
-        self, session: Session, draft: SourceRecordDraft
-    ) -> SourceRecord: ...
+    def append_source_record(self, session: Session, draft: SourceRecordDraft) -> SourceRecord: ...
     def set_normalized(
         self,
         record_id: UUID,
@@ -368,6 +379,7 @@ class SourcingRecordStore(Protocol):
         offset: int = 0,
     ) -> Sequence[IssueView]: ...
 
+
 class SourcingEntityStore(Protocol):
     def upsert_entity(
         self,
@@ -378,9 +390,7 @@ class SourcingEntityStore(Protocol):
         provenance: EntityProvenance,
         update_mode: UpdateMode,
     ) -> UUID: ...
-    def get_entity(
-        self, entity_type: str, entity_id: UUID
-    ) -> CuratedEntity | None: ...
+    def get_entity(self, entity_type: str, entity_id: UUID) -> CuratedEntity | None: ...
     def find_by_source_identity(
         self,
         entity_type: str,
@@ -447,11 +457,13 @@ class CapturedRecord:
     record: SourceRecord
     capture_quarantined: bool
 
+
 @dataclass(frozen=True)
 class CaptureResult:
     counts: Mapping[str, int]
     warnings: tuple[str, ...] = ()
     records: tuple[CapturedRecord, ...] = ()
+
 
 class RawCapturePipeline:
     def __init__(
