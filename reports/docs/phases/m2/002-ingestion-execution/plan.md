@@ -161,13 +161,15 @@ Execution:
 2. Cross-check `claim.payload["ingestion_run_id"]`; a mismatch is a permanent failure.
 3. Resolve the source; configuration/authentication failures are permanent.
 4. Mark the run running.
-5. For each requested entity type and connector page, fetch through the approved connector and call `pipeline.process(run, fetch_result, budget)`.
+5. For each requested entity type in the fixed order `supplier`, `requisition`, `quote`, `purchase_order`, `delivery`, and each connector page, fetch through the approved connector and call `pipeline.process(run=run, fetch_result=fetch_result, budget=budget)`.
 6. Aggregate the pipeline's counts.
 7. Complete the run with `SUCCEEDED` and the aggregate counts.
 8. Delete the landing file for file-based runs.
 9. Return; the worker updates the platform job to `SUCCEEDED`.
 
 The handler never updates the platform job. The runner remains the only writer of job terminal state.
+
+`ingestion/handler.py` defines `ENTITY_TYPE_PROCESSING_ORDER = ("supplier", "requisition", "quote", "purchase_order", "delivery")` and sorts the requested types by that order. The order is independent of the submission's order and guarantees that referenced entities are promoted before referring ones within a run. A requested type outside the closed set is a contract error.
 
 `src/app/modules/sourcing/ingestion/pipeline.py` defines:
 
@@ -182,6 +184,13 @@ class IngestionPipeline(Protocol):
 ```
 
 SDD 003 provides a raw-capture implementation; SDDs 004 and 005 extend it into the composite validation, normalization, and reconciliation pipeline. This feature's unit tests use a deterministic fake. The worker integration test uses the available pipeline implementation and is marked as dependent on SDD 003.
+
+#### 1.6.1 Additive SDD 005 amendment
+
+SDD 005's approved amendment adds two behaviors to this handler and changes no port, run-store, count, or submission contract:
+
+1. **Entity-type order** — the fixed processing order above, applied per run.
+2. **Error mapping** — `SourcingReconciliationContractError` maps to a permanent job failure, alongside SDD 004's configuration and contract errors. The run is set to `FAILED` with a sanitized summary before the job reaches `FAILED`.
 
 ### 1.7 Execution budget
 
@@ -208,6 +217,7 @@ Before implementation, a qualification harness runs the largest agreed M2 synthe
 | Persistence transient error, attempts remaining | `RETRY_SCHEDULED` | In progress; attempt error recorded |
 | Persistence transient error, final attempt | `FAILED` | `FAILED` |
 | Budget exceeded | `FAILED` | `FAILED` with `BUDGET_EXCEEDED` |
+| Reconciliation contract error | `FAILED` | `FAILED` with sanitized summary |
 | Missing run or payload mismatch | `FAILED` | No run update; diagnostic logged |
 | Unexpected exception | Retry or `FAILED` per attempts | `FAILED` on final attempt |
 
@@ -232,7 +242,7 @@ Before implementation, a qualification harness runs the largest agreed M2 synthe
 
 - **SDD 003** — owns `sourcing.ingestion_runs`, `SourcingRunStore`, and the raw-capture pipeline. This feature consumes the port and cannot pass integration acceptance before 003 is complete.
 - **SDD 004** — extends the pipeline with structural/business validation, normalization, and quarantine.
-- **SDD 005** — extends the pipeline with duplicate detection, reconciliation, and source authority.
+- **SDD 005** — extends the pipeline with duplicate detection, reconciliation, and source authority; requires the fixed entity-type order and the permanent mapping for `SourcingReconciliationContractError`.
 - **SDD 006** — owns the multipart route, ingestion listing, issues, entity endpoints, pagination, and filtering; calls this feature's `submit_acquisition()` and reuses `sourcing.ingest`.
 - **M2 acceptance** — runs the full pipeline end-to-end with the synthetic dataset.
 
@@ -252,6 +262,7 @@ Before implementation, a qualification harness runs the largest agreed M2 synthe
 | Qualification dataset and evidence | Largest agreed M2 synthetic dataset; duration and margin recorded in `reports/docs/phases/m2/verification/002_budget_qualification.md` |
 | Pipeline collaborators | `IngestionPipeline` port in 002; raw capture from 003; validation/normalization from 004; reconciliation from 005 |
 | `NEEDS_REVIEW` and interrupted runs | Status projection exposes `NEEDS_REVIEW`; outcome may be unset; never reported as success |
+| Entity-type processing order | `ENTITY_TYPE_PROCESSING_ORDER` in `ingestion/handler.py`; requested types sorted by that order; out-of-set types are a contract error |
 
 ---
 
@@ -274,5 +285,6 @@ Before implementation, a qualification harness runs the largest agreed M2 synthe
 
 **Plan:** Approved — 2026-11-14 by the project owner.  
 **Tasks:** Approved — 2026-11-14 by the project owner.  
+**SDD 005 amendment:** Approved — 2026-11-16 by the project owner; applied to this plan and to `spec.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. Approval of this plan and `tasks.md` is required, followed by the M2 execution plan and explicit execution authorization.  
 **Qualification gate:** M2-D02.2 remains conditionally approved until the timed qualification test is completed and recorded.

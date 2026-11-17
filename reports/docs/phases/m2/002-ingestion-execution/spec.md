@@ -71,6 +71,7 @@ FR-ING-04, FR-ING-06, FR-OPS-02, FR-OPS-03, FR-OPS-04, FR-OPS-05; MVP-01.
 15. On budget exceed, the handler shall fail permanently with an actionable message identifying the limit and recommending dataset splitting. The run shall reach a terminal outcome and shall never be left in progress.
 16. On successful completion of a file-based run, the handler shall invoke SDD 001's landing-file cleanup. Failed runs shall retain the file for diagnosis until the orphan sweep.
 17. The API shall never start, supervise, embed, or register worker handlers.
+18. The handler shall process requested entity types in the fixed dependency order `supplier`, `requisition`, `quote`, `purchase_order`, `delivery`, independent of the submission's order, so that intra-run references can resolve.
 
 ## 4. Module job-handler contract
 
@@ -193,6 +194,7 @@ Handoff:
 
 - Errors shall be classified as configuration/authentication, transient, or permanent.
 - Connector and configuration failures shall follow SDD 001's classification. Persistence failures shall be transient unless the failure is demonstrably non-retryable. Budget exceed shall be permanent.
+- A reconciliation contract error (`SourcingReconciliationContractError`) shall be permanent, consistent with validation configuration and contract errors.
 - A transient failure with attempts remaining shall leave the run in progress, record a sanitized error summary, and let the worker schedule a retry.
 - A transient failure on the final attempt and any permanent failure shall set the run outcome to `FAILED` before the job reaches `FAILED`.
 - Error summaries and logs shall include the ingestion and job identifiers, correlation identifier, attempt number, and a safe message.
@@ -239,6 +241,8 @@ Handoff:
 - [ ] A different principal using the same key does not receive another principal's run.
 - [ ] File content hash is recorded; identical content under a different key creates a new run with a `DUPLICATE_CONTENT` warning.
 - [ ] The worker claims and dispatches `sourcing.ingestion` outside a database transaction.
+- [ ] Requested entity types are processed in the fixed order `supplier`, `requisition`, `quote`, `purchase_order`, `delivery`, independent of the submission's order.
+- [ ] A reconciliation contract error is classified as a permanent job failure.
 - [ ] The run records counts and terminal outcome; the platform job reaches the correct terminal state.
 - [ ] The run never contradicts the job; retries reuse the same run and do not duplicate effects.
 - [ ] Record-level validation failures are outcomes, not job failures.
@@ -268,7 +272,7 @@ Handoff:
 - SDD 001 — `resolve_connector()`, the opaque acquisition reference, and landing-file cleanup helpers.
 - SDD 003 — `sourcing.ingestion_runs`, the run-store port, the concrete run store, raw-record persistence, and provenance.
 - SDD 004 — structural and business validation, rule catalog, and quarantine stages invoked by the handler.
-- SDD 005 — duplicate detection, reconciliation, and source-authority stages invoked by the handler.
+- SDD 005 — duplicate detection, reconciliation, and source-authority stages invoked by the handler; requires the additive entity-type order and error-mapping amendment.
 - SDD 006 — multipart route, ingestion listing, issue retrieval, entity endpoints, and pagination; reuses `sourcing.ingest`.
 - M1 — durable job store, dispatcher, worker runner, shared bootstrap, correlation, and permission enforcement.
 
@@ -301,5 +305,6 @@ Resolution confirmed by the project owner:
 
 **Feature scope:** Accepted in the M2 decision record (M2-D02, M2-D02.1, M2-D02.2; M2-D01 for source references).  
 **Feature SDD:** Approved — 2026-11-14 by the project owner.  
+**SDD 005 amendment:** Approved — 2026-11-16 by the project owner; applied to this specification and to `plan.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. The feature plan and tasks must be approved, the M2 execution plan must be approved, and explicit execution authorization must be issued before implementation may begin.  
 **Qualification condition:** M2-D02.2 remains conditionally approved until the timed qualification test is completed and recorded.

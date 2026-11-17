@@ -314,7 +314,7 @@ VALIDATION:<rule_code>:<canonical_field or '-'>:<ordinal>
 - `ordinal` is a zero-based counter per `(rule_code, field_name)`. M2 rules produce at most one finding per rule and field, so all M2 ordinals are `0`; the composer still assigns ordinals deterministically.
 - The composed key is asserted to be at most 128 characters.
 
-`raw_value` is a single-line, control-character-stripped, whitespace-collapsed excerpt truncated to 256 characters. It is `None` when the field is `sensitive`, when the value is unavailable, or when the rule is record-level. Messages and logs never contain the raw payload, a secret, a credential, a connection string, or a stack trace.
+`raw_value` is a single-line, control-character-stripped, whitespace-collapsed excerpt truncated to 256 characters. It is `None` when the field is `sensitive`, when the value is unavailable, or when the rule is record-level. Messages and logs never contain the raw payload, a secret, a credential, a connection string, or a stack trace. The sanitizer is the single public helper `sanitize_excerpt(value)` in `messages.py`; SDD 005 reuses it for its bounded evidence.
 
 ### 1.9 Pipeline composition and counts
 

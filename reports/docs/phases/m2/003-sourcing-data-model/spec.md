@@ -53,7 +53,7 @@ FR-ING-05, FR-DAT-06, MVP-04, NFR-DAT-01.
 
 1. Applying the module revisions to an empty database shall create the `sourcing` schema and all eight tables; downgrading shall remove them in dependency order without cascading destructive drops.
 2. `sourcing.ingestion_runs` shall store one row per execution with the platform job, source, requested entity types, principal-scoped idempotency key, correlation identifier, content hash or acquisition reference, terminal outcome, counts, run-level warning codes, timestamps, and a sanitized error summary.
-3. `sourcing.source_records` shall store one row per source record per run with the raw payload, the normalized payload when available, the external identifier when provided, a deterministic record key, the source timestamp, the validation status, the normalization version, and provenance metadata.
+3. `sourcing.source_records` shall store one row per source record per run with the raw payload, the normalized payload when available, the external identifier when provided, a deterministic record key, the content fingerprint when SDD 005 has computed it, the source timestamp, the validation status, the normalization version, and provenance metadata.
 4. `sourcing.validation_issues` shall store one row per issue with the run, the source record, a stable rule code, an issue type, a severity, the affected field, a sanitized message, a sanitized value excerpt, and a deterministic issue key.
 5. The five curated tables shall store the normalized business fields and provenance for suppliers, requisitions, quotes, purchase orders, and deliveries, using an internal UUID primary key and a unique source-qualified external identity where one exists.
 6. The raw, normalized, and curated representations shall remain distinguishable; raw payloads shall be retained after normalization and promotion.
@@ -143,6 +143,7 @@ Counts are non-negative integers. The intended full-pipeline relationships are `
 | `record_key` | VARCHAR(255) | No | Deterministic identity within the run |
 | `raw_payload` | JSONB | No | Record as received; bounded and possibly truncated with an issue |
 | `normalized_payload` | JSONB | Yes | Normalized representation when produced |
+| `content_fingerprint` | VARCHAR(64) | Yes | Lowercase SHA-256 of the canonical normalized payload including entity type; written by SDD 005 for promoted records |
 | `source_timestamp` | TIMESTAMPTZ | Yes | Source-declared timestamp, UTC when timezone-aware |
 | `received_at` | TIMESTAMPTZ | No | First capture time |
 | `validation_status` | VARCHAR(32) | No | `PENDING`, `VALID`, `WARNING`, or `QUARANTINED`; default `PENDING` |
@@ -157,8 +158,10 @@ Constraints and indexes:
 - `entity_type IN ('supplier', 'requisition', 'quote', 'purchase_order', 'delivery')`.
 - `validation_status IN ('PENDING', 'VALID', 'WARNING', 'QUARANTINED')`.
 - `record_key <> ''` and `external_record_id IS NULL OR external_record_id <> ''`.
+- `content_fingerprint IS NULL OR content_fingerprint ~ '^[0-9a-f]{64}$'`.
 - Index `(ingestion_run_id, validation_status)`.
 - Partial index `(source_id, external_record_id) WHERE external_record_id IS NOT NULL`.
+- Partial index `(source_id, content_fingerprint) WHERE content_fingerprint IS NOT NULL`.
 
 ### 4.4 `sourcing.validation_issues`
 
@@ -344,6 +347,9 @@ The concrete stores live in `src/app/modules/sourcing/persistence/`. Ports are t
 |---|---|
 | `append_source_record(session, record)` | Upsert by `(ingestion_run_id, record_key)`; preserve `received_at`, normalized payload, and validation status for an identical re-capture. |
 | `set_normalized(record_id, normalized_payload, validation_status, normalization_version)` | Persist the normalized representation and the resulting status; reject `PENDING`. |
+| `set_content_fingerprint(record_id, fingerprint, *, session=None)` | Persist the content fingerprint for a promoted record; never commits a caller session. |
+| `find_by_content_fingerprint(source_id, fingerprint, *, exclude_source_record_id, limit, session=None)` | Bounded, ordered `RecordReference` lookup for SDD 005's potential-duplicate detection. |
+| `find_run_records_by_source_identity(ingestion_run_id, source_id, external_record_id, *, exclude_source_record_id, limit, session=None)` | Bounded, ordered `RecordReference` lookup for SDD 005's exact-duplicate and identity/content detection. |
 | `add_issue(session, issue)` | Upsert by `(source_record_id, issue_key)`; preserve the original creation timestamp. |
 | `list_source_records(ingestion_run_id, limit, offset)` | Bounded, stable-ordered read for SDD 006. |
 | `list_issues(ingestion_run_id, severity, limit, offset)` | Bounded, stable-ordered read for SDD 006. |
@@ -354,8 +360,8 @@ The concrete stores live in `src/app/modules/sourcing/persistence/`. Ports are t
 |---|---|
 | `upsert_entity(session, entity_type, identity, values, provenance, update_mode)` | Insert or update a curated row; reject an unknown entity type. |
 | `get_entity(entity_type, entity_id)` | Return the curated row or `None`. |
-| `find_by_source_identity(entity_type, source_id, external_record_id)` | Return the row matching the origin identity or `None`. |
-| `find_candidates(entity_type, business_identifier, normalized_name_key, limit)` | Return bounded candidates matching the supplied deterministic keys for SDD 005's cascade. |
+| `find_by_source_identity(entity_type, source_id, external_record_id, *, session=None)` | Return the row matching the origin identity or `None`. |
+| `find_candidates(entity_type, business_identifier, normalized_name_key, limit, *, session=None)` | Return bounded candidates matching the supplied deterministic keys for SDD 005's cascade. |
 
 `identity` is either a resolved entity identifier or a source identity. `update_mode` is `REPLACE` for an authoritative source or `FILL_MISSING` for a non-authoritative source; both modes update provenance, while `REPLACE` overwrites only the business fields supplied and `FILL_MISSING` writes only fields that are currently null. SDD 005 chooses the mode from source authority and owns the matching cascade; `find_candidates` only applies the filters it is given.
 
@@ -384,7 +390,7 @@ class CaptureResult:
 ### 7.5 Transaction and error boundaries
 
 - `create_run` and `upsert_entity` use the caller's session; the caller owns the commit and rollback.
-- Reads and terminal updates open short store-owned sessions.
+- Reads and terminal updates open short store-owned sessions unless a caller session is supplied.
 - The handler executes outside a database transaction; the pipeline opens one transaction per page or batch.
 - Missing runs raise a not-found error; contradictory terminal writes raise a state-conflict error; duplicate principal/key surfaces as an integrity error for SDD 002 to resolve as a replay.
 - Store errors include identifiers and safe messages only; they never include raw payloads, secrets, or stack traces.
@@ -439,7 +445,7 @@ class CaptureResult:
 - [ ] `0003_sourcing_ingestion` and `0004_sourcing_curated_entities` apply from an empty database and downgrade cleanly.
 - [ ] The `sourcing` schema contains `ingestion_runs`, `source_records`, `validation_issues`, `suppliers`, `requisitions`, `quotes`, `purchase_orders`, and `deliveries`.
 - [ ] `ingestion_runs` stores the job, source, entity types, principal-scoped key, correlation, content hash or reference, outcome, counts, run-level warning codes, timestamps, and sanitized error.
-- [ ] `source_records` stores raw payload, normalized payload, external identifier, deterministic record key, source timestamp, validation status, normalization version, and provenance.
+- [ ] `source_records` stores raw payload, normalized payload, external identifier, deterministic record key, content fingerprint, source timestamp, validation status, normalization version, and provenance.
 - [ ] `validation_issues` traces to the run and source record and carries a stable rule code, issue type, severity, field, sanitized message, and value excerpt.
 - [ ] The five curated tables use internal UUID keys, unique source-qualified origin identity, nullable relationship keys, and full provenance.
 - [ ] Raw, normalized, and curated representations remain distinguishable, and raw payloads survive normalization and promotion.
@@ -470,7 +476,7 @@ class CaptureResult:
 - **SDD 001** — source identity, entity types, external identifiers, content hash, and opaque acquisition reference.
 - **SDD 002** — consumes `SourcingRunStore` for atomic run creation, lookup, lifecycle updates, and completion; consumes the raw-capture pipeline through its handler.
 - **SDD 004** — consumes `source_records` and `validation_issues`, sets normalized payloads and statuses, and extends the pipeline.
-- **SDD 005** — consumes the record and entity stores, sets reconciliation status and links, and chooses the update mode from source authority.
+- **SDD 005** — consumes the record and entity stores, sets reconciliation status and links, chooses the update mode from source authority, and writes content fingerprints through the additive SDD 005 amendment.
 - **SDD 006** — consumes the run, record, and entity read operations for listing, issues, and entity retrieval.
 - **M1** — provides `platform.jobs` and `platform.job_attempts`; the run references the job and does not duplicate attempt history.
 
@@ -502,4 +508,5 @@ These questions are resolved in [`plan.md`](plan.md) §2.
 **Feature scope:** Accepted in the M2 decision record (M2-D03, M2-D03.1; M2-D04 and M2-D05 for persisted outcomes and normalized values; M2-D06 for relationship and authority columns).  
 **Feature SDD:** Approved — 2026-11-14 by the project owner.  
 **Feature plan and tasks:** Approved — 2026-11-14 by the project owner.  
+**SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to this specification and to `plan.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. The feature plan and tasks must be approved, the M2 execution plan must be approved, and explicit execution authorization must be issued before implementation may begin.

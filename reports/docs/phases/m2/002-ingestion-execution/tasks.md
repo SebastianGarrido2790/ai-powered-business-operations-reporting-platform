@@ -71,10 +71,10 @@
 
 - [ ] **Task 7.1:** Create `src/app/modules/sourcing/ingestion/pipeline.py` with `ProcessingResult` and the `IngestionPipeline` protocol.
 - [ ] **Task 7.2:** Create `src/app/modules/sourcing/ingestion/budget.py` with `ExecutionBudget` and `BudgetExceeded` using `time.monotonic()`.
-- [ ] **Task 7.3:** Create `src/app/modules/sourcing/ingestion/handler.py` implementing run lookup, payload cross-check, source resolution, running transition, page/entity iteration, count aggregation, completion, and landing cleanup.
-- [ ] **Task 7.4:** Implement the error mapping from the plan: configuration/authentication/permanent, transient with attempts remaining, final transient, budget exceed, missing run, and unexpected exception.
+- [ ] **Task 7.3:** Create `src/app/modules/sourcing/ingestion/handler.py` implementing run lookup, payload cross-check, source resolution, running transition, iteration over requested entity types in `ENTITY_TYPE_PROCESSING_ORDER`, page processing, count aggregation, completion, and landing cleanup.
+- [ ] **Task 7.4:** Implement the error mapping from the plan: configuration/authentication/permanent, transient with attempts remaining, final transient, budget exceed, reconciliation contract error, missing run, and unexpected exception.
 - [ ] **Task 7.5:** Register `sourcing.ingestion` from `SourcingModuleContract.register_job_handlers`; confirm the handler never updates the platform job.
-- [ ] **Task 7.6:** Write `tests/test_ingestion_handler.py` and `tests/test_ingestion_budget.py` covering lookup, cross-check, pipeline invocation, aggregation, cleanup, missing run, error mapping, and terminal outcome on budget exceed.
+- [ ] **Task 7.6:** Write `tests/test_ingestion_handler.py` and `tests/test_ingestion_budget.py` covering lookup, cross-check, ordered entity-type iteration, out-of-set type rejection, pipeline invocation, aggregation, cleanup, missing run, error mapping (including `SourcingReconciliationContractError`), and terminal outcome on budget exceed.
 
 ### Phase 8: Integration and Handoff
 
@@ -104,6 +104,8 @@
 | A different principal using the same key does not receive another principal's run | 5.3, 5.6 |
 | File content hash is recorded; identical content under a different key creates a new run with `DUPLICATE_CONTENT` | 5.5, 5.6 |
 | Worker claims and dispatches `sourcing.ingestion` outside a database transaction | 2.3, 7.3, 8.1 |
+| Requested entity types are processed in the fixed order, independent of submission order | 7.3, 7.6 |
+| A reconciliation contract error is classified as a permanent job failure | 7.4, 7.6 |
 | Run records counts and terminal outcome; job reaches the correct terminal state | 7.3, 7.4, 7.6 |
 | Run never contradicts the job; retries reuse the same run and do not duplicate effects | 7.3, 7.4, 7.6, 8.1 |
 | Record-level validation failures are outcomes, not job failures | 7.1, 7.4, 7.6 |
@@ -126,6 +128,7 @@
 - [ ] Submission creates job and run atomically; no job exists without a run.
 - [ ] Replay and cross-principal isolation behave as specified; duplicate content is warned, not suppressed.
 - [ ] The handler records counts and terminal outcome without writing job state.
+- [ ] Requested entity types are processed in the fixed dependency order, and reconciliation contract errors fail permanently.
 - [ ] Budget exceed produces `FAILED` with `BUDGET_EXCEEDED` and no in-progress run.
 - [ ] `sourcing.ingest` mapping and manifest `0.2.0` are present; `sourcing.read` still covers status.
 - [ ] No schema, migration, ORM model, multipart dependency, broker, or workflow engine is added.
@@ -136,5 +139,6 @@
 ## Approval
 
 **Tasks:** Approved — 2026-11-14 by the project owner.  
+**SDD 005 amendment:** Approved — 2026-11-16 by the project owner; applied to these tasks and to `spec.md` and `plan.md`.  
 **Implementation authorization:** Not granted. Approval of this task list and the plan is required, followed by the M2 execution plan and explicit execution authorization.  
 **Qualification gate:** Phase 1 must complete and be recorded before any implementation task begins.

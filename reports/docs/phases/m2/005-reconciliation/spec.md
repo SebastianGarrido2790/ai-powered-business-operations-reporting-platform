@@ -1,7 +1,7 @@
 # 005 — Reconciliation, Duplicate Detection & Source Authority
 
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Draft — feature specification drafted for project-owner approval; no implementation authorized  
+**Status:** Approved — feature specification approved by the project owner 2026-11-16; no implementation authorized  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M2-D06; M2-D03 for persistence and identity, M2-D04 for validation outcomes, M2-D05 for normalized keys, M2-D02 for the pipeline port  
 **Execution stage:** Stage 6 per §7.2; requires SDDs 002, 003, and 004
@@ -202,7 +202,7 @@ Consequences:
 - A `supplier_code` reference resolves only against a supplier whose origin source is the referencing record's source and whose origin external identifier equals the code.
 - Cross-source supplier consolidation is deferred until an approved supplier business identifier and corroborating attribute exist.
 
-> **Decision requiring owner confirmation:** accept this limitation, or approve an additive supplier business-identifier amendment (a `supplier_code` curated column and canonical field) so that step 2 can apply to suppliers.
+> **Owner decision (2026-11-16):** the limitation is accepted for M2. The alternative supplier business-identifier amendment is not approved; cross-source supplier consolidation remains deferred.
 
 ### 6.3 Relationship rules
 
@@ -468,8 +468,10 @@ Satisfying M2-D06's cross-run content-duplicate requirement needs a persisted, i
 2. **Index** — partial index `(source_id, content_fingerprint) WHERE content_fingerprint IS NOT NULL`.
 3. **Record type** — `SourceRecordDraft` and `SourceRecord` gain `content_fingerprint: str | None`.
 4. **Write** — `SourcingRecordStore.set_content_fingerprint(record_id, fingerprint, *, session=None) -> SourceRecord`. With a caller session it flushes and never commits; without one it keeps the short store-owned session.
-5. **Reads** — `find_by_content_fingerprint(source_id, fingerprint, *, exclude_source_record_id, limit) -> Sequence[RecordReference]` and `find_run_records_by_source_identity(ingestion_run_id, source_id, external_record_id, *, exclude_source_record_id, limit) -> Sequence[RecordReference]`.
-6. **Projection** — `RecordReference` carries `id`, `record_key`, `ingestion_run_id`, `external_record_id`, and `received_at`; it never loads raw or normalized payloads.
+5. **Reads** — `find_by_content_fingerprint(source_id, fingerprint, *, exclude_source_record_id, limit, session=None) -> Sequence[RecordReference]` and `find_run_records_by_source_identity(ingestion_run_id, source_id, external_record_id, *, exclude_source_record_id, limit, session=None) -> Sequence[RecordReference]`. `find_by_source_identity` and `find_candidates` also accept an optional caller session. A supplied session is flushed and never committed; the caller owns the transaction.
+6. **Projection** — `RecordReference` carries `id`, `record_key`, `ingestion_run_id`, `external_record_id`, `content_fingerprint`, and `received_at`; it never loads raw or normalized payloads. The fingerprint is included because §5.4 compares a stored fingerprint.
+
+Exact signatures and projections are fixed in [`plan.md`](plan.md) §1.11.
 
 The column is nullable so that SDD 004, capture, and existing records are unaffected. M2 does not backfill fingerprints.
 
@@ -613,12 +615,15 @@ Error summaries include the run, source, record, entity type, rule code, and a s
 - The dependency-order implementation in SDD 002's handler.
 - The performance measurement for duplicate and candidate lookups within the execution budget.
 
+These questions are resolved in [`plan.md`](plan.md) §2.
+
 ---
 
 ## 20. Approval
 
 **Feature scope:** Accepted in the M2 decision record (M2-D06).  
-**Feature SDD:** Draft — pending project-owner approval.  
-**SDD 003 amendment:** Proposed — pending approval with this specification.  
-**SDD 002 amendment:** Proposed — pending approval with this specification.  
+**Feature SDD:** Approved — 2026-11-16 by the project owner.  
+**Supplier matching limitation (§6.2):** Accepted — 2026-11-16 by the project owner.  
+**SDD 003 amendment:** Approved — 2026-11-16 by the project owner.  
+**SDD 002 amendment:** Approved — 2026-11-16 by the project owner.  
 **Implementation authorization:** Not granted. The feature plan and tasks, the M2 execution plan, and explicit execution authorization remain required.

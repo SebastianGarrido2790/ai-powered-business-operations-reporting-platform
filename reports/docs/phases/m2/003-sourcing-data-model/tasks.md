@@ -20,10 +20,10 @@
 
 ### Phase 1: Sourcing Schema Migrations
 
-- [ ] **Task 1.1:** Create `database/migrations/versions/0003_sourcing_ingestion.py` with `down_revision = "0002_platform_jobs_and_metadata"`; create the `sourcing` schema, `ingestion_runs`, `source_records`, and `validation_issues` with the named constraints and indexes from the plan.
+- [ ] **Task 1.1:** Create `database/migrations/versions/0003_sourcing_ingestion.py` with `down_revision = "0002_platform_jobs_and_metadata"`; create the `sourcing` schema, `ingestion_runs`, `source_records`, and `validation_issues` with the named constraints and indexes from the plan, including `content_fingerprint`, `ck_source_records_content_fingerprint`, and the partial `ix_source_records_source_content_fingerprint`.
 - [ ] **Task 1.2:** Create `database/migrations/versions/0004_sourcing_curated_entities.py` with `down_revision = "0003_sourcing_ingestion"`; create `suppliers`, `requisitions`, `quotes`, `purchase_orders`, and `deliveries` with shared provenance, partial unique origin identity, relationship foreign keys, and business indexes.
 - [ ] **Task 1.3:** Implement both downgrades in reverse dependency order; drop the `sourcing` schema without `CASCADE`.
-- [ ] **Task 1.4:** Add `tests/test_sourcing_migrations.py` gated by `BOPF_TEST_DATABASE_URL`: apply to head, assert the revision, eight tables, columns, types, nullability, constraints, indexes, and `ON DELETE RESTRICT`; downgrade to `0002` and assert `sourcing` is absent; re-upgrade.
+- [ ] **Task 1.4:** Add `tests/test_sourcing_migrations.py` gated by `BOPF_TEST_DATABASE_URL`: apply to head, assert the revision, eight tables, columns (including `content_fingerprint`), types, nullability, constraints, indexes (including the partial fingerprint index), and `ON DELETE RESTRICT`; downgrade to `0002` and assert `sourcing` is absent; re-upgrade.
 - [ ] **Task 1.5:** Assert the migrations add no `platform` table or column and no `analytics_sourcing` object.
 
 ### Phase 2: Module ORM Models
@@ -41,13 +41,13 @@
 
 ### Phase 4: Persistence Ports and Stores
 
-- [ ] **Task 4.1:** Create `persistence/records.py` with `NewIngestionRun`, `IngestionRun`, `SourceRecordDraft`, `SourceRecord`, `ValidationIssueDraft`, `ValidationIssue`, `EntityProvenance`, `CuratedEntity`, `EntityIdentity`, and `UpdateMode`.
+- [ ] **Task 4.1:** Create `persistence/records.py` with `NewIngestionRun`, `IngestionRun`, `SourceRecordDraft`, `SourceRecord`, `RecordReference`, `ValidationIssueDraft`, `ValidationIssue`, `EntityProvenance`, `CuratedEntity`, `EntityIdentity`, and `UpdateMode`; include the `content_fingerprint` fields.
 - [ ] **Task 4.2:** Create `persistence/errors.py` with `SourcingNotFoundError`, `SourcingStateConflictError`, `UnknownEntityTypeError`, and `SourcingValidationError`.
 - [ ] **Task 4.3:** Create `persistence/run_store.py` with the `SourcingRunStore` protocol and `PostgresSourcingRunStore`; implement create, id, job, principal-key, and content-hash lookup, `mark_running`, `record_attempt_error`, and `complete_run` with count and warning validation.
-- [ ] **Task 4.4:** Create `persistence/record_store.py` with the `SourcingRecordStore` protocol and `PostgresSourcingRecordStore`; implement append upsert, normalized update (`set_normalized` with optional caller session), status-only terminal update (`set_validation_status`, no normalized payload, preserves existing payload), issue upsert, and bounded listing. When a caller session is supplied, flush and never commit; when omitted, keep the short store-owned session.
-- [ ] **Task 4.5:** Create `persistence/entity_store.py` with the `SourcingEntityStore` protocol and `PostgresSourcingEntityStore`; implement the explicit entity-type map, `REPLACE`/`FILL_MISSING`, immutable origin identity, `get_entity`, `find_by_source_identity`, and `find_candidates`.
-- [ ] **Task 4.6:** Add `tests/support/sourcing_stores.py` with in-memory doubles implementing the same protocols for SDDs 002, 004, and 005.
-- [ ] **Task 4.7:** Add PostgreSQL-gated `tests/test_sourcing_run_store.py`, `tests/test_sourcing_record_store.py`, and `tests/test_sourcing_entity_store.py` covering the semantics in the plan.
+- [ ] **Task 4.4:** Create `persistence/record_store.py` with the `SourcingRecordStore` protocol and `PostgresSourcingRecordStore`; implement append upsert, normalized update (`set_normalized` with optional caller session), status-only terminal update (`set_validation_status`, no normalized payload, preserves existing payload), content-fingerprint write (`set_content_fingerprint`, shape-validated, column-only), both bounded `RecordReference` lookups ordered by `(received_at, id)`, issue upsert, and bounded listing. When a caller session is supplied, flush and never commit; when omitted, keep the short store-owned session.
+- [ ] **Task 4.5:** Create `persistence/entity_store.py` with the `SourcingEntityStore` protocol and `PostgresSourcingEntityStore`; implement the explicit entity-type map, `REPLACE`/`FILL_MISSING`, immutable origin identity, `get_entity`, `find_by_source_identity`, and `find_candidates`, with optional caller sessions on the reads.
+- [ ] **Task 4.6:** Add `tests/support/sourcing_stores.py` with in-memory doubles implementing the same protocols for SDDs 002, 004, and 005, including the fingerprint operations, `RecordReference`, and optional caller sessions.
+- [ ] **Task 4.7:** Add PostgreSQL-gated `tests/test_sourcing_run_store.py`, `tests/test_sourcing_record_store.py`, and `tests/test_sourcing_entity_store.py` covering the semantics in the plan, including fingerprint shape validation, lookup ordering, exclusion, limit caps, and caller-session reads.
 
 ### Phase 5: Settings and Raw-Capture Pipeline
 
@@ -65,6 +65,7 @@
 - [ ] **Task 6.3:** Add a PostgreSQL-gated test distinguishing `REPLACE` from `FILL_MISSING` and confirming provenance refreshes in both modes.
 - [ ] **Task 6.4:** Confirm no manifest, capability, permission, platform schema, or `analytics_sourcing` change is present.
 - [ ] **Task 6.5:** Record the SDD 001 handoff requirement for `FetchResult.metadata["source_revision"]` and the SDD 002 adaptation: call `process(run=..., fetch_result=..., budget=...)` per the keyword-only protocol and adapt `CaptureResult` to `ProcessingResult`.
+- [ ] **Task 6.6:** Record the SDD 005 handoff: `content_fingerprint`, `RecordReference`, and the three fingerprint store operations serve duplicate detection, and capture and SDD 004 leave the column null.
 
 ### Phase 7: Verification
 
@@ -82,8 +83,9 @@
 | Both revisions apply from an empty database and downgrade cleanly | 1.1–1.5 |
 | The `sourcing` schema contains the eight approved tables | 1.1, 1.2, 1.4 |
 | `ingestion_runs` stores the job, source, entity types, principal key, correlation, content hash or reference, outcome, counts, warnings, timestamps, and sanitized error | 1.1, 2.1, 4.3, 4.7 |
-| `source_records` stores raw and normalized payloads, external id, record key, source timestamp, status, normalization version, and provenance | 1.1, 2.1, 3.1, 4.4, 4.7 |
+| `source_records` stores raw and normalized payloads, external id, record key, content fingerprint, source timestamp, status, normalization version, and provenance | 1.1, 2.1, 3.1, 4.1, 4.4, 4.7 |
 | `validation_issues` traces to the run and record and carries rule code, type, severity, field, message, and value excerpt | 1.1, 2.1, 4.4, 4.7 |
+| `content_fingerprint` and its partial index exist; SDD 005 can write and query fingerprints | 1.1, 1.4, 4.1, 4.4, 4.6, 4.7, 6.6 |
 | Curated tables use internal UUID keys, unique source-qualified origin identity, nullable relationships, and provenance | 1.2, 2.2, 4.5, 4.7 |
 | Raw, normalized, and curated representations remain distinguishable; raw survives promotion; capture-level quarantines and status-only updates are pipeline capabilities, not curated-table changes | 1.1–1.2, 4.4, 6.1 |
 | Re-running the same job upserts records and issues without duplication | 3.2, 4.4, 4.7, 6.2 |
@@ -104,6 +106,7 @@
 - [ ] The `sourcing` schema contains exactly the eight approved tables; no `analytics_sourcing` object exists.
 - [ ] `SourcingRunStore`, `SourcingRecordStore`, and `SourcingEntityStore` satisfy the approved ports, and in-memory doubles exist for downstream SDDs.
 - [ ] Record and issue keys are deterministic; retries do not duplicate records or issues.
+- [ ] `source_records.content_fingerprint`, its shape check, and its partial index exist, and the store exposes the fingerprint write and both bounded lookups.
 - [ ] Curated upserts honor origin identity, `REPLACE`, `FILL_MISSING`, and immutable first-run provenance.
 - [ ] `RawCapturePipeline` persists raw records with `PENDING` status, quarantines oversized payloads with an issue, respects the budget, and returns the persisted record set with capture-level quarantine flags.
 - [ ] Provenance traces from a curated row to the latest source record, run, and platform job.
@@ -116,4 +119,5 @@
 
 **Tasks:** Approved — 2026-11-14 by the project owner.  
 **Plan:** Approved — 2026-11-14 by the project owner.  
+**SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to these tasks and to `spec.md` and `plan.md`.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.
