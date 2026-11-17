@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14; no implementation authorized  
+**Status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14; SDDs 001–006 and Execution Plan approved; M2 execution authorized 2026-11-17  
 **Document type:** Living phase decision record  
 **Previous phase:** M1 — Platform Foundation (Complete, signed off 2026-11-13)
 
@@ -1272,15 +1272,15 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 
 **Implementation Plan status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14.  
 **Feature SDD status:** Specifications 001–006 approved; plans and tasks 001–006 approved.  
-**Execution Plan status:** Not started.  
-**Execution authorization:** Not granted.  
-**Phase status:** Not started.
+**Execution Plan status:** Approved — 2026-11-17 by the project owner (`execution_plan.md`).  
+**Execution authorization:** Granted by the project owner 2026-11-17 (M2-D02.2 timed qualification gate remains required at Stage 3 entry before Stage 3 production implementation).  
+**Phase status:** Authorized — awaiting Stage 0 preflight.
 
 No implementation may begin until the M2 decisions, feature SDDs, plans, tasks, execution plan, and explicit execution authorization are approved.
 
 ---
 
-## 10. Phase Outcome Record (to be completed at Stage 8)
+## 10. Phase Outcome Record (to be completed at Stage 9)
 
 This section is intentionally empty at the planning stage. At phase closure it must record:
 
