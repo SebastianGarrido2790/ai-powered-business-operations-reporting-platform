@@ -64,6 +64,13 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+RecordStoreState = tuple[
+    dict[uuid.UUID, SourceRecord],
+    dict[tuple[uuid.UUID, str], uuid.UUID],
+    dict[tuple[uuid.UUID, str], ValidationIssue],
+]
+
+
 class InMemorySession:
     """Minimal session stand-in for the raw-capture transaction boundary."""
 
@@ -285,6 +292,17 @@ class InMemorySourcingRecordStore:
         self._records: dict[uuid.UUID, SourceRecord] = {}
         self._keys: dict[tuple[uuid.UUID, str], uuid.UUID] = {}
         self._issues: dict[tuple[uuid.UUID, str], ValidationIssue] = {}
+
+    def snapshot(self) -> RecordStoreState:
+        """Return a shallow copy of the record, key, and issue state."""
+        return dict(self._records), dict(self._keys), dict(self._issues)
+
+    def restore(self, state: RecordStoreState) -> None:
+        """Replace the store state with a snapshot taken by `snapshot`."""
+        records, keys, issues = state
+        self._records = dict(records)
+        self._keys = dict(keys)
+        self._issues = dict(issues)
 
     def append_source_record(
         self, session: Session | None, draft: SourceRecordDraft
@@ -602,6 +620,19 @@ def _validate_terminal_status(status: str) -> None:
         raise SourcingValidationError(
             f"Unsupported validation status '{status}' for a terminal update."
         )
+
+
+class TransactionalInMemorySession(InMemorySession):
+    """Session double that restores an in-memory store snapshot on rollback."""
+
+    def __init__(self, store: InMemorySourcingRecordStore) -> None:
+        super().__init__()
+        self._store = store
+        self._snapshot = store.snapshot()
+
+    def rollback(self) -> None:
+        self._store.restore(self._snapshot)
+        super().rollback()
 
 
 class InMemorySourcingEntityStore:

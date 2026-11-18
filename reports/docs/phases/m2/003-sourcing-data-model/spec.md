@@ -514,4 +514,5 @@ These questions are resolved in [`plan.md`](plan.md) §2.
 **Feature plan and tasks:** Approved — 2026-11-14 by the project owner.  
 **SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to this specification and to `plan.md` and `tasks.md`.  
 **SDD 006 issue-read amendment:** Approved — 2026-11-16 by the project owner; applied to this specification and to `plan.md` and `tasks.md`.  
+**SDD 004 port amendment:** Approved — 2026-11-14 by the project owner as part of the SDD 004 plan approval; applied to this specification and to `plan.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. The feature plan and tasks must be approved, the M2 execution plan must be approved, and explicit execution authorization must be issued before implementation may begin.

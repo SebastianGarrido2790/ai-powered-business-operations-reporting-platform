@@ -593,4 +593,5 @@ Quality gates: `uv run ruff format --check .`, `uv run ruff check .`, `uv run my
 **Tasks:** Approved — 2026-11-14 by the project owner.  
 **SDD 005 fingerprint amendment:** Approved — 2026-11-16 by the project owner; applied to this plan and to `spec.md` and `tasks.md`.  
 **SDD 006 issue-read amendment:** Approved — 2026-11-16 by the project owner; applied to this plan and to `spec.md` and `tasks.md`.  
+**SDD 004 port amendment:** Approved — 2026-11-14 by the project owner as part of the SDD 004 plan approval; applied to this plan and to `spec.md` and `tasks.md`.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.

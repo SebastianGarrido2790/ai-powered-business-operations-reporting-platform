@@ -49,6 +49,11 @@ from app.modules.sourcing.validation.normalize import (
     parse_enum,
     parse_timestamp,
 )
+from app.modules.sourcing.validation.pipeline import (
+    PageOutcome,
+    RecordOutcome,
+    ValidationNormalizationPipeline,
+)
 from app.modules.sourcing.validation.types import ParsedField, RuleContext, RuleFinding
 
 __all__ = [
@@ -65,6 +70,8 @@ __all__ = [
     "EvaluationOutcome",
     "FieldDeclaration",
     "ParsedField",
+    "PageOutcome",
+    "RecordOutcome",
     "Rule",
     "RuleContext",
     "RuleFinding",
@@ -73,6 +80,7 @@ __all__ = [
     "SourcingValidationConfigError",
     "SourcingValidationContractError",
     "ValidationConfig",
+    "ValidationNormalizationPipeline",
     "canonical_decimal",
     "evaluate_record",
     "load_validation_config",

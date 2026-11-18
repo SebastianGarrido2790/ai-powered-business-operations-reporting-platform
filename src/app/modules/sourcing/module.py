@@ -7,8 +7,9 @@ Governed by:
 - M2-D01: named source configuration and connector resolution.
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import httpx
 from fastapi import APIRouter
@@ -25,12 +26,33 @@ from app.modules.sourcing.config.sources import (
 )
 from app.modules.sourcing.connectors.registry import build_connector
 
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+    from app.modules.sourcing.persistence import SourcingRecordStore
+    from app.modules.sourcing.validation import ValidationConfig
+    from app.modules.sourcing.validation.pipeline import ValidationNormalizationPipeline
+
 MODULE_ID: Final[str] = "sourcing"
 MODULE_NAME: Final[str] = "Sourcing Operations Intelligence"
 MODULE_VERSION: Final[str] = "0.2.0"
 
 MODULE_DIRECTORY: Final = Path(__file__).resolve().parent
 DEFAULT_MANIFEST_PATH: Final = MODULE_DIRECTORY / "manifest.yaml"
+
+
+class _UnavailablePipeline:
+    """Pipeline that fails execution with a recorded configuration error.
+
+    SDD 002 requires a module with degraded configuration to keep its handler
+    registered so worker startup and other modules remain operational.
+    """
+
+    def __init__(self, error: Exception) -> None:
+        self._error = error
+
+    def process(self, *, run: Any, fetch_result: Any, budget: Any) -> Any:
+        raise self._error
 
 
 class SourcingModuleContract(BusinessModuleContract):
@@ -41,8 +63,11 @@ class SourcingModuleContract(BusinessModuleContract):
         self._settings: SourcingSettings | None = None
         self._source_registry: SourceRegistry | None = None
         self._source_config_diagnostic: str | None = None
+        self._validation_config: ValidationConfig | None = None
+        self._validation_diagnostic: str | None = None
         self._landing_store: FileAcquisitionService | None = None
         self._load_source_configuration()
+        self._load_validation_configuration()
 
     def _load_source_configuration(self) -> None:
         """Load and validate named source configuration without raising at startup."""
@@ -60,6 +85,27 @@ class SourcingModuleContract(BusinessModuleContract):
         self._source_registry = registry
         self._source_config_diagnostic = None
 
+    def _load_validation_configuration(self) -> None:
+        """Load validation configuration after the source registry, never raising."""
+        from app.modules.sourcing.validation.config import load_validation_config
+        from app.modules.sourcing.validation.errors import SourcingValidationConfigError
+
+        if self._source_registry is None or self._settings is None:
+            self._validation_diagnostic = "SOURCE_CONFIG_INVALID"
+            return
+
+        try:
+            config = load_validation_config(self._settings.validation_file, self._source_registry)
+        except SourcingValidationConfigError as exc:
+            self._validation_diagnostic = exc.code
+            return
+        except Exception:  # pragma: no cover - defensive startup guard
+            self._validation_diagnostic = "VALIDATION_CONFIG_INVALID"
+            return
+
+        self._validation_config = config
+        self._validation_diagnostic = None
+
     @property
     def manifest(self) -> ModuleManifest:
         """Return the validated Sourcing manifest."""
@@ -74,7 +120,11 @@ class SourcingModuleContract(BusinessModuleContract):
     def get_health_status(self) -> dict[str, Any]:
         """Return non-sensitive Sourcing module health status."""
         status: dict[str, Any] = {
-            "status": "ok" if self._source_registry is not None else "degraded",
+            "status": (
+                "ok"
+                if self._source_registry is not None and self._validation_config is not None
+                else "degraded"
+            ),
             "module": self._manifest.id,
             "version": self._manifest.version,
         }
@@ -85,6 +135,18 @@ class SourcingModuleContract(BusinessModuleContract):
             status["source_configuration"] = "invalid"
             status["diagnostic"] = (
                 self._source_config_diagnostic or "Source configuration unavailable"
+            )
+
+        if self._validation_config is not None:
+            from app.modules.sourcing.validation import RULESET_VERSION
+
+            status["validation"] = "ok"
+            status["sources"] = len(self._validation_config.sources)
+            status["ruleset_version"] = RULESET_VERSION
+        else:
+            status["validation"] = "degraded"
+            status["validation_diagnostic"] = (
+                self._validation_diagnostic or "VALIDATION_CONFIG_INVALID"
             )
         return status
 
@@ -132,6 +194,11 @@ class SourcingModuleContract(BusinessModuleContract):
         return self._settings
 
     @property
+    def validation_config(self) -> "ValidationConfig | None":
+        """Return the resolved validation configuration, or None when degraded."""
+        return self._validation_config
+
+    @property
     def landing_store(self) -> FileAcquisitionService | None:
         """Return the file acquisition landing store if configured."""
         if self._landing_store is None and self._settings is not None:
@@ -148,6 +215,36 @@ class SourcingModuleContract(BusinessModuleContract):
             )
         return self._source_registry.get(source_id)
 
+    def build_pipeline(
+        self,
+        *,
+        record_store: "SourcingRecordStore",
+        session_factory: Callable[[], "Session"],
+    ) -> "ValidationNormalizationPipeline":
+        """Build the validation pipeline or fail with a configuration error."""
+        from app.modules.sourcing.ingestion.raw_capture import RawCapturePipeline
+        from app.modules.sourcing.validation.errors import SourcingValidationConfigError
+        from app.modules.sourcing.validation.pipeline import ValidationNormalizationPipeline
+
+        if self._validation_config is None or self._settings is None:
+            raise SourcingValidationConfigError(
+                "Validation configuration is unavailable; ingestion is blocked.",
+                code=self._validation_diagnostic or "VALIDATION_CONFIG_INVALID",
+            )
+
+        capture = RawCapturePipeline(
+            record_store=record_store,
+            session_factory=session_factory,
+            max_payload_bytes=self._settings.raw_payload_max_bytes,
+        )
+        return ValidationNormalizationPipeline(
+            capture=capture,
+            record_store=record_store,
+            config=self._validation_config,
+            session_factory=session_factory,
+            batch_size=self._settings.validation_batch_size,
+        )
+
     def register_job_handlers(self, dispatcher: Any) -> None:
         """Register module-owned job handlers for background processing."""
         runtime = getattr(dispatcher, "runtime", None)
@@ -157,20 +254,26 @@ class SourcingModuleContract(BusinessModuleContract):
         from sqlalchemy.orm import Session
 
         from app.modules.sourcing.ingestion.handler import IngestionHandler
-        from app.modules.sourcing.ingestion.raw_capture import RawCapturePipeline
         from app.modules.sourcing.persistence import (
             PostgresSourcingRecordStore,
             PostgresSourcingRunStore,
         )
+        from app.modules.sourcing.validation.errors import SourcingValidationConfigError
 
         settings = self.settings or SourcingSettings()
         run_store = PostgresSourcingRunStore(runtime.engine)
         record_store = PostgresSourcingRecordStore(runtime.engine)
-        pipeline = RawCapturePipeline(
-            record_store=record_store,
-            session_factory=lambda: Session(runtime.engine, expire_on_commit=False),
-            max_payload_bytes=settings.raw_payload_max_bytes,
-        )
+
+        def session_factory() -> Session:
+            return Session(runtime.engine, expire_on_commit=False)
+
+        try:
+            pipeline: Any = self.build_pipeline(
+                record_store=record_store,
+                session_factory=session_factory,
+            )
+        except SourcingValidationConfigError as exc:
+            pipeline = _UnavailablePipeline(exc)
 
         handler = IngestionHandler(
             run_store=run_store,

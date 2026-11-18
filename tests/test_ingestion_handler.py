@@ -4,6 +4,7 @@ Governed by:
 - SDD 002 §1.6: IngestionHandler callable executed outside database transactions.
 - SDD 002 §1.7: execution budget checks at page/entity boundaries.
 - SDD 002 §1.8: error classification, bounded retry mapping, and run outcome.
+- SDD 004 §11: validation configuration and contract errors are permanent.
 - SDD 005 §1.6.1: fixed entity processing order and contract error mapping.
 """
 
@@ -27,6 +28,10 @@ from app.modules.sourcing.ingestion.budget import BudgetExceeded, ExecutionBudge
 from app.modules.sourcing.ingestion.handler import IngestionHandler
 from app.modules.sourcing.ingestion.pipeline import IngestionPipeline, ProcessingResult
 from app.modules.sourcing.persistence import IngestionRun, NewIngestionRun
+from app.modules.sourcing.validation.errors import (
+    SourcingValidationConfigError,
+    SourcingValidationContractError,
+)
 from app.workers.dispatcher import PermanentJobError, TransientJobError
 
 
@@ -372,3 +377,74 @@ def test_handler_reconciliation_contract_error_fails_permanently(
     assert updated is not None
     assert updated.outcome == "FAILED"
     assert "Reconciliation schema mismatch" in (updated.error_summary or "")
+
+
+def test_handler_validation_config_error_fails_permanently(
+    run_store: InMemorySourcingRunStore,
+) -> None:
+    """Verify SourcingValidationConfigError fails the run and raises PermanentJobError."""
+    job_id = uuid.uuid4()
+    run = run_store.create_run(
+        None,
+        NewIngestionRun(
+            job_id=job_id,
+            source_id="src_1",
+            entity_types=("supplier",),
+            idempotency_key="key-validation-config",
+            submitted_by="analyst",
+        ),
+    )
+    claim = _make_claim(job_id, run_id=run.id)
+    pipeline = MockPipeline(
+        exception_to_raise=SourcingValidationConfigError(
+            "Validation configuration is unavailable; ingestion is blocked.",
+            code="VALIDATION_CONFIG_INVALID",
+        )
+    )
+    handler = IngestionHandler(
+        run_store=run_store,
+        connector_resolver=lambda sid: MockConnector(),
+        pipeline=pipeline,
+    )
+
+    with pytest.raises(PermanentJobError, match="Validation pipeline error"):
+        handler(claim)
+
+    updated = run_store.get_run(run.id)
+    assert updated is not None
+    assert updated.outcome == "FAILED"
+    assert "ingestion is blocked" in (updated.error_summary or "")
+
+
+def test_handler_validation_contract_error_fails_permanently(
+    run_store: InMemorySourcingRunStore,
+) -> None:
+    """Verify SourcingValidationContractError fails the run and raises PermanentJobError."""
+    job_id = uuid.uuid4()
+    run = run_store.create_run(
+        None,
+        NewIngestionRun(
+            job_id=job_id,
+            source_id="src_1",
+            entity_types=("supplier",),
+            idempotency_key="key-validation-contract",
+            submitted_by="analyst",
+        ),
+    )
+    claim = _make_claim(job_id, run_id=run.id)
+    pipeline = MockPipeline(
+        exception_to_raise=SourcingValidationContractError("Capture returned a duplicate record.")
+    )
+    handler = IngestionHandler(
+        run_store=run_store,
+        connector_resolver=lambda sid: MockConnector(),
+        pipeline=pipeline,
+    )
+
+    with pytest.raises(PermanentJobError, match="Validation pipeline error"):
+        handler(claim)
+
+    updated = run_store.get_run(run.id)
+    assert updated is not None
+    assert updated.outcome == "FAILED"
+    assert "duplicate record" in (updated.error_summary or "")

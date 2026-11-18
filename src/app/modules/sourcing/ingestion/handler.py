@@ -28,6 +28,10 @@ from app.modules.sourcing.persistence import (
     IngestionRun,
     SourcingRunStore,
 )
+from app.modules.sourcing.validation.errors import (
+    SourcingValidationConfigError,
+    SourcingValidationContractError,
+)
 from app.workers.dispatcher import PermanentJobError, TransientJobError
 
 logger = get_logger("app.modules.sourcing.ingestion.handler")
@@ -171,6 +175,9 @@ class IngestionHandler:
                         f"BUDGET_EXCEEDED: Dataset exceeded budget of {self._budget_seconds} "
                         "seconds. Split the dataset into smaller batches."
                     ) from exc
+                except (SourcingValidationConfigError, SourcingValidationContractError) as exc:
+                    self._complete_failed(run, str(exc)[:500], aggregate_counts)
+                    raise PermanentJobError(f"Validation pipeline error: {exc}") from exc
                 except Exception as exc:
                     if exc.__class__.__name__ == "SourcingReconciliationContractError":
                         self._complete_failed(run, str(exc)[:500], aggregate_counts)
