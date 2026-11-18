@@ -92,6 +92,7 @@ class NewIngestionRun:
     content_hash: str | None = None
     acquisition_ref: str | None = None
     warnings: tuple[str, ...] = ()
+    id: UUID | None = None
 
 
 @dataclass(frozen=True)

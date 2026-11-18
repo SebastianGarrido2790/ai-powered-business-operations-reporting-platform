@@ -130,6 +130,59 @@ class JobStore:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
 
+    def create_job_in_session(
+        self,
+        session: Session,
+        job_type: str,
+        payload: dict[str, Any],
+        *,
+        idempotency_key: str | None = None,
+        correlation_id: str | None = None,
+        max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+        scheduled_at: datetime | None = None,
+    ) -> JobRecord:
+        """Persist a queued job within the caller's session without committing."""
+        if not job_type.strip():
+            raise ValueError("job_type must not be blank.")
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1.")
+        if idempotency_key is not None and not idempotency_key.strip():
+            raise ValueError("idempotency_key must not be blank when provided.")
+
+        now = _now()
+        if idempotency_key is not None:
+            existing = session.scalar(
+                select(JobModel).where(JobModel.idempotency_key == idempotency_key)
+            )
+            if existing is not None:
+                return _job_record(existing)
+
+        job = JobModel(
+            job_type=job_type,
+            status=JobStatus.QUEUED.value,
+            payload=payload,
+            correlation_id=correlation_id,
+            idempotency_key=idempotency_key,
+            attempt_count=0,
+            max_attempts=max_attempts,
+            scheduled_at=scheduled_at or now,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(job)
+        session.flush()
+        if idempotency_key is not None:
+            session.add(
+                IdempotencyKeyModel(
+                    key_value=idempotency_key,
+                    job_id=job.id,
+                    created_at=now,
+                )
+            )
+            session.flush()
+        session.refresh(job)
+        return _job_record(job)
+
     def create_job(
         self,
         job_type: str,
@@ -141,48 +194,17 @@ class JobStore:
         scheduled_at: datetime | None = None,
     ) -> JobRecord:
         """Persist a queued job, returning an existing job for a repeat key."""
-        if not job_type.strip():
-            raise ValueError("job_type must not be blank.")
-        if max_attempts < 1:
-            raise ValueError("max_attempts must be at least 1.")
-        if idempotency_key is not None and not idempotency_key.strip():
-            raise ValueError("idempotency_key must not be blank when provided.")
-
-        now = _now()
         with Session(self._engine, expire_on_commit=False) as session:
-            if idempotency_key is not None:
-                existing = session.scalar(
-                    select(JobModel).where(JobModel.idempotency_key == idempotency_key)
-                )
-                if existing is not None:
-                    return _job_record(existing)
-
-            job = JobModel(
-                job_type=job_type,
-                status=JobStatus.QUEUED.value,
-                payload=payload,
-                correlation_id=correlation_id,
-                idempotency_key=idempotency_key,
-                attempt_count=0,
-                max_attempts=max_attempts,
-                scheduled_at=scheduled_at or now,
-                created_at=now,
-                updated_at=now,
-            )
-            session.add(job)
             try:
-                session.flush()
-                if idempotency_key is not None:
-                    session.add(
-                        IdempotencyKeyModel(
-                            key_value=idempotency_key,
-                            job_id=job.id,
-                            created_at=now,
-                        )
-                    )
-                    session.flush()
-                session.refresh(job)
-                record = _job_record(job)
+                record = self.create_job_in_session(
+                    session,
+                    job_type,
+                    payload,
+                    idempotency_key=idempotency_key,
+                    correlation_id=correlation_id,
+                    max_attempts=max_attempts,
+                    scheduled_at=scheduled_at,
+                )
                 session.commit()
                 return record
             except IntegrityError:
@@ -199,6 +221,14 @@ class JobStore:
         """Return the current durable state for a job, if it exists."""
         with Session(self._engine, expire_on_commit=False) as session:
             job = session.get(JobModel, job_id)
+            return _job_record(job) if job is not None else None
+
+    def get_job_by_idempotency_key(self, key: str) -> JobRecord | None:
+        """Return a job record by its idempotency key if it exists."""
+        if not key or not key.strip():
+            raise ValueError("idempotency_key must not be blank.")
+        with Session(self._engine, expire_on_commit=False) as session:
+            job = session.scalar(select(JobModel).where(JobModel.idempotency_key == key.strip()))
             return _job_record(job) if job is not None else None
 
     def claim_next_job(
@@ -398,6 +428,36 @@ class InMemoryJobStore:
 
     def get_job_by_id(self, job_id: uuid.UUID) -> JobRecord | None:
         """Return a job record by ID if it exists."""
+        return self._jobs.get(job_id)
+
+    def create_job_in_session(
+        self,
+        session: Any,
+        job_type: str,
+        payload: dict[str, Any],
+        *,
+        idempotency_key: str | None = None,
+        correlation_id: str | None = None,
+        max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+        scheduled_at: datetime | None = None,
+    ) -> JobRecord:
+        """In-memory parity for create_job_in_session; ignores the session parameter."""
+        return self.create_job(
+            job_type,
+            payload,
+            idempotency_key=idempotency_key,
+            correlation_id=correlation_id,
+            max_attempts=max_attempts,
+            scheduled_at=scheduled_at,
+        )
+
+    def get_job_by_idempotency_key(self, key: str) -> JobRecord | None:
+        """Return a job record by its idempotency key if it exists."""
+        if not key or not key.strip():
+            raise ValueError("idempotency_key must not be blank.")
+        job_id = self._idempotency_index.get(key.strip())
+        if job_id is None:
+            return None
         return self._jobs.get(job_id)
 
     def claim_next_job(

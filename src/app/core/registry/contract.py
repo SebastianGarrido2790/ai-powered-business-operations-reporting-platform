@@ -7,11 +7,14 @@ Governed by:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter
 
 from app.core.registry.manifest import ModuleManifest
+
+if TYPE_CHECKING:
+    from app.workers.dispatcher import JobDispatcher
 
 
 class BusinessModuleContract(ABC):
@@ -37,3 +40,12 @@ class BusinessModuleContract(ABC):
     def get_declared_capabilities(self) -> list[str]:
         """Return the capabilities declared by the module manifest."""
         return list(self.manifest.capabilities)
+
+    def register_job_handlers(self, dispatcher: "JobDispatcher") -> None:
+        """Register module-owned job handlers.
+
+        The default registers nothing. Modules that own asynchronous jobs
+        override this method; the worker composition calls it once per active
+        module. The API entrypoint never calls it.
+        """
+        return None

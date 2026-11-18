@@ -63,6 +63,22 @@ class SourcingSettings(BaseSettings):
             "truncated and quarantined"
         ),
     )
+    ingestion_budget_seconds: int = Field(
+        default=240,
+        ge=30,
+        le=290,
+        description=(
+            "Wall-clock deadline in seconds for an ingestion run; must be <= 290 "
+            "to leave a 60-second safety margin below the 300-second worker lease"
+        ),
+    )
+    ingestion_budget_check_records: int = Field(
+        default=1000,
+        ge=1,
+        description=(
+            "Cadence in records at which the ingestion pipeline checks the execution budget"
+        ),
+    )
 
     @field_validator("landing_dir")
     @classmethod

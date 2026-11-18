@@ -172,6 +172,8 @@ class PostgresSourcingRunStore:
             acquisition_ref=run.acquisition_ref,
             warnings=list(run.warnings),
         )
+        if run.id is not None:
+            model.id = run.id
         session.add(model)
         session.flush()
         session.refresh(model)

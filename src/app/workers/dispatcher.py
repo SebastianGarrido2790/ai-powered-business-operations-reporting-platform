@@ -2,14 +2,36 @@
 
 Governed by:
 - SDD 003 §5: worker executes only registered job handlers outside database transactions.
+- SDD 002 §1.1: module-owned handlers register through an explicit owner namespace.
 - M1-D05 / D05.1: deterministic execution, explicit error classifications, bounded retries.
 - INV-008: independent asynchronous processing; no blocking synchronous execution.
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
-from app.core.persistence.job_store import JobClaim
+from sqlalchemy.engine import Engine
+
+from app.core.config import Settings
+from app.core.persistence.job_store import JobClaim, JobStore
+
+
+@runtime_checkable
+class WorkerRuntime(Protocol):
+    """Structural view of the runtime services available to worker handlers.
+
+    `PlatformRuntimeContext` satisfies this protocol, so a module can build its
+    handler against the worker's existing engine instead of creating a second one.
+    """
+
+    @property
+    def engine(self) -> Engine: ...
+
+    @property
+    def settings(self) -> Settings: ...
+
+    @property
+    def job_store(self) -> JobStore | None: ...
 
 
 class JobExecutionError(Exception):
@@ -30,14 +52,43 @@ JobHandler = Callable[[JobClaim], Any]
 class JobDispatcher:
     """Registry and execution dispatcher for worker job handlers."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, runtime: WorkerRuntime | None = None) -> None:
         self._handlers: dict[str, JobHandler] = {}
+        self._runtime = runtime
 
-    def register(self, job_type: str, handler: JobHandler) -> None:
-        """Register a handler for the specified job_type."""
-        if not job_type or not job_type.strip():
+    @property
+    def runtime(self) -> WorkerRuntime | None:
+        """Return the worker runtime modules may build handlers against."""
+        return self._runtime
+
+    def register(
+        self,
+        job_type: str,
+        handler: JobHandler,
+        *,
+        owner: str | None = None,
+    ) -> None:
+        """Register a handler for the specified job_type.
+
+        A supplied `owner` confines the registration to the module namespace
+        `<owner>.`. Platform test handlers pass no owner.
+        """
+        cleaned = job_type.strip() if isinstance(job_type, str) else ""
+        if not cleaned:
             raise ValueError("job_type must not be blank.")
-        self._handlers[job_type.strip()] = handler
+
+        if owner is not None:
+            cleaned_owner = owner.strip()
+            if not cleaned_owner:
+                raise ValueError("owner must not be blank when provided.")
+            if not cleaned.startswith(f"{cleaned_owner}."):
+                raise ValueError(
+                    f"Job type '{cleaned}' is outside module namespace '{cleaned_owner}.'."
+                )
+
+        if cleaned in self._handlers:
+            raise ValueError(f"Job type '{cleaned}' is already registered.")
+        self._handlers[cleaned] = handler
 
     def unregister(self, job_type: str) -> None:
         """Remove a handler for the specified job_type."""
@@ -74,9 +125,9 @@ def echo_handler(claim: JobClaim) -> dict[str, Any]:
     return dict(claim.payload)
 
 
-def create_default_dispatcher() -> JobDispatcher:
+def create_default_dispatcher(*, runtime: WorkerRuntime | None = None) -> JobDispatcher:
     """Create a dispatcher populated with default platform test handlers."""
-    dispatcher = JobDispatcher()
+    dispatcher = JobDispatcher(runtime=runtime)
     dispatcher.register("test.noop", noop_handler)
     dispatcher.register("test.echo", echo_handler)
     return dispatcher

@@ -100,3 +100,39 @@ def test_calculate_backoff_minimum_attempt_count() -> None:
     """Verify non-positive attempt counts default safely to attempt 1."""
     assert calculate_backoff(0, jitter=False) == timedelta(seconds=30)
     assert calculate_backoff(-5, jitter=False) == timedelta(seconds=30)
+
+
+def test_in_memory_job_store_session_and_idempotency_lookup() -> None:
+    """Verify in-memory job store create_job_in_session and get_by_idempotency_key."""
+    from app.core.persistence.job_store import InMemoryJobStore
+
+    store = InMemoryJobStore()
+    job = store.create_job_in_session(
+        session=None,
+        job_type="sourcing.ingestion",
+        payload={"key": "val"},
+        idempotency_key="idem-1",
+    )
+    assert job.job_type == "sourcing.ingestion"
+    assert job.idempotency_key == "idem-1"
+
+    # Lookup by key
+    found = store.get_job_by_idempotency_key("idem-1")
+    assert found is not None
+    assert found.id == job.id
+
+    # Lookup missing key
+    assert store.get_job_by_idempotency_key("missing-key") is None
+
+    # Blank key rejection
+    with pytest.raises(ValueError, match="idempotency_key must not be blank"):
+        store.get_job_by_idempotency_key("   ")
+
+    # Repeat creation with same key returns existing
+    repeat = store.create_job_in_session(
+        session=None,
+        job_type="sourcing.ingestion",
+        payload={"different": "data"},
+        idempotency_key="idem-1",
+    )
+    assert repeat.id == job.id

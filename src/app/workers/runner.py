@@ -40,6 +40,34 @@ MAX_LOGGED_ERROR_LENGTH = 500
 logger = get_logger("app.workers.runner")
 
 
+class WorkerStartupError(RuntimeError):
+    """Raised when module job-handler registration fails during worker startup."""
+
+
+def build_worker_dispatcher(context: PlatformRuntimeContext) -> JobDispatcher:
+    """Compose the worker dispatcher from the active module registry.
+
+    Registration is explicit and all-or-nothing: a module failure logs a
+    sanitized diagnostic and aborts startup rather than leaving a partial
+    dispatcher running. The API entrypoint never calls this function.
+    """
+    dispatcher = create_default_dispatcher(runtime=context)
+    for module in context.registry.get_active_modules():
+        try:
+            module.register_job_handlers(dispatcher)
+        except Exception as exc:
+            logger.error(
+                "job_handler_registration_failed",
+                module_id=module.manifest.id,
+                error_class=exc.__class__.__name__,
+                error=str(exc)[:MAX_LOGGED_ERROR_LENGTH],
+            )
+            raise WorkerStartupError(
+                f"Job handler registration failed for module '{module.manifest.id}'."
+            ) from exc
+    return dispatcher
+
+
 class WorkerStore(StaleJobStore, Protocol):
     """Persistence operations the worker engine depends on."""
 
@@ -281,6 +309,7 @@ def main(
         resolved_store = store or context.job_store or JobStore(context.engine)
         worker = Worker(
             store=resolved_store,
+            dispatcher=build_worker_dispatcher(context),
             poll_interval=args.poll_interval,
         )
         logger.info(

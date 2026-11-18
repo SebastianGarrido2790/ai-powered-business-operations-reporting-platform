@@ -147,6 +147,50 @@ def test_idempotency_key_returns_existing_job(store: JobStore, engine: Engine) -
     assert _scalar(engine, "SELECT count(*) FROM platform.idempotency_keys") == 1
 
 
+def test_create_job_in_session_transaction_control(store: JobStore, engine: Engine) -> None:
+    """Verify create_job_in_session honors caller commit and rollback."""
+    # 1. Rollback test
+    with Session(engine, expire_on_commit=False) as session:
+        job = store.create_job_in_session(
+            session, "test.echo", {"aborted": True}, idempotency_key="rollback-key"
+        )
+        assert job.id is not None
+        session.rollback()
+
+    assert store.get_job_by_id(job.id) is None
+    assert store.get_job_by_idempotency_key("rollback-key") is None
+
+    # 2. Commit test
+    with Session(engine, expire_on_commit=False) as session:
+        job = store.create_job_in_session(
+            session, "test.echo", {"committed": True}, idempotency_key="commit-key"
+        )
+        session.commit()
+
+    persisted = store.get_job_by_id(job.id)
+    assert persisted is not None
+    assert persisted.payload == {"committed": True}
+
+    # 3. get_job_by_idempotency_key
+    by_key = store.get_job_by_idempotency_key("commit-key")
+    assert by_key is not None
+    assert by_key.id == job.id
+
+    # 4. Missing key returns None
+    assert store.get_job_by_idempotency_key("nonexistent-key") is None
+
+    # 5. Blank key raises ValueError
+    with pytest.raises(ValueError, match="idempotency_key must not be blank"):
+        store.get_job_by_idempotency_key("   ")
+
+    # 6. Existing key inside same session returns existing record
+    with Session(engine, expire_on_commit=False) as session:
+        existing = store.create_job_in_session(
+            session, "test.echo", {"repeat": True}, idempotency_key="commit-key"
+        )
+        assert existing.id == job.id
+
+
 def test_invalid_submission_values_are_rejected(store: JobStore) -> None:
     """Verify blank identity values and invalid attempt bounds are rejected."""
     with pytest.raises(ValueError):

@@ -119,7 +119,7 @@ def test_sourcing_health_endpoint() -> None:
     data = response.json()
     assert data["status"] == "ok"
     assert data["module"] == "sourcing"
-    assert data["version"] == "0.1.0"
+    assert data["version"] == "0.2.0"
 
 
 def test_sourcing_status_endpoint() -> None:
@@ -144,13 +144,16 @@ def test_sourcing_contract_interface() -> None:
 
     assert sourcing_module.manifest.id == MODULE_ID == "sourcing"
     assert sourcing_module.manifest.name == MODULE_NAME == "Sourcing Operations Intelligence"
-    assert sourcing_module.manifest.version == MODULE_VERSION == "0.1.0"
-    assert sourcing_module.get_declared_capabilities() == ["health"]
-    assert sourcing_module.get_declared_permissions() == ["sourcing.read"]
+    assert sourcing_module.manifest.version == MODULE_VERSION == "0.2.0"
+    assert sourcing_module.get_declared_capabilities() == ["health", "ingestion"]
+    assert sourcing_module.get_declared_permissions() == [
+        "sourcing.read",
+        "sourcing.ingest",
+    ]
     assert isinstance(sourcing_module.get_router(), APIRouter)
     health = sourcing_module.get_health_status()
     assert health["module"] == "sourcing"
-    assert health["version"] == "0.1.0"
+    assert health["version"] == "0.2.0"
     assert health["source_configuration"] in {"ok", "invalid"}
     if health["source_configuration"] == "ok":
         assert health["status"] == "ok"
@@ -183,8 +186,8 @@ def test_sourcing_manifest_conformance() -> None:
     assert manifest.platform.minimum_version == "0.1.0"
     assert manifest.database.schema_name == "sourcing"
     assert manifest.database.migrations == "database/migrations"
-    assert manifest.capabilities == ["health"]
-    assert manifest.permissions == ["sourcing.read"]
+    assert manifest.capabilities == ["health", "ingestion"]
+    assert manifest.permissions == ["sourcing.read", "sourcing.ingest"]
 
 
 def test_app_uses_bootstrap_registry() -> None:

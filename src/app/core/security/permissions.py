@@ -27,6 +27,7 @@ class SourcingPermission(StrEnum):
 
     READ = "sourcing.read"
     MANAGE = "sourcing.manage"
+    INGEST = "sourcing.ingest"
 
 
 class CanonicalRole(StrEnum):
@@ -48,6 +49,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             PlatformPermission.JOBS_SUBMIT.value,
             PlatformPermission.JOBS_READ.value,
             SourcingPermission.READ.value,
+            SourcingPermission.INGEST.value,
         }
     ),
     CanonicalRole.OPERATIONS_ANALYST.value: frozenset(
@@ -63,6 +65,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             PlatformPermission.JOBS_READ.value,
             SourcingPermission.READ.value,
             SourcingPermission.MANAGE.value,
+            SourcingPermission.INGEST.value,
         }
     ),
     CanonicalRole.EXECUTIVE_VIEWER.value: frozenset(
@@ -76,6 +79,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             PlatformPermission.JOBS_SUBMIT.value,
             PlatformPermission.JOBS_READ.value,
             SourcingPermission.READ.value,
+            SourcingPermission.INGEST.value,
         }
     ),
 }

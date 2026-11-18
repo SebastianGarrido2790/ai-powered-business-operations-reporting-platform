@@ -355,10 +355,10 @@ def test_replace_and_fill_missing_differ_while_provenance_refreshes(
 
 
 def test_module_manifest_and_capabilities_are_unchanged() -> None:
-    """Verify Stage 2 introduces no manifest, capability, or permission change."""
+    """Verify Sourcing manifest conforms to approved capability and permission set."""
     manifest = create_sourcing_module().manifest
 
     assert manifest.id == "sourcing"
-    assert manifest.version == "0.1.0"
-    assert set(manifest.capabilities) == {"health"}
-    assert set(manifest.permissions) == {"sourcing.read"}
+    assert manifest.version == "0.2.0"
+    assert set(manifest.capabilities) == {"health", "ingestion"}
+    assert set(manifest.permissions) == {"sourcing.read", "sourcing.ingest"}

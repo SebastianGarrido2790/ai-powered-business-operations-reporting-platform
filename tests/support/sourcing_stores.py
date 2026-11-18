@@ -104,7 +104,7 @@ class InMemorySourcingRunStore:
             raise SourcingValidationError("Run warning codes must not be blank.")
         now = _now()
         record = IngestionRun(
-            id=uuid.uuid4(),
+            id=run.id if run.id is not None else uuid.uuid4(),
             job_id=run.job_id,
             source_id=run.source_id,
             entity_types=run.entity_types,

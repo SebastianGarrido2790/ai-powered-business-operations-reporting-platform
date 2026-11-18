@@ -42,12 +42,12 @@ def test_load_valid_sourcing_manifest() -> None:
 
     assert manifest.id == "sourcing"
     assert manifest.name == "Sourcing Operations Intelligence"
-    assert manifest.version == "0.1.0"
+    assert manifest.version == "0.2.0"
     assert manifest.platform.minimum_version == "0.1.0"
     assert manifest.database.schema_name == "sourcing"
     assert manifest.database.migrations == "database/migrations"
-    assert manifest.capabilities == ["health"]
-    assert manifest.permissions == ["sourcing.read"]
+    assert manifest.capabilities == ["health", "ingestion"]
+    assert manifest.permissions == ["sourcing.read", "sourcing.ingest"]
 
 
 @pytest.mark.parametrize(
