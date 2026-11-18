@@ -32,6 +32,7 @@ dependencies = [
     { name = "pyyaml" },
     { name = "sqlalchemy" },
     { name = "structlog" },
+    { name = "tzdata" },
     { name = "uvicorn" },
 ]
 
@@ -96,6 +97,7 @@ requires-dist = [
     { name = "structlog", specifier = ">=24.0" },
     { name = "torch", marker = "extra == 'ml'", specifier = ">=2.4" },
     { name = "transformers", marker = "extra == 'ml'", specifier = ">=4.40" },
+    { name = "tzdata", specifier = ">=2024.1" },
     { name = "uvicorn", specifier = ">=0.30" },
     { name = "xgboost", marker = "extra == 'ml'", specifier = ">=2.1" },
 ]

@@ -330,7 +330,7 @@ None beyond SDD 002's negative tests (in-session rollback leaving neither job no
 
 ---
 
-### Stage 4 — Validation Rule Catalog, Configuration & Issue Evaluation
+### Stage 4 — Validation Rule Catalog, Configuration & Issue Evaluation ✅ **PASSED**
 
 **Goal**
 
@@ -729,7 +729,7 @@ The following evidence must exist before M2 sign-off at Stage 9:
 | 1 | Sourcing Connectors, Named Sources & Acquisition | `app/core/connectors`, `sources.yaml`, file acquisition, CSV/XLSX/PG/REST adapters, ERP stub | ADR-001, ADR-002, ADR-012 | Connector, acquisition, and stub tests pass | **Passed** |
 | 2 | Sourcing Schema, Persistence & Raw Capture | Migrations `0003`–`0004`, run/record/entity stores, `record_key`, `RawCapturePipeline` | ADR-003 | Clean migrations and PostgreSQL store tests pass | **Passed** |
 | 3 | Execution-Budget Qualification & Ingestion Execution | D02.2 qualification record, handler registration, atomic submission, `sourcing.ingest`, handler & budget | ADR-002, ADR-005, ADR-007 | Qualification passes first; submission and worker tests pass | **Passed** |
-| 4 | Validation Rule Catalog, Configuration & Issue Evaluation | 28-rule catalog (`1.0.0`), normalizers, `validation.yaml`, evaluator, `VALIDATION` issues | ADR-009 | Catalog meta-test, normalizer, config, and issue tests pass | Not started |
+| 4 | Validation Rule Catalog, Configuration & Issue Evaluation | 28-rule catalog (`1.0.0`), normalizers, `validation.yaml`, evaluator, `VALIDATION` issues | ADR-009 | Catalog meta-test, normalizer, config, and issue tests pass | **Passed** |
 | 5 | Validation & Normalization Pipeline & Module Integration | `ValidationNormalizationPipeline`, module health integration, business-owner catalog review | ADR-003, ADR-009 | Batch atomicity tests and recorded catalog review pass | Not started |
 | 6 | Duplicate Detection, Reconciliation & Source Authority | Fingerprinting, duplicate detector, matching cascade, authority modes, `ReconciliationPipeline` | ADR-003, ADR-009 | Reconciliation, authority, and page-rollback tests pass | Not started |
 | 7 | Ingestion, Data-Quality & Entity API | `on_startup` hook, `sweep_landing`, 13 routes, `limit + 1` pagination, manifest `0.3.0` | ADR-002, ADR-007 | All 13 route, permission, sweep, and PG read tests pass | Not started |
@@ -746,7 +746,7 @@ Maintain the following record as execution progresses:
 | 1 | 2026-11-17 | 2026-11-17 | `aa9d68c` — `feat(sourcing): Implement Stage 1 connectors, named sources, and file acquisition` · evidence in `verification/stage_1_verification.md` | **Passed** (2026-11-17) | S1-F1 (Low/Accepted), S1-F2 (Info), S1-F3 (Info), S1-F4 (Low/Accepted) | Project owner acknowledged Stage 1 pass and approved commit/push 2026-11-17 |
 | 2 | 2026-11-17 | 2026-11-17 | `08e9d51` — `feat(sourcing): Implement Stage 2 sourcing schema, stores, and raw capture` · evidence in `verification/stage_2_verification.md` and `verification/003_sourcing_verification.md` | **Passed** (2026-11-17) | S2-F1 (Low/Accepted), S2-F2 (Low/Accepted), S2-F3 (Info/Accepted), S2-F4 (Info/Expected), S2-F5 (Info/Accepted), S2-F6 (Low/Accepted), S2-F7 (Low/Accepted) | Project owner acknowledged Stage 2 pass and approved commit/push 2026-11-17 |
 | 3 | 2026-11-17 | 2026-11-18 | `48ea77f` — `feat(sourcing): Stage 3 — Execution-Budget Qualification & Ingestion Execution` · evidence in `verification/002_budget_qualification.md`, `verification/002_ingestion_verification.md`, `verification/stage_3_verification.md` | **Passed** (2026-11-18) | S3-F1 (Low/Accepted), S3-F2 (Info/Accepted) | Project owner acknowledged Stage 3 pass and approved commit/push 2026-11-18 |
-| 4 | — | — | `verification/stage_4_verification.md` | Pending | — | — |
+| 4 | 2026-11-18 | 2026-11-18 | Evidence in `verification/stage_4_verification.md`; commit reference pending authorization | **Passed** (2026-11-18) | S4-F1 (Low/Accepted), S4-F2 (Info/Expected), S4-F3 (Info/Expected), S4-F4 (Low/Accepted), S4-F5 (Info/Accepted), S4-F6 (Info/Accepted) | Pending — Stage 4 pass reported to the project owner 2026-11-18 |
 | 5 | — | — | `verification/004_rule_catalog_review.md`, `verification/stage_5_verification.md` | Pending | — | — |
 | 6 | — | — | `verification/stage_6_verification.md` | Pending | — | — |
 | 7 | — | — | `verification/stage_7_verification.md` | Pending | — | — |

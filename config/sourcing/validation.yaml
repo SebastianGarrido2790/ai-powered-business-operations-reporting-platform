@@ -1,0 +1,183 @@
+version: 1
+
+# Structural schemas and canonical mappings for every configured source and
+# authoritative entity. SDD 001 owns source identity and connector options; this
+# file owns field shapes, formats, timezones, decimal conventions, and mappings.
+sources:
+  supplier_file:
+    supplier:
+      source_timestamp: optional
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        supplier_code:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        name:
+          target: name
+          type: string
+          required: true
+          max_length: 255
+        created_at:
+          target: source_timestamp
+          type: timestamp
+          formats:
+            - "%Y-%m-%dT%H:%M:%S%z"
+
+  legacy_requisitions:
+    requisition:
+      source_timestamp: optional
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        requisition_no:
+          target: requisition_number
+          type: string
+          required: true
+          max_length: 100
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        supplier_code:
+          target: supplier_code
+          type: string
+          max_length: 255
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        requested_at:
+          target: source_timestamp
+          type: timestamp
+          formats:
+            - "%Y-%m-%dT%H:%M:%S%z"
+            - "%Y-%m-%d %H:%M:%S%z"
+
+  erp_master_data:
+    supplier:
+      source_timestamp: required
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        id:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        name:
+          target: name
+          type: string
+          required: true
+          max_length: 255
+
+    requisition:
+      source_timestamp: required
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        id:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        requisition_no:
+          target: requisition_number
+          type: string
+          required: true
+          max_length: 100
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        supplier_code:
+          target: supplier_code
+          type: string
+          max_length: 255
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+
+    quote:
+      source_timestamp: required
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        id:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        requisition_no:
+          target: requisition_number
+          type: string
+          max_length: 100
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        supplier_code:
+          target: supplier_code
+          type: string
+          max_length: 255
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        amount:
+          target: amount
+          type: decimal
+          currency_field: currency
+        currency:
+          target: currency
+          type: string
+
+    purchase_order:
+      source_timestamp: required
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        id:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        po_number:
+          target: purchase_order_number
+          type: string
+          required: true
+          max_length: 100
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        supplier_code:
+          target: supplier_code
+          type: string
+          max_length: 255
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        amount:
+          target: total_amount
+          type: decimal
+          currency_field: currency
+        currency:
+          target: currency
+          type: string
+
+    delivery:
+      source_timestamp: required
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        id:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        po_number:
+          target: purchase_order_number
+          type: string
+          max_length: 100
+          case: upper
+          pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        delivered_on:
+          target: delivered_on
+          type: date
+          formats:
+            - "%Y-%m-%d"

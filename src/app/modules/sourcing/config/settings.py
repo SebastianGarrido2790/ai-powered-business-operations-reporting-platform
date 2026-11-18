@@ -79,6 +79,16 @@ class SourcingSettings(BaseSettings):
             "Cadence in records at which the ingestion pipeline checks the execution budget"
         ),
     )
+    validation_file: Path = Field(
+        default=Path("config/sourcing/validation.yaml"),
+        description="Path to non-secret validation schemas and mappings YAML file",
+    )
+    validation_batch_size: int = Field(
+        default=500,
+        ge=1,
+        le=5000,
+        description="Number of records validated and persisted per batch",
+    )
 
     @field_validator("landing_dir")
     @classmethod

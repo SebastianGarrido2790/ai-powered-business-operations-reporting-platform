@@ -1,0 +1,41 @@
+version: 1
+sources:
+  src_a:
+    supplier:
+      source_timestamp: optional
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        supplier_code:
+          target: external_record_id
+          type: string
+          required: true
+          max_length: 100
+        name:
+          target: name
+          type: string
+          required: true
+    quote:
+      source_timestamp: optional
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        amount:
+          target: amount
+          type: decimal
+          currency_field: currency
+        currency:
+          target: currency
+          type: string
+    delivery:
+      source_timestamp: optional
+      decimal: { separator: ".", thousands: null }
+      timezone: null
+      fields:
+        quantity:
+          target: quantity
+          type: decimal
+          unit_field: unit
+        unit:
+          target: unit
+          type: string
