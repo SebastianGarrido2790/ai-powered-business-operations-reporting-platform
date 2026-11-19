@@ -13,7 +13,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from fastapi.routing import APIRoute
+from fastapi import FastAPI
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 from support.sourcing_stores import (
@@ -186,18 +186,36 @@ def test_degraded_module_still_registers_its_job_handler(
     assert exc_info.value.code == "VALIDATION_CONFIG_MALFORMED"
 
 
-def test_module_manifest_and_routes_are_unchanged(
+def test_module_manifest_and_routes_match_approved_surface(
     configured_module: SourcingModuleContract,
 ) -> None:
-    """Stage 5 adds no capability, permission, or route."""
+    """Stage 7 declares the approved capabilities, permissions, and route surface."""
     manifest = configured_module.manifest
-    assert manifest.capabilities == ["health", "ingestion"]
+    assert manifest.capabilities == [
+        "health",
+        "ingestion",
+        "data_quality",
+        "entities",
+    ]
     assert manifest.permissions == ["sourcing.read", "sourcing.ingest"]
 
-    router = configured_module.get_router()
-    assert {route.path for route in router.routes if isinstance(route, APIRoute)} == {
+    app = FastAPI()
+    app.include_router(configured_module.get_router())
+    assert set(app.openapi()["paths"]) == {
         "/health",
         "/status",
         "/ingestions",
+        "/ingestions/files",
         "/ingestions/{ingestion_id}",
+        "/ingestions/{ingestion_id}/issues",
+        "/suppliers",
+        "/suppliers/{entity_id}",
+        "/requisitions",
+        "/requisitions/{entity_id}",
+        "/quotes",
+        "/quotes/{entity_id}",
+        "/purchase-orders",
+        "/purchase-orders/{entity_id}",
+        "/deliveries",
+        "/deliveries/{entity_id}",
     }

@@ -21,7 +21,10 @@ from app.modules.sourcing.config.sources import (
 )
 
 
-def test_sourcing_settings_defaults() -> None:
+def test_sourcing_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The suite-level landing-directory isolation sets this variable; clear it
+    # to assert the approved application default.
+    monkeypatch.delenv("SOURCING_LANDING_DIR", raising=False)
     settings = SourcingSettings()
     assert settings.sources_file == Path("config/sourcing/sources.yaml")
     assert settings.landing_dir == Path("data/sourcing/landing")

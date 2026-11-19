@@ -213,7 +213,7 @@ def test_module_health_reports_registered_module(client: TestClient) -> None:
     data = response.json()
     assert data["module_id"] == "sourcing"
     assert data["status"] == "ok"
-    assert data["version"] == "0.2.0"
+    assert data["version"] == "0.3.0"
     assert data["reason"] is None
 
 

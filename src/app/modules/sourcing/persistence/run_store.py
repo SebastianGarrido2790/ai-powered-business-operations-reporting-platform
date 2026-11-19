@@ -326,7 +326,7 @@ class PostgresSourcingRunStore:
         if created_from is not None:
             statement = statement.where(IngestionRunModel.created_at >= created_from)
         if created_to is not None:
-            statement = statement.where(IngestionRunModel.created_at <= created_to)
+            statement = statement.where(IngestionRunModel.created_at < created_to)
         statement = (
             statement.order_by(IngestionRunModel.created_at.desc(), IngestionRunModel.id.desc())
             .limit(_clamp_limit(limit))

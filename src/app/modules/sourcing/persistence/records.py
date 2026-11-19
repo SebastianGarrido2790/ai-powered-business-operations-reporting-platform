@@ -242,6 +242,8 @@ class CuratedEntity:
     id: UUID
     values: Mapping[str, Any]
     provenance: EntityProvenance
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass(frozen=True)

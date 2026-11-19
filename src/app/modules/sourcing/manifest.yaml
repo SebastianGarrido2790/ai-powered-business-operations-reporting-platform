@@ -1,6 +1,6 @@
 id: sourcing
 name: Sourcing Operations Intelligence
-version: 0.2.0
+version: 0.3.0
 
 platform:
   minimum_version: 0.1.0
@@ -12,6 +12,8 @@ database:
 capabilities:
   - health
   - ingestion
+  - data_quality
+  - entities
 
 permissions:
   - sourcing.read

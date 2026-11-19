@@ -166,7 +166,7 @@ def test_platform_modules_succeeds_for_platform_admin(client: TestClient) -> Non
     sourcing_mod = next((m for m in modules if m["id"] == "sourcing"), None)
     assert sourcing_mod is not None
     assert sourcing_mod["name"] == "Sourcing Operations Intelligence"
-    assert sourcing_mod["version"] == "0.2.0"
+    assert sourcing_mod["version"] == "0.3.0"
     assert sourcing_mod["status"] == "registered"
     assert isinstance(sourcing_mod["capabilities"], list)
 

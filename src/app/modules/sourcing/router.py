@@ -4,12 +4,13 @@ Governed by:
 - ADR-002: module permission ownership and enforcement boundary.
 - M1-D02: module-declared permissions enforced per route.
 - SDD 002 §1.5: per-route permissions, POST /ingestions, GET /ingestions/{id}.
+- SDD 006 §4: file submission, run/issue listing, and entity retrieval routes.
 - SDD 004: sourcing.read for health and status endpoints.
 - INV-016: security enforced at execution boundaries; no exposed secrets.
 """
 
 import uuid
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
@@ -17,13 +18,13 @@ from app.core.correlation import get_correlation_id
 from app.core.registry import BusinessModuleContract
 from app.core.security import require_permission
 from app.core.security.dependencies import get_current_identity
-from app.modules.sourcing.ingestion.submission import (
-    IngestionStateInconsistencyError,
-    InvalidEntityTypeError,
-    InvalidSubmissionError,
-    SourceNotFoundError,
-    SourceUnavailableError,
-)
+from app.modules.sourcing.api.dependencies import services_dependency
+from app.modules.sourcing.api.entity_routes import build_entity_router
+from app.modules.sourcing.api.errors import submission_http_error
+from app.modules.sourcing.api.ingestion_routes import build_ingestion_router
+from app.modules.sourcing.api.issue_routes import build_issue_router
+from app.modules.sourcing.api.projections import project_submission
+from app.modules.sourcing.ingestion.submission import SourcingSubmissionError
 from app.modules.sourcing.schemas.ingestion import (
     IngestionCreateRequest,
     IngestionDetailResponse,
@@ -37,27 +38,7 @@ TERMINAL_JOB_STATUSES = frozenset({"SUCCEEDED", "FAILED", "NEEDS_REVIEW", "CANCE
 def create_router(module: BusinessModuleContract) -> APIRouter:
     """Build a module router with per-route permission enforcement."""
     router = APIRouter()
-
-    def _resolve_services(request: Request) -> SourcingServices:
-        services = getattr(request.app.state, "sourcing_services", None)
-        if isinstance(services, SourcingServices):
-            return services
-        context = getattr(request.app.state, "platform_context", None)
-        if context is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={
-                    "code": "platform_context_unavailable",
-                    "message": "Platform runtime context is not available.",
-                },
-            )
-        services = SourcingServices(
-            engine=context.engine,
-            job_store=context.job_store,
-            module=module,  # type: ignore[arg-type]
-        )
-        request.app.state.sourcing_services = services
-        return services
+    get_services = services_dependency(module)
 
     @router.get(
         "/health",
@@ -87,9 +68,9 @@ def create_router(module: BusinessModuleContract) -> APIRouter:
         payload: IngestionCreateRequest,
         request: Request,
         response: Response,
+        services: Annotated[SourcingServices, Depends(get_services)],
     ) -> IngestionResponse:
         """Submit a JSON database or REST API ingestion request."""
-        services = _resolve_services(request)
         correlation_id = get_correlation_id(request)
         identity = await get_current_identity(request)
 
@@ -101,56 +82,17 @@ def create_router(module: BusinessModuleContract) -> APIRouter:
                 identity=identity,
                 correlation_id=correlation_id,
             )
-        except SourceNotFoundError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"code": "source_not_found", "message": str(exc)},
-            ) from exc
-        except SourceUnavailableError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={"code": "source_unavailable", "message": str(exc)},
-            ) from exc
-        except InvalidEntityTypeError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail={"code": "invalid_entity_type", "message": str(exc)},
-            ) from exc
-        except IngestionStateInconsistencyError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={"code": "ingestion_state_inconsistent", "message": str(exc)},
-            ) from exc
-        except InvalidSubmissionError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail={"code": "invalid_submission", "message": str(exc)},
-            ) from exc
+        except SourcingSubmissionError as exc:
+            raise submission_http_error(exc) from exc
 
         location = f"/api/v1/sourcing/ingestions/{result.run.id}"
         response.headers["Location"] = location
         response.status_code = status.HTTP_201_CREATED if result.created else status.HTTP_200_OK
+        return project_submission(services, result)
 
-        if result.created:
-            effective_status = "QUEUED"
-        else:
-            job = services.job_store.get_job_by_id(result.run.job_id)
-            if job is not None and job.status in TERMINAL_JOB_STATUSES:
-                effective_status = result.run.outcome or job.status
-            elif job is not None:
-                effective_status = job.status
-            else:
-                effective_status = "QUEUED"
-
-        return IngestionResponse(
-            ingestion_id=result.run.id,
-            job_id=result.run.job_id,
-            source_id=result.run.source_id,
-            entity_types=list(result.run.entity_types),
-            status=effective_status,
-            created_at=result.run.created_at,
-            correlation_id=result.run.correlation_id,
-        )
+    router.include_router(build_ingestion_router(get_services))
+    router.include_router(build_issue_router(get_services))
+    router.include_router(build_entity_router(get_services))
 
     @router.get(
         "/ingestions/{ingestion_id}",
@@ -160,10 +102,9 @@ def create_router(module: BusinessModuleContract) -> APIRouter:
     )
     async def get_ingestion(
         ingestion_id: uuid.UUID,
-        request: Request,
+        services: Annotated[SourcingServices, Depends(get_services)],
     ) -> IngestionDetailResponse:
         """Retrieve run summary, effective operational status, and counts."""
-        services = _resolve_services(request)
         run = services.run_store.get_run(ingestion_id)
         if run is None:
             raise HTTPException(

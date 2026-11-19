@@ -132,6 +132,8 @@ def _snapshot(entity_type: str, entity: Any) -> CuratedEntity:
         id=entity.id,
         values=values,
         provenance=provenance,
+        created_at=entity.created_at,
+        updated_at=entity.updated_at,
     )
 
 

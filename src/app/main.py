@@ -18,16 +18,33 @@ from app.core.bootstrap import PlatformRuntimeContext, bootstrap_platform
 from app.core.config import Settings, get_settings
 from app.core.correlation import CorrelationIdMiddleware
 from app.core.errors import register_error_handlers
-from app.core.logging import configure_logging
+from app.core.logging import configure_logging, get_logger
+
+logger = get_logger("app.main")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Dispose shared runtime resources on shutdown; never manage workers."""
+    """Run module startup hooks, then dispose shared runtime resources on shutdown.
+
+    Module hooks are invoked once per active module before request handling.
+    The contract requires modules not to raise; the platform does not swallow
+    a raising hook. A registry whose metadata cannot be read cannot enumerate
+    modules, so startup continues without hooks and readiness reports the
+    registry as unavailable. The API never starts or supervises workers.
+    """
+    context = getattr(app.state, "platform_context", None)
+    if isinstance(context, PlatformRuntimeContext):
+        try:
+            modules = context.registry.get_active_modules()
+        except Exception:
+            logger.warning("module_startup_hooks_skipped")
+        else:
+            for module in modules:
+                await module.on_startup(app)
     try:
         yield
     finally:
-        context = getattr(app.state, "platform_context", None)
         if isinstance(context, PlatformRuntimeContext):
             context.engine.dispose()
 

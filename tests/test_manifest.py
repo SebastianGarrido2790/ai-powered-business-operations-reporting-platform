@@ -42,11 +42,16 @@ def test_load_valid_sourcing_manifest() -> None:
 
     assert manifest.id == "sourcing"
     assert manifest.name == "Sourcing Operations Intelligence"
-    assert manifest.version == "0.2.0"
+    assert manifest.version == "0.3.0"
     assert manifest.platform.minimum_version == "0.1.0"
     assert manifest.database.schema_name == "sourcing"
     assert manifest.database.migrations == "database/migrations"
-    assert manifest.capabilities == ["health", "ingestion"]
+    assert manifest.capabilities == [
+        "health",
+        "ingestion",
+        "data_quality",
+        "entities",
+    ]
     assert manifest.permissions == ["sourcing.read", "sourcing.ingest"]
 
 

@@ -9,7 +9,7 @@ Governed by:
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, FastAPI
 
 from app.core.registry.manifest import ModuleManifest
 
@@ -40,6 +40,15 @@ class BusinessModuleContract(ABC):
     def get_declared_capabilities(self) -> list[str]:
         """Return the capabilities declared by the module manifest."""
         return list(self.manifest.capabilities)
+
+    async def on_startup(self, app: FastAPI) -> None:
+        """Run optional module startup work.
+
+        The default performs nothing. Modules that own startup work override
+        this method; the application lifespan calls it once per active module
+        before serving requests. Modules must not raise from this hook.
+        """
+        return None
 
     def register_job_handlers(self, dispatcher: "JobDispatcher") -> None:
         """Register module-owned job handlers.

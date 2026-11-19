@@ -354,11 +354,16 @@ def test_replace_and_fill_missing_differ_while_provenance_refreshes(
     assert replaced.provenance.processed_at == datetime(2026, 11, 17, 12, 0, tzinfo=UTC)
 
 
-def test_module_manifest_and_capabilities_are_unchanged() -> None:
-    """Verify Sourcing manifest conforms to approved capability and permission set."""
+def test_module_manifest_and_capabilities_match_stage7_surface() -> None:
+    """Verify Sourcing manifest declares the Stage 7 capability and permission set."""
     manifest = create_sourcing_module().manifest
 
     assert manifest.id == "sourcing"
-    assert manifest.version == "0.2.0"
-    assert set(manifest.capabilities) == {"health", "ingestion"}
+    assert manifest.version == "0.3.0"
+    assert set(manifest.capabilities) == {
+        "health",
+        "ingestion",
+        "data_quality",
+        "entities",
+    }
     assert set(manifest.permissions) == {"sourcing.read", "sourcing.ingest"}

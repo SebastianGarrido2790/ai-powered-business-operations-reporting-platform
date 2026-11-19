@@ -52,15 +52,20 @@ def test_sourcing_ingest_permission_role_grants() -> None:
         assert not has_permission(identity, ingest)
 
 
-def test_sourcing_manifest_0_2_0_conformance() -> None:
-    """Verify Sourcing manifest 0.2.0 declares ingestion capability and permissions."""
+def test_sourcing_manifest_0_3_0_conformance() -> None:
+    """Verify Sourcing manifest 0.3.0 declares ingestion, quality, and entity capabilities."""
     manifest_path = PROJECT_ROOT / "src" / "app" / "modules" / "sourcing" / "manifest.yaml"
     manifest = load_manifest(manifest_path)
 
     assert manifest.id == "sourcing"
-    assert manifest.version == "0.2.0"
-    assert MODULE_VERSION == "0.2.0"
-    assert manifest.capabilities == ["health", "ingestion"]
+    assert manifest.version == "0.3.0"
+    assert MODULE_VERSION == "0.3.0"
+    assert manifest.capabilities == [
+        "health",
+        "ingestion",
+        "data_quality",
+        "entities",
+    ]
     assert manifest.permissions == ["sourcing.read", "sourcing.ingest"]
 
 
@@ -94,6 +99,6 @@ def test_sourcing_settings_budget_defaults_and_bounds() -> None:
 def test_sourcing_module_contract_declared_metadata() -> None:
     """Verify module instance reports updated capabilities and permissions."""
     sourcing = create_sourcing_module()
-    assert sourcing.manifest.version == "0.2.0"
+    assert sourcing.manifest.version == "0.3.0"
     assert "ingestion" in sourcing.get_declared_capabilities()
     assert "sourcing.ingest" in sourcing.get_declared_permissions()

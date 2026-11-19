@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 
 import pytest
-from fastapi.routing import APIRoute
+from fastapi import FastAPI
 
 from app.modules.sourcing import SourcingModuleContract, create_sourcing_module
 from app.modules.sourcing.reconciliation.pipeline import ReconciliationPipeline
@@ -92,20 +92,38 @@ def test_module_wires_a_reconciliation_pipeline(
     assert isinstance(pipeline, ReconciliationPipeline)
 
 
-def test_module_manifest_routes_and_health_are_unchanged(
+def test_module_manifest_and_routes_match_approved_surface(
     configured_module: SourcingModuleContract,
 ) -> None:
-    """Stage 6 adds no capability, permission, route, health facet, or setting."""
+    """Stage 7 declares the approved capabilities, permissions, and route surface."""
     manifest = configured_module.manifest
-    assert manifest.capabilities == ["health", "ingestion"]
+    assert manifest.capabilities == [
+        "health",
+        "ingestion",
+        "data_quality",
+        "entities",
+    ]
     assert manifest.permissions == ["sourcing.read", "sourcing.ingest"]
 
-    router = configured_module.get_router()
-    assert {route.path for route in router.routes if isinstance(route, APIRoute)} == {
+    app = FastAPI()
+    app.include_router(configured_module.get_router())
+    assert set(app.openapi()["paths"]) == {
         "/health",
         "/status",
         "/ingestions",
+        "/ingestions/files",
         "/ingestions/{ingestion_id}",
+        "/ingestions/{ingestion_id}/issues",
+        "/suppliers",
+        "/suppliers/{entity_id}",
+        "/requisitions",
+        "/requisitions/{entity_id}",
+        "/quotes",
+        "/quotes/{entity_id}",
+        "/purchase-orders",
+        "/purchase-orders/{entity_id}",
+        "/deliveries",
+        "/deliveries/{entity_id}",
     }
 
     health = configured_module.get_health_status()

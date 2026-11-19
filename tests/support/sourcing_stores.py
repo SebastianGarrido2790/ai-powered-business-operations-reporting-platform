@@ -249,7 +249,7 @@ class InMemorySourcingRunStore:
                 or run.outcome == outcome
             )
             and (created_from is None or run.created_at >= created_from)
-            and (created_to is None or run.created_at <= created_to)
+            and (created_to is None or run.created_at < created_to)
         ]
         matches.sort(key=lambda run: (run.created_at, run.id), reverse=True)
         return matches[offset : offset + min(limit, 201)]
@@ -684,11 +684,24 @@ class InMemorySourcingEntityStore:
                     f"Curated {entity_type} {identity.entity_id} does not exist."
                 )
             entity_id = uuid.uuid4()
+            now = _now()
             rows[entity_id] = CuratedEntity(
                 entity_type=entity_type,
                 id=entity_id,
                 values={field: value for field, value in values.items() if value is not None},
-                provenance=provenance,
+                provenance=EntityProvenance(
+                    origin_source_id=identity.source_id,
+                    origin_external_record_id=identity.external_record_id,
+                    first_ingestion_run_id=provenance.first_ingestion_run_id,
+                    last_ingestion_run_id=provenance.last_ingestion_run_id,
+                    latest_source_record_id=provenance.latest_source_record_id,
+                    source_timestamp=provenance.source_timestamp,
+                    processed_at=provenance.processed_at,
+                    validation_status=provenance.validation_status,
+                    reconciliation_status=provenance.reconciliation_status,
+                ),
+                created_at=now,
+                updated_at=now,
             )
             return entity_id
 
@@ -719,6 +732,8 @@ class InMemorySourcingEntityStore:
                 validation_status=provenance.validation_status,
                 reconciliation_status=provenance.reconciliation_status,
             ),
+            created_at=existing.created_at,
+            updated_at=_now(),
         )
         return existing.id
 
@@ -823,10 +838,16 @@ class InMemorySourcingEntityStore:
                 business_identifier is None
                 or entity.values.get(identifier_field) == business_identifier
             )
-            and (updated_since is None or entity.provenance.processed_at >= updated_since)
+            and (
+                updated_since is None
+                or (entity.updated_at or entity.provenance.processed_at) >= updated_since
+            )
         ]
         matches.sort(
-            key=lambda entity: (entity.provenance.processed_at, entity.id),
+            key=lambda entity: (
+                entity.updated_at or entity.provenance.processed_at,
+                entity.id,
+            ),
             reverse=True,
         )
         return matches[offset : offset + min(limit, 201)]

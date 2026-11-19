@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, FastAPI
 
 from app.core.connectors import ConnectorError, DataConnector
+from app.core.logging import get_logger
 from app.core.registry import BusinessModuleContract, ModuleManifest, load_manifest
 from app.modules.sourcing.acquisition.files import FileAcquisitionService
 from app.modules.sourcing.config.settings import SourcingSettings
@@ -35,10 +36,12 @@ if TYPE_CHECKING:
 
 MODULE_ID: Final[str] = "sourcing"
 MODULE_NAME: Final[str] = "Sourcing Operations Intelligence"
-MODULE_VERSION: Final[str] = "0.2.0"
+MODULE_VERSION: Final[str] = "0.3.0"
 
 MODULE_DIRECTORY: Final = Path(__file__).resolve().parent
 DEFAULT_MANIFEST_PATH: Final = MODULE_DIRECTORY / "manifest.yaml"
+
+logger = get_logger("app.modules.sourcing.module")
 
 
 class _UnavailablePipeline:
@@ -149,6 +152,33 @@ class SourcingModuleContract(BusinessModuleContract):
                 self._validation_diagnostic or "VALIDATION_CONFIG_INVALID"
             )
         return status
+
+    async def on_startup(self, app: FastAPI) -> None:
+        """Run the best-effort landing sweep without blocking or failing startup."""
+        try:
+            from app.modules.sourcing.acquisition.cleanup import sweep_landing
+            from app.modules.sourcing.api.dependencies import resolve_services
+
+            services = resolve_services(app, self)
+            acquisition = services.acquisition
+            if acquisition is None:
+                return
+            retention_hours = (
+                self._settings.landing_retention_hours if self._settings is not None else 24
+            )
+            result = sweep_landing(
+                acquisition=acquisition,
+                run_store=services.run_store,
+                retention_hours=retention_hours,
+            )
+            logger.info(
+                "sourcing_landing_sweep",
+                skipped=result.skipped,
+                protected_refs=result.protected_refs,
+                removed=result.removed,
+            )
+        except Exception:
+            logger.warning("sourcing_landing_sweep_failed")
 
     def resolve_connector(
         self,

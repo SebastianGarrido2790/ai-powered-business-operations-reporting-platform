@@ -68,6 +68,22 @@ def isolate_correlation_context() -> Iterator[None]:
         reset_correlation_id(token)
 
 
+@pytest.fixture(autouse=True)
+def isolate_landing_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolate_settings: None,
+) -> Path:
+    """Point the Sourcing landing directory at a per-test temporary path.
+
+    Upload and startup-sweep tests must never read or write the repository's
+    default landing directory, and must not see files left by another test.
+    """
+    landing_dir = tmp_path / "sourcing-landing"
+    monkeypatch.setenv("SOURCING_LANDING_DIR", str(landing_dir))
+    return landing_dir
+
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
 MIGRATIONS_DIR = PROJECT_ROOT / "database" / "migrations"
