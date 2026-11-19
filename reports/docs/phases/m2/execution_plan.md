@@ -427,7 +427,7 @@ Implement canonical content fingerprinting, source-scoped duplicate detection, t
 2. Implement `duplicates.py` (`detect_duplicates` for `DUPLICATE_EXACT`, `DUPLICATE_IDENTITY_CONFLICT`, and `DUPLICATE_POTENTIAL` within the same source, excluding the record's own id on retry) (`005` Phase 3).
 3. Implement `matcher.py` (two-step identity cascade: source-qualified origin identity, then normalized business identifier or exact `normalized_name_key` for suppliers with an external id) and `links.py` (`supplier_id`, `requisition_id`, `purchase_order_id` resolution and `ReconciliationStatus` derivation) (`005` Phases 4–5).
 4. Implement `authority.py` (authority resolution from `SourceDefinition.entity_types`, `REPLACE` vs. `FILL_MISSING` selection, and field-level `CONFLICT_SOURCE_VALUE` / `CONFLICT_UNTRUSTED_UPDATE` comparison) (`005` Phase 6).
-5. Implement `reconciliation/pipeline.py` (`ReconciliationPipeline`) wrapping `ValidationNormalizationPipeline` in a single caller-owned session per fetch page, promoting only `VALID`/`WARNING` records, skipping curated writes on `DUPLICATE_EXACT`, and returning `duplicate` and `unresolved` counts (`005` Phase 7).
+5. Implement `reconciliation/pipeline.py` (`ReconciliationPipeline`) wrapping `ValidationNormalizationPipeline` in a single caller-owned session per fetch page, promoting only `VALID`/`WARNING` records, promoting exact same-run duplicates like any other promoted record (the later record carries `DUPLICATE_EXACT_RECORD` per spec §5.2; amended 2026-11-18 by owner decision), and returning `duplicate` and `unresolved` counts (`005` Phase 7).
 6. Wire `ReconciliationPipeline` into `SourcingModuleContract.build_pipeline` and run all unit and PostgreSQL reconciliation tests (`005` Phases 8–9).
 7. Record Stage 6 evidence in `reports/docs/phases/m2/verification/stage_6_verification.md`.
 
@@ -445,7 +445,7 @@ None in this stage beyond SDD 005's negative tests (ambiguous candidates creatin
 **Hard gate**
 
 - Promoted records create or update curated entities deterministically according to source authority (`REPLACE` vs. `FILL_MISSING`); `QUARANTINED` records never reach curated tables.
-- Exact same-run duplicates perform no second curated write; potential and identity-conflict duplicates remain traceable with `WARNING` issues.
+- Exact same-run duplicates are both persisted and promoted, with the later record traceable by a `WARNING` `DUPLICATE_EXACT_RECORD` issue (spec §5.2; amended 2026-11-18 by owner decision); potential and identity-conflict duplicates remain traceable with `WARNING` issues.
 - SDD 005 never alters a record's `validation_status` or fails the job on data-quality findings.
 - Ruff, Mypy, and Pytest pass; Stage 6 evidence is recorded in `verification/stage_6_verification.md`.
 
