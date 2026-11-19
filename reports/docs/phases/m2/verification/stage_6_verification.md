@@ -3,7 +3,7 @@
 **Phase:** M2 — Data Integration & Processing
 **Stage:** 6
 **Verification date:** 2026-11-18
-**Status:** Implementation complete; validation recorded — **gate PASSED** (one criterion recorded with an owner-accepted exception, §6)
+**Status:** Stage closed — gate PASSED with one owner-accepted exception; all owner decisions recorded
 **Authorization:** M2 execution authorized by the project owner on 2026-11-17; Stage 6 implementation and this validation record authorized by the owner on 2026-11-18
 
 ---
@@ -227,30 +227,12 @@ authorization (§7(k)).
 
 ### Judgment calls — awaiting owner confirmation (not gate-blocking)
 
-- **(d) A10 / S6-F25-equivalent — effective-link status.** `links.py` reads an
-  ambiguous **required** link backed by an existing non-null FK as `CONFIRMED`;
-  plan §1.5 and spec §6.5 list it as `AMBIGUOUS`. Accept the code (spec §6.5
-  table, arguably most aligned) or amend the plan/spec?
-- **(e) S6-F7 — "status-only conflicts" interpretation.** Read as the no-op
-  case: identical values, no conflict, provenance/status refreshed
-  (`test_identical_values_refresh_provenance_without_conflict`). Accepted?
-- **(f) S6-F11 — evidence filename.** This record uses the execution-plan path
-  (`verification/stage_6_verification.md`); SDD 005 `tasks.md` §9.4 names
-  `005_reconciliation_verification.md`. Record uses the plan path; tasks file
-  not edited. Accepted?
-- **(g) S6-F22 / A11 — post-commit invariant raise.** `_check_invariants`
-  raises after the page commits (counts cannot trip today; defense in depth).
-  Accepted?
-- **(h) S6-F3, S6-F4, S6-F8 — deviations/acceptances.** `build_pipeline`'s
-  required keyword-only `entity_store` (plan said "signature unchanged");
-  handler class-name duck-typing preserved by design (real-class test added);
-  in-memory doubles cannot roll back curated rows (atomicity verified only on
-  PostgreSQL). Accepted?
-- **(i) S6-F25 / S6-F26 — accepted residuals.** Dead `_LINK_AMBIGUOUS_CODES`
-  entry and swallowed registry exceptions in `resolve_authoritative_entities`
-  (A14/A15); `LOOKUP_LIMIT = 50` under-reporting by design (A9/A16); A17 (no
-  count defect), A13 (fingerprint-before-upsert), A20 (filter semantics).
-  Accepted?
+- **(d) A10 / S6-F25-equivalent — effective-link status. RESOLVED.** Code (`links.py:197-200`), plan §1.5 pseudocode (lines 147–151), and spec §6.5 table all agree: an ambiguous required link backed by an existing non-null FK reads `CONFIRMED` (the existing FK is an effective confirmed link from an earlier run; step 3's ambiguous check excludes effective links). The checkpoint summary's "triple disagreement" was a misreading. No plan/spec amendment needed.
+- **(e) S6-F7 — "status-only conflicts" interpretation. RESOLVED.** Accepted the no-op interpretation: identical values → no conflict, provenance/status refreshed only (`test_identical_values_refresh_provenance_without_conflict`). No spec change.
+- **(f) S6-F11 — evidence filename. RESOLVED.** This record uses the execution-plan path (`verification/stage_6_verification.md`); SDD 005 `tasks.md` §9.4 names `005_reconciliation_verification.md`. The plan path is authoritative for the gate; tasks file unchanged.
+- **(g) S6-F22 / A11 — post-commit invariant raise. RESOLVED.** Accepted as defense in depth; counts cannot trip under current SDD 004 relation (S6-F22).
+- **(h) S6-F3, S6-F4, S6-F8 — deviations/acceptances. RESOLVED.** F3 (required `entity_store`), F4 (class-name duck-typing with real-class test), F8 (in-memory atomicity limit — covered by PostgreSQL suite) documented and non-breaking.
+- **(i) S6-F25 / S6-F26 — accepted residuals. RESOLVED.** Dead `_LINK_AMBIGUOUS_CODES` entry, swallowed registry exceptions, `LOOKUP_LIMIT = 50` under-reporting, A13 (fingerprint-before-upsert), A17 (no count defect), A20 (filter semantics) — all recorded, no defect.
 
 ### Other — RESOLVED / AUTHORIZED
 
