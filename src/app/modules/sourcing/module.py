@@ -29,9 +29,9 @@ from app.modules.sourcing.connectors.registry import build_connector
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
-    from app.modules.sourcing.persistence import SourcingRecordStore
+    from app.modules.sourcing.persistence import SourcingEntityStore, SourcingRecordStore
+    from app.modules.sourcing.reconciliation.pipeline import ReconciliationPipeline
     from app.modules.sourcing.validation import ValidationConfig
-    from app.modules.sourcing.validation.pipeline import ValidationNormalizationPipeline
 
 MODULE_ID: Final[str] = "sourcing"
 MODULE_NAME: Final[str] = "Sourcing Operations Intelligence"
@@ -215,14 +215,31 @@ class SourcingModuleContract(BusinessModuleContract):
             )
         return self._source_registry.get(source_id)
 
+    def resolve_authoritative_entities(self, source_id: str) -> frozenset[str] | None:
+        """Return the source's authoritative entity types, or None if unknown.
+
+        Sourcing-internal accessor read from SDD 001's loaded source
+        definition; SDD 001's registry, configuration, and contract are
+        unchanged.
+        """
+        if self._source_registry is None:
+            return None
+        try:
+            definition = self._source_registry.get(source_id)
+        except Exception:
+            return None
+        return frozenset(definition.authoritative_entities)
+
     def build_pipeline(
         self,
         *,
         record_store: "SourcingRecordStore",
+        entity_store: "SourcingEntityStore",
         session_factory: Callable[[], "Session"],
-    ) -> "ValidationNormalizationPipeline":
-        """Build the validation pipeline or fail with a configuration error."""
+    ) -> "ReconciliationPipeline":
+        """Build the reconciliation pipeline or fail with a configuration error."""
         from app.modules.sourcing.ingestion.raw_capture import RawCapturePipeline
+        from app.modules.sourcing.reconciliation.pipeline import ReconciliationPipeline
         from app.modules.sourcing.validation.errors import SourcingValidationConfigError
         from app.modules.sourcing.validation.pipeline import ValidationNormalizationPipeline
 
@@ -237,12 +254,19 @@ class SourcingModuleContract(BusinessModuleContract):
             session_factory=session_factory,
             max_payload_bytes=self._settings.raw_payload_max_bytes,
         )
-        return ValidationNormalizationPipeline(
+        validation = ValidationNormalizationPipeline(
             capture=capture,
             record_store=record_store,
             config=self._validation_config,
             session_factory=session_factory,
             batch_size=self._settings.validation_batch_size,
+        )
+        return ReconciliationPipeline(
+            validation=validation,
+            record_store=record_store,
+            entity_store=entity_store,
+            resolve_authoritative_entities=self.resolve_authoritative_entities,
+            session_factory=session_factory,
         )
 
     def register_job_handlers(self, dispatcher: Any) -> None:
@@ -255,6 +279,7 @@ class SourcingModuleContract(BusinessModuleContract):
 
         from app.modules.sourcing.ingestion.handler import IngestionHandler
         from app.modules.sourcing.persistence import (
+            PostgresSourcingEntityStore,
             PostgresSourcingRecordStore,
             PostgresSourcingRunStore,
         )
@@ -263,6 +288,7 @@ class SourcingModuleContract(BusinessModuleContract):
         settings = self.settings or SourcingSettings()
         run_store = PostgresSourcingRunStore(runtime.engine)
         record_store = PostgresSourcingRecordStore(runtime.engine)
+        entity_store = PostgresSourcingEntityStore(runtime.engine)
 
         def session_factory() -> Session:
             return Session(runtime.engine, expire_on_commit=False)
@@ -270,6 +296,7 @@ class SourcingModuleContract(BusinessModuleContract):
         try:
             pipeline: Any = self.build_pipeline(
                 record_store=record_store,
+                entity_store=entity_store,
                 session_factory=session_factory,
             )
         except SourcingValidationConfigError as exc:
