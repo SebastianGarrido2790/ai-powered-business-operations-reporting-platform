@@ -698,11 +698,27 @@ class InMemorySourcingEntityStore:
                 continue
             if update_mode is UpdateMode.REPLACE or merged.get(field) is None:
                 merged[field] = value
+        # Origin identity and first-run provenance are immutable (Postgres parity).
+        preserved = existing.provenance
         rows[existing.id] = CuratedEntity(
             entity_type=entity_type,
             id=existing.id,
             values=merged,
-            provenance=provenance,
+            provenance=EntityProvenance(
+                origin_source_id=preserved.origin_source_id,
+                origin_external_record_id=preserved.origin_external_record_id,
+                first_ingestion_run_id=preserved.first_ingestion_run_id,
+                last_ingestion_run_id=provenance.last_ingestion_run_id,
+                latest_source_record_id=provenance.latest_source_record_id,
+                source_timestamp=(
+                    provenance.source_timestamp
+                    if provenance.source_timestamp is not None
+                    else preserved.source_timestamp
+                ),
+                processed_at=provenance.processed_at,
+                validation_status=provenance.validation_status,
+                reconciliation_status=provenance.reconciliation_status,
+            ),
         )
         return existing.id
 

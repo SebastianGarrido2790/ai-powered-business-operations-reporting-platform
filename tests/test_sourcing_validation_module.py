@@ -16,16 +16,20 @@ import pytest
 from fastapi.routing import APIRoute
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
-from support.sourcing_stores import InMemorySession, InMemorySourcingRecordStore
+from support.sourcing_stores import (
+    InMemorySession,
+    InMemorySourcingEntityStore,
+    InMemorySourcingRecordStore,
+)
 
 import app.modules.sourcing.ingestion.handler as handler_module
 from app.modules.sourcing import SourcingModuleContract, create_sourcing_module
 from app.modules.sourcing.config.sources import load_sources_config
+from app.modules.sourcing.reconciliation.pipeline import ReconciliationPipeline
 from app.modules.sourcing.validation import (
     RULESET_VERSION,
     SourcingValidationConfigError,
     ValidationConfig,
-    ValidationNormalizationPipeline,
 )
 from app.workers.dispatcher import JobDispatcher
 
@@ -129,15 +133,17 @@ def test_invalid_source_configuration_degrades_validation(
 def test_build_pipeline_returns_a_configured_pipeline(
     configured_module: SourcingModuleContract,
 ) -> None:
-    """`build_pipeline` composes capture and validation against one store."""
+    """`build_pipeline` composes capture, validation, and reconciliation."""
     store = InMemorySourcingRecordStore()
+    entity_store = InMemorySourcingEntityStore()
 
     pipeline = configured_module.build_pipeline(
         record_store=store,
+        entity_store=entity_store,
         session_factory=_session_factory(),
     )
 
-    assert isinstance(pipeline, ValidationNormalizationPipeline)
+    assert isinstance(pipeline, ReconciliationPipeline)
 
 
 def test_build_pipeline_raises_the_recorded_configuration_error(
@@ -145,10 +151,12 @@ def test_build_pipeline_raises_the_recorded_configuration_error(
 ) -> None:
     """A degraded module blocks ingestion with the sanitized diagnostic code."""
     store = InMemorySourcingRecordStore()
+    entity_store = InMemorySourcingEntityStore()
 
     with pytest.raises(SourcingValidationConfigError) as exc_info:
         degraded_module.build_pipeline(
             record_store=store,
+            entity_store=entity_store,
             session_factory=_session_factory(),
         )
 
