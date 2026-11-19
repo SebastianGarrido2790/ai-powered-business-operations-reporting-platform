@@ -410,7 +410,7 @@ None beyond SDD 004's batch-rollback and retry-idempotency tests.
 
 ---
 
-### Stage 6 — Duplicate Detection, Reconciliation & Source Authority
+### Stage 6 — Duplicate Detection, Reconciliation & Source Authority ✅ **PASSED**
 
 **Goal**
 
