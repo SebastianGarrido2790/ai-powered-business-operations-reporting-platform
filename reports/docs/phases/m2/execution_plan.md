@@ -451,7 +451,7 @@ None in this stage beyond SDD 005's negative tests (ambiguous candidates creatin
 
 ---
 
-### Stage 7 — Ingestion, Data-Quality & Entity API
+### Stage 7 — Ingestion, Data-Quality & Entity API ✅ **PASSED**
 
 **Goal**
 
@@ -732,7 +732,7 @@ The following evidence must exist before M2 sign-off at Stage 9:
 | 4 | Validation Rule Catalog, Configuration & Issue Evaluation | 28-rule catalog (`1.0.0`), normalizers, `validation.yaml`, evaluator, `VALIDATION` issues | ADR-009 | Catalog meta-test, normalizer, config, and issue tests pass | **Passed** |
 | 5 | Validation & Normalization Pipeline & Module Integration | `ValidationNormalizationPipeline`, module health integration, business-owner catalog review | ADR-003, ADR-009 | Batch atomicity tests and recorded catalog review pass | **Passed** |
 | 6 | Duplicate Detection, Reconciliation & Source Authority | Fingerprinting, duplicate detector, matching cascade, authority modes, `ReconciliationPipeline` | ADR-003, ADR-009 | Reconciliation, authority, and page-rollback tests pass | **Passed** |
-| 7 | Ingestion, Data-Quality & Entity API | `on_startup` hook, `sweep_landing`, 13 routes, `limit + 1` pagination, manifest `0.3.0` | ADR-002, ADR-007 | All 13 route, permission, sweep, and PG read tests pass | Not started |
+| 7 | Ingestion, Data-Quality & Entity API | `on_startup` hook, `sweep_landing`, 13 routes, `limit + 1` pagination, manifest `0.3.0` | ADR-002, ADR-007 | All 13 route, permission, sweep, and PG read tests pass | **Passed** |
 | 8 | Integrated Acceptance & One-Time Falsification | Multi-source E2E acceptance and mid-run fault-and-retry falsification | None | E2E acceptance, falsification, and full suite pass | Not started |
 | 9 | ADR Consolidation & Phase Sign-Off | Reconciled decisions, PIR, §10 Outcome Record, and M2 sign-off | As required by approved changes | All M2 exit criteria verified and signed off | Not started |
 
@@ -749,7 +749,7 @@ Maintain the following record as execution progresses:
 | 4 | 2026-11-18 | 2026-11-18 | `086214b` — `feat(sourcing): Stage 4 - Validation Rule Catalog, Configuration and Issue Evaluation` · evidence in `verification/stage_4_verification.md` | **Passed** (2026-11-18) | S4-F1 (Low/Accepted), S4-F2 (Info/Expected), S4-F3 (Info/Expected), S4-F4 (Low/Accepted), S4-F5 (Info/Accepted), S4-F6 (Info/Accepted) | Project owner authorized Stage 4 commit/push 2026-11-18 |
 | 5 | 2026-11-18 | 2026-11-18 | `4178c70` — `feat(sourcing): Stage 5 - Validation & Normalization Pipeline & Module Integration` · evidence in `verification/stage_5_verification.md`, `verification/004_validation_verification.md`, and `verification/004_rule_catalog_review.md` | **Passed** (2026-11-18) | S5-F1 (Low/Accepted), S5-F2 (Info/Expected), S5-F3 (Info/Accepted), S5-F4 (Info/Accepted) | Project owner acknowledged Stage 5 pass and approved commit/push 2026-11-18 |
 | 6 | 2026-11-18 | 2026-11-18 | `d83c0e4` (code), `53d5215` (tests), `826ad5c` (docs) — evidence in `verification/stage_6_verification.md` | **Passed** (2026-11-18) — one owner-accepted exception and one owner-authorized plan amendment (see §6 of the evidence record) | S6-F1 (High/Resolved), S6-F2 (High/Resolved), S6-F3–F4 (Low/Accepted), S6-F5–F6 (Med/Accepted risk), S6-F7 (Info/Interpretation accepted), S6-F8–F10 (Low-Info/Accepted), S6-F11 (Low/Accepted), S6-F12–F13 (Info/Expected), S6-F14 (Info/Superseded), S6-F15 (Critical/Resolved), S6-F16 (Critical/Resolved; owner-accepted exception), S6-F17 (High/Resolved by plan amendment), S6-F18 (Med/Accepted spec gap), S6-F19 (High/Resolved; owner-accepted exception), S6-F20 (High/Resolved), S6-F21 (Med/Resolved), S6-F22 (Med/Accepted), S6-F23 (Med/Resolved), S6-F24 (Low/Resolved), S6-F25–F26 (Info/Accepted), S6-F27 (Info/Expected). Judgment calls (d)–(i) resolved 2026-11-18; second opinion declined; cross-source consolidation out of scope (ADR-009) | Project owner acknowledged Stage 6 gate pass with accepted exception; authorized stage record update and push 2026-11-18 |
-| 7 | — | — | `verification/stage_7_verification.md` | Pending | — | — |
+| 7 | 2026-11-18 | 2026-11-20 | `8a5b436` (code and tests), `dd300c4` (review fixes) — evidence in `verification/stage_7_verification.md` and `reviews/2026-11-19-main.md` | **Passed** (2026-11-18; closed 2026-11-20) | S7-F1–F7 (Resolved), S7-F8 (Info/Accepted), S7-F9 (Low/Resolved), S7-F10 (Low/Accepted per decision 8), S7-F11 (Info/Accepted), S7-F12 (Info/Resolved by review), S7-F13 (Major/Resolved), S7-F14–F15 (Minor/Resolved), S7-F16 (Minor–Nit/Deferred). Review ran inline on the author model; cross-model reviewer unavailable (OpenRouter free-tier limits) | Project owner authorized Stage 7 commit/push 2026-11-18, review and fix set 2026-11-19, and stage closure, coverage floor, and review-policy updates 2026-11-20 |
 | 8 | — | — | `verification/stage_8_verification.md` | Pending | — | — |
 | 9 | — | — | `verification/stage_9_verification.md` | Pending | — | — |
 

@@ -3,8 +3,8 @@
 **Phase:** M2 — Data Integration & Processing
 **Stage:** 7
 **Verification date:** 2026-11-18
-**Status:** Implementation and verification complete — gate PASSED; stage closure, commit, and push not yet authorized
-**Authorization:** Stage 7 implementation authorized by the project owner on 2026-11-18 with the seven plan decisions recorded in §6
+**Status:** Implementation, verification, adversarial review, and review fixes complete — Stage 7 **PASSED** and closed
+**Authorization:** Stage 7 implementation authorized 2026-11-18; review fix set authorized 2026-11-19; stage closure and governance updates authorized 2026-11-20 by the project owner
 
 ---
 
@@ -64,10 +64,10 @@ health routes.
 
 | Check | Command / evidence | Result |
 |---|---|---|
-| Formatting | `uv run ruff format --check .` | Pass — 285 files already formatted |
+| Formatting | `uv run ruff format --check .` | Pass — 286 files already formatted |
 | Linting | `uv run ruff check .` | Pass — zero findings |
-| Static typing | `uv run mypy src tests` | Pass — zero issues in 196 files |
-| Entire test suite | `BOPF_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/bopf_test uv run pytest -q` | Pass — **867 passed**, 0 failed, 0 skipped, **95% statement coverage**, 23 warnings (Stage 6: 765 / 94% / 19) |
+| Static typing | `uv run mypy src tests` | Pass — zero issues in 195 files |
+| Entire test suite | `BOPF_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/bopf_test uv run pytest -q` | Pass — **869 passed**, 0 failed, 0 skipped, **95% statement coverage**, 23 warnings (Stage 6: 765 / 94% / 19) |
 | Route surface | `tests/test_sourcing_api_manifest.py::test_router_declares_only_the_approved_routes`; `app.openapi()["paths"]` | Pass — exactly the 13 SDD 006 routes plus the four SDD 002/health paths; no extra endpoint |
 | Pagination | `tests/test_sourcing_api_pagination.py` (6) | Pass — default 50, max 200, `limit + 1` probe, exact-boundary `has_more=False`, `limit=0`/`limit=201`/`offset=-1` → `422 validation_error` |
 | Run listing | `tests/test_sourcing_api_runs.py` (6) | Pass — `(created_at DESC, id DESC)`, source/outcome/`PENDING` filters, inclusive `created_from`, exclusive `created_to`, inverted range → `422 invalid_filter`, offset windows non-overlapping, no job join |
@@ -134,7 +134,11 @@ database was not touched.
 | S7-F9 | `status.HTTP_413_REQUEST_ENTITY_TOO_LARGE` is deprecated in this Starlette version. The handler now uses `HTTP_413_CONTENT_TOO_LARGE` — same numeric status. | Low | Resolved — removes the one deprecation warning emitted by Stage 7 source code. |
 | S7-F10 | Stage 7 new-code coverage is 96%; `api/errors.py` (57%) has its 503/409/generic branches untested after the owner removed the unit-test suite (decision 8), and `dependencies.py:28`, `projections.py` decimal/`QUEUED` branches, and the `ingestion_routes` 503/`invalid_file` fallbacks are uncovered. | Low (residual, owner-accepted) | Accepted — owner decision 8: tests are brought to the approved plan matrix, not to a coverage target; total coverage 95%, practical benchmark 70–80%. |
 | S7-F11 | 23 warnings, all inherited from dependencies: Starlette's `HTTP_422_UNPROCESSABLE_ENTITY` deprecation in route-boundary `422` tests, the `starlette.testclient` httpx deprecation, and the Alembic `path_separator` deprecation in PostgreSQL suites. No Stage 7 source code emits a warning (S7-F9 fixed the one it did). | Info | Accepted — same root causes as Stage 5/6 findings S5-F4/S6-F10; no Stage 7 defect. |
-| S7-F12 | No adversarial fresh-context break-it review was run for Stage 7, unlike Stage 6. The Stage 7 hard gate does not require one, and the owner did not authorize one. | Info (process) | Recorded — available on request before the stage is closed. |
+| S7-F12 | Adversarial break-it review executed inline on 2026-11-19 after cross-model reviewer attempts failed on OpenRouter free-tier quotas (`reports/docs/reviews/2026-11-19-main.md`). Findings resolved via follow-up commit `dd300c4`. | Info (process) | Resolved — see S7-F13..S7-F16 and review document. |
+| S7-F13 | Oversized XLSX was parsed by `openpyxl` before acquisition enforced `max_upload_bytes`. Guard added before workbook parse, rejecting with `413 payload_too_large`; regression test added. | Major | Resolved in `dd300c4`. |
+| S7-F14 | Engine connection pool was not disposed if an active module startup hook raised. Lifespan hook loop moved inside `try` block with `engine.dispose()` in `finally`; regression test added. | Minor | Resolved in `dd300c4`. |
+| S7-F15 | Landing sweep skip on overflow returned `protected_refs=0` rather than the observed count. Skip path now returns `len(protected)`; test verified. | Minor | Resolved in `dd300c4`. |
+| S7-F16 | Deferred review findings: event-loop offloading for file IO/parsing, multipart form schema bounds, `not_found` vs `ingestion_not_found` consistency, and code clean-up nits. | Minor / Nit | Deferred per owner authorization 2026-11-19. |
 
 ---
 
@@ -145,17 +149,16 @@ database was not touched.
 | All 13 routes in SDD 006 §4 satisfy their status codes, pagination (`limit + 1` → `has_more`), ordering, filters, and permission checks | Satisfied | §3 rows: route surface, pagination, run listing, issue listing, entity routes, file submission, permissions; 102 Stage 7 tests pass |
 | No response, error, or log exposes `raw_payload`, `normalized_payload`, content hashes, acquisition references, filesystem paths, secrets, or stack traces | Satisfied | Projection assertions in all four read/write suites; the sweep log emits `skipped`, `protected_refs`, and `removed` only; error details carry identifiers and safe messages |
 | `on_startup` runs the landing sweep without blocking or failing startup and protects non-terminal runs | Satisfied | `test_module_lifecycle.py` (hook once per module, registry failure tolerated) and `test_sourcing_landing_sweep.py` (retention, protection, overflow skip, failure swallowed) |
-| Ruff, Mypy, and Pytest pass; Stage 7 evidence is recorded in `verification/stage_7_verification.md` | Satisfied | §3 — format and lint clean, mypy clean in 196 files, 867 passed / 95% coverage; this file |
+| Ruff, Mypy, and Pytest pass; Stage 7 evidence is recorded in `verification/stage_7_verification.md` | Satisfied | §3 — format and lint clean, mypy clean in 195 files, 869 passed / 95% coverage; this file |
 
 **Gate result: PASSED.** All four criteria are satisfied with executed
-evidence. Two items remain outside the gate: the residual untested error
-branches (S7-F10, accepted per decision 8) and the absence of an adversarial
-review (S7-F12). The Stage 6 verification record was not modified;
-`3bced03` only marks Stage 6 as passed in the execution plan.
+evidence. The adversarial review ran 2026-11-19, its approved fixes landed in
+commit `dd300c4`, and Stage 7 was formally closed on 2026-11-20 upon owner
+authorization.
 
-Stage closure, the execution-plan stage-record update, the commit, and the push
-each still require separate, explicit owner authorization. All Stage 7 changes
-are uncommitted on top of `3bced03`.
+Commit references:
+- Implementation & initial test suite: `8a5b436`
+- Adversarial review fix set & regression tests: `dd300c4`
 
 ---
 

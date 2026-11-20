@@ -79,3 +79,8 @@ mypy_path = "src"
 
 [tool.coverage.run]
 source = ["app"]
+
+[tool.coverage.report]
+# Review norm, not a target: the practical benchmark is 70-80%, not 95%+.
+# This floor encodes the lower bound of that band.
+fail_under = 70
