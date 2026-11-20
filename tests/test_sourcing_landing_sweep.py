@@ -119,8 +119,8 @@ def test_sweep_skips_when_the_last_page_is_full(tmp_path: Path) -> None:
     acquisition = _acquisition(tmp_path)
     old = _file(acquisition, "old.csv", age_seconds=OLD_SECONDS)
     store = InMemorySourcingRunStore()
-    for _ in range(4):
-        _pending_run(store, None)
+    for index in range(4):
+        _pending_run(store, f"pending-{index}.csv")
 
     result = sweep_landing(
         acquisition=acquisition,
@@ -131,6 +131,7 @@ def test_sweep_skips_when_the_last_page_is_full(tmp_path: Path) -> None:
     )
 
     assert result.skipped is True
+    assert result.protected_refs == 4
     assert result.removed == 0
     assert old.exists()
 

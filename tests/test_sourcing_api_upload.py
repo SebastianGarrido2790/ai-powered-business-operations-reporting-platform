@@ -233,6 +233,42 @@ def test_oversized_upload_returns_413_and_removes_partial_file(tmp_path: Path) -
     assert api.run_store.list_runs() == []
 
 
+def test_oversized_xlsx_is_rejected_before_the_workbook_check(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify the size guard runs before `openpyxl` parses an oversized workbook."""
+    parsed = False
+
+    def _fail_on_parse(*args: Any, **kwargs: Any) -> Any:
+        nonlocal parsed
+        parsed = True
+        raise AssertionError("workbook should not be parsed")
+
+    monkeypatch.setattr(openpyxl, "load_workbook", _fail_on_parse)
+
+    with sourcing_api_client(
+        landing_dir=tmp_path / "landing",
+        max_upload_bytes=10,
+    ) as api:
+        response = api.client.post(
+            "/api/v1/sourcing/ingestions/files",
+            headers=MANAGER,
+            **_csv_upload(
+                key="large-xlsx-key",
+                filename="suppliers.xlsx",
+                content=_xlsx_bytes(),
+                content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            ),
+        )
+
+    assert response.status_code == 413
+    assert response.json()["code"] == "payload_too_large"
+    assert parsed is False
+    assert _landing_files(api.landing_dir) == []
+    assert api.run_store.list_runs() == []
+
+
 def test_submission_failure_after_acquisition_removes_landing_file(
     upload_api: ApiHarness,
 ) -> None:

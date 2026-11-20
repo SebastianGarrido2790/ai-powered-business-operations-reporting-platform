@@ -57,6 +57,11 @@ class FileAcquisitionService:
         """The resolved directory where landing files are stored."""
         return self._landing_dir
 
+    @property
+    def max_upload_bytes(self) -> int:
+        """The configured maximum upload size in bytes."""
+        return self._settings.max_upload_bytes
+
     def _validate_landing_dir(self, directory: Path) -> None:
         """Ensure landing directory is not located within application source package."""
         current = Path(__file__).resolve().parent

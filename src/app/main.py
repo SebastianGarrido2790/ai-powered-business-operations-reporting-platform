@@ -29,20 +29,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     Module hooks are invoked once per active module before request handling.
     The contract requires modules not to raise; the platform does not swallow
-    a raising hook. A registry whose metadata cannot be read cannot enumerate
+    a raising hook, and the engine is still disposed before the failure
+    propagates. A registry whose metadata cannot be read cannot enumerate
     modules, so startup continues without hooks and readiness reports the
     registry as unavailable. The API never starts or supervises workers.
     """
     context = getattr(app.state, "platform_context", None)
-    if isinstance(context, PlatformRuntimeContext):
-        try:
-            modules = context.registry.get_active_modules()
-        except Exception:
-            logger.warning("module_startup_hooks_skipped")
-        else:
-            for module in modules:
-                await module.on_startup(app)
     try:
+        if isinstance(context, PlatformRuntimeContext):
+            try:
+                modules = context.registry.get_active_modules()
+            except Exception:
+                logger.warning("module_startup_hooks_skipped")
+            else:
+                for module in modules:
+                    await module.on_startup(app)
         yield
     finally:
         if isinstance(context, PlatformRuntimeContext):

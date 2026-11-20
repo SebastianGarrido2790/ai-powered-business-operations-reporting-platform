@@ -37,7 +37,8 @@ def sweep_landing(
 
     Reads at most `max_pages * page_size` non-terminal runs. If the final page
     is full, the sweep cannot prove it has seen every non-terminal run, so it
-    deletes nothing and reports `skipped=True`.
+    deletes nothing and reports `skipped=True` with the references observed so
+    far.
     """
     protected: set[str] = set()
     offset = 0
@@ -57,4 +58,4 @@ def sweep_landing(
 
         offset += page_size
 
-    return SweepResult(skipped=True, protected_refs=0, removed=0)
+    return SweepResult(skipped=True, protected_refs=len(protected), removed=0)

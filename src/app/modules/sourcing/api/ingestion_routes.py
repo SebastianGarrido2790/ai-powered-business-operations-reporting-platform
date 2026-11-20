@@ -50,8 +50,8 @@ def _reject(code: str, message: str, status_code: int) -> HTTPException:
     return HTTPException(status_code=status_code, detail={"code": code, "message": message})
 
 
-def _validate_upload(file: UploadFile) -> str:
-    """Validate the declared extension, content type, and workbook before landing."""
+def _validate_upload(file: UploadFile, *, max_bytes: int) -> str:
+    """Validate the declared extension, content type, size, and workbook before landing."""
     filename = file.filename or ""
     suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS:
@@ -67,6 +67,13 @@ def _validate_upload(file: UploadFile) -> str:
             "unsupported_media_type",
             "The upload content type is not permitted for this file type.",
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        )
+
+    if file.size is not None and file.size > max_bytes:
+        raise _reject(
+            "payload_too_large",
+            "The upload exceeds the configured size limit.",
+            status.HTTP_413_CONTENT_TOO_LARGE,
         )
 
     if suffix == ".xlsx":
@@ -136,8 +143,6 @@ def build_ingestion_router(get_services: ServicesDependency) -> APIRouter:
         idempotency_key: Annotated[str, Form(min_length=1, max_length=255)],
     ) -> IngestionResponse:
         """Submit a CSV or XLSX ingestion request."""
-        _validate_upload(file)
-
         acquisition = services.acquisition
         if acquisition is None:
             raise _reject(
@@ -145,6 +150,8 @@ def build_ingestion_router(get_services: ServicesDependency) -> APIRouter:
                 "File acquisition is not configured for this source.",
                 status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+        _validate_upload(file, max_bytes=acquisition.max_upload_bytes)
 
         try:
             acquired = acquisition.acquire(

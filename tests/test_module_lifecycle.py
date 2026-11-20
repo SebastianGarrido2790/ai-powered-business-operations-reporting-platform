@@ -9,6 +9,7 @@ Governed by:
 from types import SimpleNamespace
 from typing import Any, cast
 
+import pytest
 from fastapi import APIRouter, FastAPI
 
 from app.core.bootstrap import PlatformRuntimeContext
@@ -52,6 +53,13 @@ class _StubModule(BusinessModuleContract):
 
     async def on_startup(self, app: FastAPI) -> None:
         self.calls.append(app)
+
+
+class _RaisingModule(_StubModule):
+    """Module whose startup hook fails."""
+
+    async def on_startup(self, app: FastAPI) -> None:
+        raise RuntimeError("hook failed")
 
 
 class _Engine:
@@ -119,6 +127,18 @@ async def test_lifespan_runs_each_hook_once_before_serving() -> None:
 
     assert first.calls == [app]
     assert second.calls == [app]
+    assert engine.disposed is True
+
+
+async def test_lifespan_disposes_engine_when_a_hook_raises() -> None:
+    """Verify a raising startup hook still disposes the shared engine."""
+    engine = _Engine()
+    app = _app(_context(_Registry([_RaisingModule()]), engine))
+
+    with pytest.raises(RuntimeError, match="hook failed"):
+        async with lifespan(app):
+            pass
+
     assert engine.disposed is True
 
 
