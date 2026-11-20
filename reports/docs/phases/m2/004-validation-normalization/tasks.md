@@ -1,6 +1,6 @@
 # 004 — Validation, Normalization & Quarantine: Tasks
 
-**Status:** Approved — feature tasks approved by the project owner 2026-11-14; implementation authorization not granted  
+**Status:** Approved — feature tasks approved by the project owner 2026-11-14; original feature implementation completed in Stages 4–5; Stage 8 shared page-transaction tasks implemented and verified 2026-11-20
 **Amendment:** Approved — 2026-11-20 shared page-transaction tasks.  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stages 4–5 per `../implementation_plan.md` §7.2; requires SDDs 002 and 003  

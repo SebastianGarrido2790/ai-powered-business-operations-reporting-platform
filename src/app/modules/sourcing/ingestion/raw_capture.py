@@ -104,6 +104,7 @@ class RawCapturePipeline:
         run: IngestionRun,
         fetch_result: FetchResult,
         budget: ExecutionBudget,
+        session: Session | None = None,
     ) -> CaptureResult:
         budget.check(records_processed=0)
 
@@ -124,44 +125,60 @@ class RawCapturePipeline:
             if page_index > 0:
                 budget.check(records_processed=processed)
 
-            with self._session_factory() as session:
-                try:
-                    drafts: list[SourceRecordDraft] = []
-                    quarantined_flags: list[bool] = []
-                    for record in page_records:
-                        draft, quarantined = self._build_draft(
-                            run, fetch_result, record, occurrences
-                        )
-                        drafts.append(draft)
-                        quarantined_flags.append(quarantined)
+            if session is not None:
+                self._process_page(
+                    run, fetch_result, page_records, occurrences, captured, counts, session
+                )
+                processed += len(page_records)
+                continue
 
-                    for start in range(0, len(drafts), RECORD_BATCH_LIMIT):
-                        batch = drafts[start : start + RECORD_BATCH_LIMIT]
-                        flags = quarantined_flags[start : start + RECORD_BATCH_LIMIT]
-                        for draft, persisted, quarantined in zip(
-                            batch,
-                            self._record_store.append_source_records(session, batch),
-                            flags,
-                            strict=True,
-                        ):
-                            if quarantined:
-                                self._record_store.add_issue(
-                                    session,
-                                    self._truncation_issue(run, persisted, draft),
-                                )
-                            captured.append(
-                                CapturedRecord(record=persisted, capture_quarantined=quarantined)
-                            )
-                            processed += 1
-                            counts["received"] += 1
-                            if quarantined:
-                                counts["quarantined"] += 1
-                    session.commit()
+            with self._session_factory() as page_session:
+                try:
+                    self._process_page(
+                        run, fetch_result, page_records, occurrences, captured, counts, page_session
+                    )
+                    page_session.commit()
                 except Exception:
-                    session.rollback()
+                    page_session.rollback()
                     raise
+            processed += len(page_records)
 
         return CaptureResult(counts=counts, warnings=(), records=tuple(captured))
+
+    def _process_page(
+        self,
+        run: IngestionRun,
+        fetch_result: FetchResult,
+        page_records: Sequence[FetchedRecord],
+        occurrences: dict[str, int],
+        captured: list[CapturedRecord],
+        counts: dict[str, int],
+        session: Session,
+    ) -> None:
+        drafts: list[SourceRecordDraft] = []
+        quarantined_flags: list[bool] = []
+        for record in page_records:
+            draft, quarantined = self._build_draft(run, fetch_result, record, occurrences)
+            drafts.append(draft)
+            quarantined_flags.append(quarantined)
+
+        for start in range(0, len(drafts), RECORD_BATCH_LIMIT):
+            batch = drafts[start : start + RECORD_BATCH_LIMIT]
+            flags = quarantined_flags[start : start + RECORD_BATCH_LIMIT]
+            for draft, persisted, quarantined in zip(
+                batch,
+                self._record_store.append_source_records(session, batch),
+                flags,
+                strict=True,
+            ):
+                if quarantined:
+                    self._record_store.add_issue(
+                        session, self._truncation_issue(run, persisted, draft)
+                    )
+                captured.append(CapturedRecord(record=persisted, capture_quarantined=quarantined))
+                counts["received"] += 1
+                if quarantined:
+                    counts["quarantined"] += 1
 
     def _build_draft(
         self,

@@ -1,28 +1,27 @@
-"""One-time falsification test for M2 Stage 8: Mid-run multi-page fault injection & worker retry convergence.
+"""Stage 8 mid-run fault injection and worker retry convergence falsification.
 
 Governed by:
 - Stage 8 (§522–§558): Controlled falsification experiment.
   Hypothesis: When a multi-page ingestion run fails midway through a later page (Page 2)
   after an earlier page (Page 1) has already committed source_records, validation_issues,
   content_fingerprint, and curated entity rows, the failed page transaction must roll back
-  completely without partial residue. The run must remain non-terminal with a sanitized attempt error,
-  and a subsequent worker retry of the same job (job_id / ingestion_run_id) must converge to the exact
+  completely without partial residue. The run must remain non-terminal with a
+  sanitized attempt error, and a retry of the same job/run must converge to the exact
   same persisted records, issues, curated entities, immutable first_ingestion_run_id provenance, and
   run counts as an uninterrupted single-attempt run—without duplicating rows or generating false
   self-duplicate issues against the first attempt's records.
 """
 
 import os
-import uuid
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
+from uuid import UUID
 
 import pytest
-from sqlalchemy import Engine
+from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
-from app.core.config import Settings
 from app.core.connectors import (
     ConnectorType,
     DataConnector,
@@ -36,7 +35,6 @@ from app.core.connectors import (
 from app.core.persistence import JobStore
 from app.core.persistence.models import JobStatus
 from app.core.security import AuthenticatedIdentity, CanonicalRole
-from app.main import create_app
 from app.modules.sourcing import create_sourcing_module
 from app.modules.sourcing.config.settings import SourcingSettings
 from app.modules.sourcing.config.sources import (
@@ -46,9 +44,12 @@ from app.modules.sourcing.config.sources import (
 )
 from app.modules.sourcing.ingestion.submission import SourcingSubmissionService
 from app.modules.sourcing.persistence import (
+    CuratedEntity,
+    IssueView,
     PostgresSourcingEntityStore,
     PostgresSourcingRecordStore,
     PostgresSourcingRunStore,
+    SourceRecord,
 )
 from app.modules.sourcing.services import SourcingServices
 from app.workers.dispatcher import JobDispatcher
@@ -74,24 +75,56 @@ class MultiPageFakeConnector(DataConnector):
             FetchedRecord(
                 external_record_id="P1-SUP-01",
                 entity_type="supplier",
-                payload={"supplier_code": "P1-SUP-01", "name": "Alpha Corp", "created_at": "2026-01-01T00:00:00Z"},
+                payload={
+                    "supplier_code": "P1-SUP-01",
+                    "name": "Alpha Corp",
+                    "created_at": "2026-01-01T00:00:00Z",
+                },
             ),
             FetchedRecord(
                 external_record_id="P1-SUP-02",
                 entity_type="supplier",
-                payload={"supplier_code": "P1-SUP-02", "name": "Beta LLC", "created_at": "2026-01-02T00:00:00Z"},
+                payload={
+                    "supplier_code": "P1-SUP-02",
+                    "name": "Beta LLC",
+                    "created_at": "2026-01-02T00:00:00Z",
+                },
+            ),
+            FetchedRecord(
+                external_record_id="P1-SUP-03",
+                entity_type="supplier",
+                payload={
+                    "supplier_code": "P1-SUP-03",
+                    "created_at": "2026-01-02T12:00:00Z",
+                },
             ),
         ]
         self.page2_records = [
             FetchedRecord(
                 external_record_id="P2-SUP-01",
                 entity_type="supplier",
-                payload={"supplier_code": "P2-SUP-01", "name": "Gamma Inc", "created_at": "2026-01-03T00:00:00Z"},
+                payload={
+                    "supplier_code": "P2-SUP-01",
+                    "name": "Gamma Inc",
+                    "created_at": "2026-01-03T00:00:00Z",
+                },
             ),
             FetchedRecord(
                 external_record_id="P2-SUP-02",
                 entity_type="supplier",
-                payload={"supplier_code": "P2-SUP-02", "name": "Delta Co", "created_at": "2026-01-04T00:00:00Z"},
+                payload={
+                    "supplier_code": "P2-SUP-02",
+                    "name": "Delta Co",
+                    "created_at": "2026-01-04T00:00:00Z",
+                },
+            ),
+            FetchedRecord(
+                external_record_id="P2-SUP-03",
+                entity_type="supplier",
+                payload={
+                    "supplier_code": "P2-SUP-03",
+                    "created_at": "2026-01-04T12:00:00Z",
+                },
             ),
         ]
 
@@ -174,7 +207,9 @@ class FaultInjectingEntityStore(PostgresSourcingEntityStore):
         return result
 
 
-def _setup_environment(sourcing_engine: Engine, entity_store: PostgresSourcingEntityStore) -> dict[str, Any]:
+def _setup_environment(
+    sourcing_engine: Engine, entity_store: PostgresSourcingEntityStore
+) -> dict[str, Any]:
     sources = [
         SourceDefinition(
             source_id=SOURCE_ID,
@@ -202,6 +237,7 @@ def _setup_environment(sourcing_engine: Engine, entity_store: PostgresSourcingEn
         val_sources = dict(module._validation_config.sources)
         val_sources[SOURCE_ID] = val_sources["supplier_file"]
         from app.modules.sourcing.validation import ValidationConfig
+
         module._validation_config = ValidationConfig(
             version=module._validation_config.version,
             sources=val_sources,
@@ -248,7 +284,7 @@ def _setup_environment(sourcing_engine: Engine, entity_store: PostgresSourcingEn
         entity_store=entity_store,
     )
 
-    dispatcher = JobDispatcher(runtime=services)
+    dispatcher = JobDispatcher(runtime=cast(Any, services))
     module.register_job_handlers(dispatcher)
     worker = Worker(store=job_store, dispatcher=dispatcher)
 
@@ -260,6 +296,75 @@ def _setup_environment(sourcing_engine: Engine, entity_store: PostgresSourcingEn
         "submission_service": submission_service,
         "worker": worker,
     }
+
+
+def _record_projection(records: Sequence[SourceRecord]) -> tuple[tuple[Any, ...], ...]:
+    """Compare persisted record content without run-specific database IDs/times."""
+    return tuple(
+        (
+            record.record_key,
+            record.external_record_id,
+            dict(record.raw_payload),
+            dict(record.normalized_payload) if record.normalized_payload is not None else None,
+            record.content_fingerprint,
+            record.source_timestamp,
+            record.validation_status,
+            record.normalization_version,
+            dict(record.provenance),
+        )
+        for record in sorted(records, key=lambda item: item.record_key)
+    )
+
+
+def _issue_projection(
+    issues: Sequence[IssueView], records: Sequence[SourceRecord]
+) -> tuple[tuple[Any, ...], ...]:
+    """Compare deterministic issue identity and content, excluding generated IDs/times."""
+    external_id_by_record_key = {record.record_key: record.external_record_id for record in records}
+    return tuple(
+        sorted(
+            (
+                external_id_by_record_key[issue.record_key],
+                issue.record_key,
+                issue.issue_key,
+                issue.issue_type,
+                issue.rule_code,
+                issue.severity,
+                issue.field_name,
+                issue.message,
+                issue.raw_value,
+            )
+            for issue in issues
+        )
+    )
+
+
+def _entity_projection(
+    entities: Sequence[CuratedEntity], records: Sequence[SourceRecord], run_id: UUID
+) -> tuple[tuple[Any, ...], ...]:
+    """Compare full entity values and provenance relationships across fresh runs."""
+    external_id_by_record_id = {record.id: record.external_record_id for record in records}
+    projections = [
+        (
+            entity.entity_type,
+            dict(entity.values),
+            entity.provenance.origin_source_id,
+            entity.provenance.origin_external_record_id,
+            entity.provenance.source_timestamp,
+            entity.provenance.validation_status,
+            entity.provenance.reconciliation_status,
+            entity.provenance.first_ingestion_run_id == run_id,
+            entity.provenance.last_ingestion_run_id == run_id,
+            external_id_by_record_id[entity.provenance.latest_source_record_id],
+        )
+        for entity in entities
+    ]
+    return tuple(
+        sorted(
+            projections,
+            key=lambda item: (item[0], item[2], item[3] or ""),
+        )
+    )
 
 
 def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
@@ -280,7 +385,9 @@ def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
     # -------------------------------------------------------------
     normal_entity_store = PostgresSourcingEntityStore(sourcing_engine)
     base_env = _setup_environment(sourcing_engine, normal_entity_store)
-    identity = AuthenticatedIdentity(subject="baseline-submitter", roles=frozenset({CanonicalRole.OPERATIONS_MANAGER.value}))
+    identity = AuthenticatedIdentity(
+        subject="baseline-submitter", roles=frozenset({CanonicalRole.OPERATIONS_MANAGER.value})
+    )
 
     baseline_sub = base_env["submission_service"].submit_json(
         source_id=SOURCE_ID,
@@ -290,7 +397,6 @@ def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
         correlation_id="corr-base-1",
     )
     base_run_id = baseline_sub.run.id
-    base_job_id = baseline_sub.run.job_id
 
     # Execute worker uninterrupted
     base_res = base_env["worker"].run_once()
@@ -302,23 +408,55 @@ def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
     assert base_run is not None
     assert base_run.outcome == "SUCCEEDED"
     base_counts = dict(base_run.counts)
-    assert base_counts["received"] == 4
+    assert base_counts["received"] == 6
     assert base_counts["valid"] == 4
+    assert base_counts["quarantined"] == 2
     assert base_counts["duplicate"] == 0
     assert base_counts["unresolved"] == 0
 
     base_records = list(base_env["record_store"].list_source_records(base_run_id))
-    assert len(base_records) == 4
+    assert len(base_records) == 6
     base_ext_ids = {r.external_record_id for r in base_records}
-    assert base_ext_ids == {"P1-SUP-01", "P1-SUP-02", "P2-SUP-01", "P2-SUP-02"}
+    assert base_ext_ids == {
+        "P1-SUP-01",
+        "P1-SUP-02",
+        "P1-SUP-03",
+        "P2-SUP-01",
+        "P2-SUP-02",
+        "P2-SUP-03",
+    }
+    base_record_projection = _record_projection(base_records)
+    assert sum(record.content_fingerprint is not None for record in base_records) == 4
 
     base_issues = list(base_env["record_store"].list_issues(base_run_id))
-    assert len(base_issues) == 0
+    assert len(base_issues) == 2
+    base_issue_projection = _issue_projection(base_issues, base_records)
+    base_page1_issue_projection = tuple(
+        issue for issue in base_issue_projection if issue[0].startswith("P1-")
+    )
+    base_page2_issue_projection = tuple(
+        issue for issue in base_issue_projection if issue[0].startswith("P2-")
+    )
+    assert len(base_page1_issue_projection) == 1
+    assert len(base_page2_issue_projection) == 1
 
     base_entities = list(base_env["entity_store"].list_entities("supplier"))
     assert len(base_entities) == 4
     base_entity_map = {e.values["name"]: e for e in base_entities}
     assert set(base_entity_map.keys()) == {"Alpha Corp", "Beta LLC", "Gamma Inc", "Delta Co"}
+    base_entity_projection = _entity_projection(base_entities, base_records, base_run_id)
+
+    # The experiment compares two independent clean states in one test. Clear
+    # the uninterrupted baseline before submitting the fault-injected run.
+    with sourcing_engine.begin() as conn:
+        conn.execute(
+            text(
+                "TRUNCATE sourcing.validation_issues, sourcing.source_records, "
+                "sourcing.deliveries, sourcing.purchase_orders, sourcing.quotes, "
+                "sourcing.requisitions, sourcing.suppliers, sourcing.ingestion_runs, "
+                "platform.jobs RESTART IDENTITY CASCADE"
+            )
+        )
 
     # -------------------------------------------------------------
     # Step 2: Fault-Injected Attempt 1
@@ -358,8 +496,17 @@ def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
     # Page 1 was committed before Page 2 crashed.
     # Therefore, exactly Page 1's records exist; Page 2's flushed records were rolled back.
     att1_records = list(fault_env["record_store"].list_source_records(run_id))
-    assert len(att1_records) == 2, "Atomic rollback must leave only Page 1 committed"
-    assert {r.external_record_id for r in att1_records} == {"P1-SUP-01", "P1-SUP-02"}
+    assert len(att1_records) == 3, "Atomic rollback must leave only Page 1 committed"
+    assert {r.external_record_id for r in att1_records} == {
+        "P1-SUP-01",
+        "P1-SUP-02",
+        "P1-SUP-03",
+    }
+    assert _record_projection(att1_records) == tuple(
+        row for row in base_record_projection if row[1].startswith("P1-")
+    )
+    attempt1_issues = list(fault_env["record_store"].list_issues(run_id))
+    assert _issue_projection(attempt1_issues, att1_records) == base_page1_issue_projection
 
     # Curated entities: exactly Page 1's 2 entities exist
     att1_entities = list(fault_env["entity_store"].list_entities("supplier"))
@@ -374,9 +521,10 @@ def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
 
     # Force job scheduled_at to past to be immediately claimable
     with sourcing_engine.begin() as conn:
-        from sqlalchemy import text
         conn.execute(
-            text("UPDATE platform.jobs SET scheduled_at = now() - interval '1 minute' WHERE id = :id"),
+            text(
+                "UPDATE platform.jobs SET scheduled_at = now() - interval '1 minute' WHERE id = :id"
+            ),
             {"id": job_id},
         )
 
@@ -392,28 +540,31 @@ def test_stage8_mid_run_fault_injection_and_retry_convergence_falsification(
     final_run = fault_env["run_store"].get_run(run_id)
     assert final_run is not None
     assert final_run.outcome == "SUCCEEDED"
-    assert dict(final_run.counts) == base_counts, "Run counts must match uninterrupted baseline exactly"
+    assert dict(final_run.counts) == base_counts, (
+        "Run counts must match uninterrupted baseline exactly"
+    )
 
     # B. Source Records: Row counts, keys, zero duplicate rows
     final_records = list(fault_env["record_store"].list_source_records(run_id))
     assert len(final_records) == len(base_records)
     final_ext_ids = {r.external_record_id for r in final_records}
     assert final_ext_ids == base_ext_ids
+    assert _record_projection(final_records) == base_record_projection
 
-    # C. Data Quality Issues: Zero false self-duplicate issues
+    # C. Validation issues match the baseline, with no false self-duplicate issue.
     final_issues = list(fault_env["record_store"].list_issues(run_id))
-    assert len(final_issues) == 0, (
-        f"Retry generated unexpected issues: {[i.rule_code for i in final_issues]}"
-    )
+    assert _issue_projection(final_issues, final_records) == base_issue_projection
+    assert not any(issue.issue_type == "DUPLICATE" for issue in final_issues)
 
     # D. Curated Entities: Exact match of values, count, and immutable provenance
     final_entities = list(fault_env["entity_store"].list_entities("supplier"))
     assert len(final_entities) == len(base_entities)
+    assert _entity_projection(final_entities, final_records, run_id) == base_entity_projection
     final_entity_map = {e.values["name"]: e for e in final_entities}
     assert set(final_entity_map.keys()) == set(base_entity_map.keys())
 
     # Verify immutable provenance (first_ingestion_run_id and origin_source_id)
-    for name, entity in final_entity_map.items():
+    for _name, entity in final_entity_map.items():
         assert entity.provenance.origin_source_id == SOURCE_ID
         assert entity.provenance.first_ingestion_run_id == run_id
         assert entity.provenance.last_ingestion_run_id == run_id

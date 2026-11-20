@@ -494,7 +494,7 @@ None beyond SDD 006's negative tests (`401`/`403` across all 13 routes, `413`/`4
 
 ---
 
-### Stage 8 — Integrated Acceptance & One-Time Falsification
+### Stage 8 — Integrated Acceptance & One-Time Falsification ✅ **PASSED**
 
 **Goal**
 
@@ -711,9 +711,9 @@ The following evidence must exist before M2 sign-off at Stage 9:
 
 ### Integrated acceptance, falsification, and closure (Stages 8–9)
 
-- [ ] Multi-source end-to-end acceptance evidence (CSV, XLSX, PostgreSQL, REST → worker → curated entities & issues → API).
-- [ ] One-time mid-run fault-injection and worker-retry falsification evidence (`verification/stage_8_verification.md`).
-- [ ] Post-falsification full test suite run.
+- [x] Multi-source end-to-end acceptance evidence (CSV, XLSX, PostgreSQL, REST → worker → curated entities & issues → API) — `verification/stage_8_verification.md`.
+- [x] One-time mid-run fault-injection and worker-retry falsification evidence (`verification/stage_8_verification.md`).
+- [x] Post-falsification full test suite run — 871 passed, 0 failed.
 - [ ] Decision reconciliation (`M2-D01`..`M2-D08`), ADR review, Post-Implementation Review, and §10 Phase Outcome Record completed (`verification/stage_9_verification.md`).
 - [ ] All six M2 exit criteria verified and project-owner phase sign-off recorded.
 
@@ -733,7 +733,7 @@ The following evidence must exist before M2 sign-off at Stage 9:
 | 5 | Validation & Normalization Pipeline & Module Integration | `ValidationNormalizationPipeline`, module health integration, business-owner catalog review | ADR-003, ADR-009 | Batch atomicity tests and recorded catalog review pass | **Passed** |
 | 6 | Duplicate Detection, Reconciliation & Source Authority | Fingerprinting, duplicate detector, matching cascade, authority modes, `ReconciliationPipeline` | ADR-003, ADR-009 | Reconciliation, authority, and page-rollback tests pass | **Passed** |
 | 7 | Ingestion, Data-Quality & Entity API | `on_startup` hook, `sweep_landing`, 13 routes, `limit + 1` pagination, manifest `0.3.0` | ADR-002, ADR-007 | All 13 route, permission, sweep, and PG read tests pass | **Passed** |
-| 8 | Integrated Acceptance & One-Time Falsification | Multi-source E2E acceptance and mid-run fault-and-retry falsification | None | E2E acceptance, falsification, and full suite pass | Not started |
+| 8 | Integrated Acceptance & One-Time Falsification | Multi-source E2E acceptance and mid-run fault-and-retry falsification | None | E2E acceptance, falsification, migrations, review, and full suite pass | **Passed** |
 | 9 | ADR Consolidation & Phase Sign-Off | Reconciled decisions, PIR, §10 Outcome Record, and M2 sign-off | As required by approved changes | All M2 exit criteria verified and signed off | Not started |
 
 ### 9.2 Stage record
@@ -750,7 +750,7 @@ Maintain the following record as execution progresses:
 | 5 | 2026-11-18 | 2026-11-18 | `4178c70` — `feat(sourcing): Stage 5 - Validation & Normalization Pipeline & Module Integration` · evidence in `verification/stage_5_verification.md`, `verification/004_validation_verification.md`, and `verification/004_rule_catalog_review.md` | **Passed** (2026-11-18) | S5-F1 (Low/Accepted), S5-F2 (Info/Expected), S5-F3 (Info/Accepted), S5-F4 (Info/Accepted) | Project owner acknowledged Stage 5 pass and approved commit/push 2026-11-18 |
 | 6 | 2026-11-18 | 2026-11-18 | `d83c0e4` (code), `53d5215` (tests), `826ad5c` (docs) — evidence in `verification/stage_6_verification.md` | **Passed** (2026-11-18) — one owner-accepted exception and one owner-authorized plan amendment (see §6 of the evidence record) | S6-F1 (High/Resolved), S6-F2 (High/Resolved), S6-F3–F4 (Low/Accepted), S6-F5–F6 (Med/Accepted risk), S6-F7 (Info/Interpretation accepted), S6-F8–F10 (Low-Info/Accepted), S6-F11 (Low/Accepted), S6-F12–F13 (Info/Expected), S6-F14 (Info/Superseded), S6-F15 (Critical/Resolved), S6-F16 (Critical/Resolved; owner-accepted exception), S6-F17 (High/Resolved by plan amendment), S6-F18 (Med/Accepted spec gap), S6-F19 (High/Resolved; owner-accepted exception), S6-F20 (High/Resolved), S6-F21 (Med/Resolved), S6-F22 (Med/Accepted), S6-F23 (Med/Resolved), S6-F24 (Low/Resolved), S6-F25–F26 (Info/Accepted), S6-F27 (Info/Expected). Judgment calls (d)–(i) resolved 2026-11-18; second opinion declined; cross-source consolidation out of scope (ADR-009) | Project owner acknowledged Stage 6 gate pass with accepted exception; authorized stage record update and push 2026-11-18 |
 | 7 | 2026-11-18 | 2026-11-20 | `8a5b436` (code and tests), `dd300c4` (review fixes) — evidence in `verification/stage_7_verification.md` and `reviews/2026-11-19-main.md` | **Passed** (2026-11-18; closed 2026-11-20) | S7-F1–F7 (Resolved), S7-F8 (Info/Accepted), S7-F9 (Low/Resolved), S7-F10 (Low/Accepted per decision 8), S7-F11 (Info/Accepted), S7-F12 (Info/Resolved by review), S7-F13 (Major/Resolved), S7-F14–F15 (Minor/Resolved), S7-F16 (Minor–Nit/Deferred). Review ran inline on the author model; cross-model reviewer unavailable (OpenRouter free-tier limits) | Project owner authorized Stage 7 commit/push 2026-11-18, review and fix set 2026-11-19, and stage closure, coverage floor, and review-policy updates 2026-11-20 |
-| 8 | — | — | `verification/stage_8_verification.md` | Pending | — | — |
+| 8 | 2026-11-20 | 2026-11-20 | Stage 8 implementation and tests in working tree; evidence in `verification/stage_8_verification.md`; baseline approval commit `d64bbca` | **Passed** (2026-11-20) | S8-F1 (P2/Resolved) — initial falsification assertions compared partial state; expanded with Page 1/Page 2 validation issues and full record, issue, entity-value, provenance, and count comparisons | Project owner approved the transaction redesign and amendments, then authorized Stage 8 closure on 2026-11-20 |
 | 9 | — | — | `verification/stage_9_verification.md` | Pending | — | — |
 
 A stage may be marked complete only after its gate has passed and its verification record has been written.

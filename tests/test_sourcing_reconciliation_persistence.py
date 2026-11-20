@@ -1,9 +1,9 @@
 """PostgreSQL tests for the SDD 005 reconciliation pipeline.
 
 Governed by:
-- SDD 005 §10: one store session and one commit per page; a page failure
-  rolls back fingerprints, reconciliation issues, and curated-row writes;
-  SDD 004 validation commits stay committed.
+- Approved 2026-11-20 Stage 8 transaction redesign: capture, validation, and
+  reconciliation share one store session and one commit per page; a page
+  failure rolls back all page writes.
 - SDD 005 §5.6 / §5: fingerprints persist for promoted records only; lookups
   are source-scoped, prior-record-ordered, and reproduce on retry.
 - SDD 005 §6.3 / §6.5: effective existing links keep a row CONFIRMED when a
@@ -335,14 +335,12 @@ def test_mid_page_failure_rolls_back_curated_rows_fingerprints_and_issues(
             budget=Budget(),
         )
 
-    # No curated rows, no fingerprints, no reconciliation issues survive.
+    # The shared page transaction rolls capture, validation, and reconciliation
+    # back together when a curated write fails.
     assert list(entity_store.list_entities("supplier")) == []
     stored = list(record_store.list_source_records(run.id))
-    assert len(stored) == 2
-    assert all(record.content_fingerprint is None for record in stored)
+    assert stored == []
     assert record_store.list_issues(run.id) == []
-    # SDD 004 validation commits remain (spec §8.5 / §10).
-    assert all(record.validation_status == ValidationStatus.VALID.value for record in stored)
 
 
 def test_retry_after_failure_converges(

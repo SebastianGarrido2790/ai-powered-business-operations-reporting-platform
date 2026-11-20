@@ -70,7 +70,12 @@ class StubValidation:
         self.calls = 0
 
     def process_page(
-        self, *, run: IngestionRun, fetch_result: FetchResult, budget: Any
+        self,
+        *,
+        run: IngestionRun,
+        fetch_result: FetchResult,
+        budget: Any,
+        session: Session | None = None,
     ) -> PageOutcome:
         self.calls += 1
         return self._page

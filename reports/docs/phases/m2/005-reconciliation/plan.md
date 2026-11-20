@@ -1,6 +1,6 @@
 # 005 — Reconciliation, Duplicate Detection & Source Authority: Plan
 
-**Status:** Approved — feature plan approved by the project owner 2026-11-16; implementation authorization not granted  
+**Status:** Approved — feature plan approved by the project owner 2026-11-16; original feature implementation completed in Stage 6; Stage 8 shared page-transaction amendment implemented and verified 2026-11-20
 **Amendment:** Approved — 2026-11-20 shared page-transaction redesign for Stage 8 falsification.  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** Stage 6 per `../implementation_plan.md` §7.2; requires SDDs 002, 003, and 004  

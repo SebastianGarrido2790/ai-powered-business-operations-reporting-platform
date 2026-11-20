@@ -118,6 +118,7 @@ class ValidationNormalizationPipeline:
         run: IngestionRun,
         fetch_result: FetchResult,
         budget: ExecutionBudget,
+        session: Session | None = None,
     ) -> PageOutcome:
         """Capture, validate, and persist one fetch page."""
         budget.check(records_processed=0)
@@ -125,6 +126,7 @@ class ValidationNormalizationPipeline:
             run=run,
             fetch_result=fetch_result,
             budget=budget,
+            session=session,
         )
         self._check_capture_result(run, capture_result)
 
@@ -142,7 +144,7 @@ class ValidationNormalizationPipeline:
         for batch in _batched(evaluated, self._batch_size):
             budget.check(records_processed=processed)
             batch_outcomes = self._evaluate_batch(batch, schemas)
-            self._persist_batch(batch_outcomes)
+            self._persist_batch(batch_outcomes, session=session)
             for outcome in batch_outcomes:
                 outcomes[outcome.record.id] = outcome
             processed += len(batch)
@@ -232,37 +234,50 @@ class ValidationNormalizationPipeline:
             )
         return tuple(outcomes)
 
-    def _persist_batch(self, outcomes: Sequence[RecordOutcome]) -> None:
+    def _persist_batch(
+        self,
+        outcomes: Sequence[RecordOutcome],
+        *,
+        session: Session | None = None,
+    ) -> None:
+        if session is not None:
+            self._persist_batch_in_session(outcomes, session)
+            return
         with self._session_factory() as session:
             try:
-                for outcome in outcomes:
-                    version = outcome.normalization_version
-                    if version is None:
-                        raise SourcingValidationContractError(
-                            f"Evaluated record '{outcome.record.id}' has no normalization version."
-                        )
-                    if outcome.normalized_payload is not None:
-                        self._record_store.set_normalized(
-                            outcome.record.id,
-                            outcome.normalized_payload,
-                            outcome.status,
-                            version,
-                            session=session,
-                        )
-                    else:
-                        self._record_store.set_validation_status(
-                            outcome.record.id,
-                            outcome.status,
-                            version,
-                            session=session,
-                        )
-                for outcome in outcomes:
-                    for issue in outcome.issues:
-                        self._record_store.add_issue(session, issue)
+                self._persist_batch_in_session(outcomes, session)
                 session.commit()
             except Exception:
                 session.rollback()
                 raise
+
+    def _persist_batch_in_session(
+        self, outcomes: Sequence[RecordOutcome], session: Session
+    ) -> None:
+        for outcome in outcomes:
+            version = outcome.normalization_version
+            if version is None:
+                raise SourcingValidationContractError(
+                    f"Evaluated record '{outcome.record.id}' has no normalization version."
+                )
+            if outcome.normalized_payload is not None:
+                self._record_store.set_normalized(
+                    outcome.record.id,
+                    outcome.normalized_payload,
+                    outcome.status,
+                    version,
+                    session=session,
+                )
+            else:
+                self._record_store.set_validation_status(
+                    outcome.record.id,
+                    outcome.status,
+                    version,
+                    session=session,
+                )
+        for outcome in outcomes:
+            for issue in outcome.issues:
+                self._record_store.add_issue(session, issue)
 
     def _counts(
         self,

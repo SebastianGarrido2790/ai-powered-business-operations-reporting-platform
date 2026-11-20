@@ -11,15 +11,14 @@ Governed by:
 
 import os
 import uuid
-from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import openpyxl  # type: ignore[import-untyped]
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 from support.erp_stub import STUB_TOKEN, build_erp_stub_transport
 
@@ -119,7 +118,8 @@ def acceptance_env(
         )
         conn.execute(
             text(
-                f"INSERT INTO {pg_table} (requisition_no, supplier_code, requested_at, amount, currency) "
+                f"INSERT INTO {pg_table} (requisition_no, supplier_code, requested_at, "
+                "amount, currency) "
                 "VALUES ('REQ-PG-001', 'SUP-CSV-001', '2026-02-15T10:00:00Z', '5000.00', 'USD')"
             )
         )
@@ -161,7 +161,10 @@ def acceptance_env(
                 "port": 5433,
                 "database": "bopf_test",
                 "user": "postgres",
-                "query": f"SELECT requisition_no, supplier_code, requested_at, amount, currency FROM {pg_table}",
+                "query": (
+                    "SELECT requisition_no, supplier_code, requested_at, amount, currency "
+                    f"FROM {pg_table}"
+                ),
                 "max_rows": 1000,
             },
             secret_refs={"password": "TEST_DB_PASSWORD"},
@@ -170,7 +173,13 @@ def acceptance_env(
         SourceDefinition(
             source_id="erp_master_data",
             connector_type=ConnectorType.REST,
-            authoritative_entities=["supplier", "requisition", "quote", "purchase_order", "delivery"],
+            authoritative_entities=[
+                "supplier",
+                "requisition",
+                "quote",
+                "purchase_order",
+                "delivery",
+            ],
             external_id_field="id",
             source_timestamp_field="updated_at",
             options={
@@ -215,11 +224,10 @@ def acceptance_env(
     # Inject quotes_xlsx into validation config schemas copied from erp_master_data
     if module._validation_config is not None:
         val_sources = dict(module._validation_config.sources)
-        val_sources["quotes_xlsx"] = {
-            "quote": val_sources["erp_master_data"]["quote"]
-        }
+        val_sources["quotes_xlsx"] = {"quote": val_sources["erp_master_data"]["quote"]}
         val_sources["supplier_file_xlsx"] = val_sources["supplier_file"]
         from app.modules.sourcing.validation import ValidationConfig
+
         module._validation_config = ValidationConfig(
             version=module._validation_config.version,
             sources=val_sources,
@@ -256,11 +264,11 @@ def acceptance_env(
     )
 
     # 5. Application and worker setup
-    settings_app = Settings(database_url=_db_url())
+    settings_app = Settings(DATABASE_URL=_db_url())
     app = create_app(settings_app)
     app.state.sourcing_services = services
 
-    dispatcher = JobDispatcher(runtime=services)
+    dispatcher = JobDispatcher(runtime=cast(Any, services))
     module.register_job_handlers(dispatcher)
     worker = Worker(store=job_store, dispatcher=dispatcher)
 
@@ -289,7 +297,6 @@ def test_stage8_multi_source_integrated_acceptance(acceptance_env: dict[str, Any
     """
     app = acceptance_env["app"]
     worker: Worker = acceptance_env["worker"]
-    entity_store: PostgresSourcingEntityStore = acceptance_env["entity_store"]
     manager = _manager_headers()
     analyst = _analyst_headers()
 
@@ -339,7 +346,9 @@ def test_stage8_multi_source_integrated_acceptance(acceptance_env: dict[str, Any
         assert csv_summary["counts"]["quarantined_count"] == 1
 
         # Check issues for CSV run
-        issues_csv = client.get(f"/api/v1/sourcing/ingestions/{csv_run_id}/issues", headers=analyst).json()
+        issues_csv = client.get(
+            f"/api/v1/sourcing/ingestions/{csv_run_id}/issues", headers=analyst
+        ).json()
         assert len(issues_csv["items"]) == 1
         assert issues_csv["items"][0]["issue_type"] == "VALIDATION"
         assert issues_csv["items"][0]["severity"] == "ERROR"
@@ -440,7 +449,9 @@ def test_stage8_multi_source_integrated_acceptance(acceptance_env: dict[str, Any
 
         # Get SUP-CSV-001 detail
         sup_item = next(item for item in sup_list["items"] if item["label"] == "Apex Solutions Ltd")
-        sup_detail = client.get(f"/api/v1/sourcing/suppliers/{sup_item['id']}", headers=analyst).json()
+        sup_detail = client.get(
+            f"/api/v1/sourcing/suppliers/{sup_item['id']}", headers=analyst
+        ).json()
         assert sup_detail["name"] == "Apex Solutions Ltd"
         assert sup_detail["provenance"]["origin_source_id"] == "supplier_file"
         assert sup_detail["provenance"]["first_ingestion_run_id"] == str(csv_run_id)
@@ -448,27 +459,37 @@ def test_stage8_multi_source_integrated_acceptance(acceptance_env: dict[str, Any
         # Requisitions
         req_list = client.get("/api/v1/sourcing/requisitions", headers=analyst).json()
         assert len(req_list["items"]) == 1
-        req_detail = client.get(f"/api/v1/sourcing/requisitions/{req_list['items'][0]['id']}", headers=analyst).json()
+        req_detail = client.get(
+            f"/api/v1/sourcing/requisitions/{req_list['items'][0]['id']}", headers=analyst
+        ).json()
         assert req_detail["requisition_number"] == "REQ-PG-001"
         assert req_detail["provenance"]["origin_source_id"] == "legacy_requisitions"
 
         # Quotes
         quo_list = client.get("/api/v1/sourcing/quotes", headers=analyst).json()
         assert len(quo_list["items"]) == 1
-        quo_detail = client.get(f"/api/v1/sourcing/quotes/{quo_list['items'][0]['id']}", headers=analyst).json()
+        quo_detail = client.get(
+            f"/api/v1/sourcing/quotes/{quo_list['items'][0]['id']}", headers=analyst
+        ).json()
         assert quo_detail["amount"].startswith("4800.00")
-        assert quo_detail["requisition_id"] == req_list["items"][0]["id"]  # Resolved foreign key to requisition!
+        assert (
+            quo_detail["requisition_id"] == req_list["items"][0]["id"]
+        )  # Resolved foreign key to requisition!
 
         # Purchase Orders
         po_list = client.get("/api/v1/sourcing/purchase-orders", headers=analyst).json()
         assert len(po_list["items"]) == 1
-        po_detail = client.get(f"/api/v1/sourcing/purchase-orders/{po_list['items'][0]['id']}", headers=analyst).json()
+        po_detail = client.get(
+            f"/api/v1/sourcing/purchase-orders/{po_list['items'][0]['id']}", headers=analyst
+        ).json()
         assert po_detail["purchase_order_number"] == "SYN-PO-001"
 
         # Deliveries
         del_list = client.get("/api/v1/sourcing/deliveries", headers=analyst).json()
         assert len(del_list["items"]) == 1
-        del_detail = client.get(f"/api/v1/sourcing/deliveries/{del_list['items'][0]['id']}", headers=analyst).json()
+        del_detail = client.get(
+            f"/api/v1/sourcing/deliveries/{del_list['items'][0]['id']}", headers=analyst
+        ).json()
         assert del_detail["delivered_on"] == "2026-02-20"
         assert del_detail["purchase_order_id"] == po_list["items"][0]["id"]
 
@@ -495,7 +516,9 @@ def test_stage8_multi_source_integrated_acceptance(acceptance_env: dict[str, Any
 
         sup_list_after = client.get("/api/v1/sourcing/suppliers", headers=analyst).json()
         assert len(sup_list_after["items"]) == 2  # No duplicate suppliers created!
-        re_detail = client.get(f"/api/v1/sourcing/suppliers/{sup_item['id']}", headers=analyst).json()
+        re_detail = client.get(
+            f"/api/v1/sourcing/suppliers/{sup_item['id']}", headers=analyst
+        ).json()
         # Immutable origin remains, last run id updated
         assert re_detail["provenance"]["first_ingestion_run_id"] == str(csv_run_id)
         assert re_detail["provenance"]["last_ingestion_run_id"] == str(re_run_id)

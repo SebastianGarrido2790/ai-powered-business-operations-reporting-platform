@@ -1,7 +1,7 @@
 # 005 — Reconciliation, Duplicate Detection & Source Authority
 
 **Phase:** M2 — Data Integration & Processing  
-**Status:** Approved — feature specification approved by the project owner 2026-11-16; no implementation authorized  
+**Status:** Approved — feature specification approved by the project owner 2026-11-16; original feature implementation completed in Stage 6; Stage 8 transaction-boundary amendment implemented and verified 2026-11-20
 **Amendment:** Approved — 2026-11-20 transaction-boundary amendment for Stage 8 falsification.  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M2-D06; M2-D03 for persistence and identity, M2-D04 for validation outcomes, M2-D05 for normalized keys, M2-D02 for the pipeline port  

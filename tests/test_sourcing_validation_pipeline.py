@@ -158,6 +158,7 @@ class StubCapture:
         run: IngestionRun,
         fetch_result: FetchResult,
         budget: RecordingBudget,
+        session: Session | None = None,
     ) -> CaptureResult:
         self.calls += 1
         return self.result

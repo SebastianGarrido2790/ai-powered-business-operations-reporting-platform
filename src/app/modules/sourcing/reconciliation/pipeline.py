@@ -83,23 +83,31 @@ class ReconciliationPipeline:
         budget: Any,
     ) -> ProcessingResult:
         """Reconcile one fetch page and return SDD 002's typed result."""
-        page = self._validation.process_page(run=run, fetch_result=fetch_result, budget=budget)
-        reconciled = self._reconcile_page(run, page, budget)
-
-        counts = dict(page.counts)
-        duplicate = sum(1 for item in reconciled if item.duplicate)
-        unresolved = sum(1 for item in reconciled if item.unresolved)
-        counts["duplicate"] = duplicate
-        counts["unresolved"] = unresolved
-        _check_invariants(counts)
-
-        return ProcessingResult(counts=counts, warnings=page.warnings)
+        with self._session_factory() as session:
+            try:
+                page = self._validation.process_page(
+                    run=run,
+                    fetch_result=fetch_result,
+                    budget=budget,
+                    session=session,
+                )
+                reconciled = self._reconcile_page(run, page, budget, session)
+                counts = dict(page.counts)
+                counts["duplicate"] = sum(1 for item in reconciled if item.duplicate)
+                counts["unresolved"] = sum(1 for item in reconciled if item.unresolved)
+                _check_invariants(counts)
+                session.commit()
+                return ProcessingResult(counts=counts, warnings=page.warnings)
+            except Exception:
+                session.rollback()
+                raise
 
     def _reconcile_page(
         self,
         run: IngestionRun,
         page: PageOutcome,
         budget: Any,
+        session: Session,
     ) -> tuple[RecordReconciliation, ...]:
         budget.check(records_processed=0)
         selected = self._select(page)
@@ -114,25 +122,19 @@ class ReconciliationPipeline:
         # promotion, and intra-page duplicates are detected regardless of
         # capture order.
         page_priors, page_fingerprints = _page_priors(selected)
-        with self._session_factory() as session:
-            try:
-                for outcome in selected:
-                    reconciled.append(
-                        self._reconcile_record(
-                            run,
-                            outcome,
-                            authoritative,
-                            session,
-                            page_priors.get(outcome.record.id, ()),
-                            page_fingerprints.get(outcome.record.id),
-                        )
-                    )
-                    processed += 1
-                    budget.check(records_processed=processed)
-                session.commit()
-            except Exception:
-                session.rollback()
-                raise
+        for outcome in selected:
+            reconciled.append(
+                self._reconcile_record(
+                    run,
+                    outcome,
+                    authoritative,
+                    session,
+                    page_priors.get(outcome.record.id, ()),
+                    page_fingerprints.get(outcome.record.id),
+                )
+            )
+            processed += 1
+            budget.check(records_processed=processed)
         return tuple(reconciled)
 
     def _select(self, page: PageOutcome) -> tuple[RecordOutcome, ...]:
