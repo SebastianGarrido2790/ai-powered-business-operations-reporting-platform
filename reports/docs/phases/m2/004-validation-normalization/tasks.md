@@ -1,6 +1,7 @@
 # 004 — Validation, Normalization & Quarantine: Tasks
 
 **Status:** Approved — feature tasks approved by the project owner 2026-11-14; implementation authorization not granted  
+**Amendment:** Approved — 2026-11-20 shared page-transaction tasks.  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stages 4–5 per `../implementation_plan.md` §7.2; requires SDDs 002 and 003  
 **Governing decisions:** M2-D04, M2-D04.1, M2-D05; M2-D03 for persistence and M2-D02 for the pipeline port
@@ -124,3 +125,25 @@
 **Tasks:** Approved — 2026-11-14 by the project owner.  
 **Plan:** Approved — 2026-11-14 by the project owner.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.
+
+---
+
+## Amendment Tasks — Shared Page Transaction
+
+### Task A4.1 — Thread a caller-owned page session through capture and validation
+
+- **Objective:** Let SDD 005 compose raw capture and validation inside its one page transaction, while retaining standalone ownership for SDD 004 callers.
+- **Criteria covered:** SDD 004 spec §3.17, §8.4, §14 shared-rollback criterion; INV-009.
+- **Scope:** `ingestion/raw_capture.py`, `validation/pipeline.py`, relevant store protocols/doubles, and their focused tests. Add an optional keyword-only `Session` at the internal composition boundary; supplied sessions flush but never commit or roll back.
+- **Dependencies:** Approved SDD 004/005 spec and plan amendments; existing optional-session record-store operations.
+- **Done when:** Capture records, validation statuses, and validation issues are all written through one supplied session; standalone processing commits once per fetched page; exceptions leave transaction ownership with the caller.
+- **Required validation:** Focused raw-capture and validation pipeline tests cover caller-owned commit/rollback and preserve existing standalone behavior; Ruff and Mypy pass for changed files.
+
+### Task A4.2 — Prove validation-layer rollback and retry safety
+
+- **Objective:** Guard the shared-session contract against partial persisted capture or validation state.
+- **Criteria covered:** SDD 004 spec §8.4, §14; Stage 8 §522–§542.
+- **Scope:** `tests/test_sourcing_raw_capture.py`, `tests/test_sourcing_validation_pipeline.py`, PostgreSQL validation tests, and in-memory store support only.
+- **Dependencies:** Task A4.1.
+- **Done when:** Tests show that a failure after a flushed caller-session write leaves no fetched-page source record, terminal validation update, or validation issue after rollback; retry creates the deterministic expected state exactly once.
+- **Required validation:** Run the focused unit tests and PostgreSQL-gated tests against `BOPF_TEST_DATABASE_URL`; record any unavailable database as skipped rather than passing.

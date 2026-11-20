@@ -2,6 +2,7 @@
 
 **Phase:** M2 — Data Integration & Processing  
 **Status:** Approved — feature specification approved by the project owner 2026-11-14; feature plan and tasks drafted and pending approval; no implementation authorized  
+**Amendment:** Approved — 2026-11-20 transaction-boundary amendment for Stage 8 falsification.  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M2-D04, M2-D04.1, M2-D05; M2-D03 for persistence and M2-D02 for the pipeline port  
 **Execution stage:** Stages 4–5 per §7.2; requires SDDs 002 and 003
@@ -74,6 +75,7 @@ FR-ING-07, FR-DAT-01, FR-DAT-02, FR-DAT-03, FR-DAT-07; MVP-02.
 14. The pipeline shall check the execution budget before capture and between validation batches.
 15. Validation findings are data-quality outcomes, not job failures. Configuration and persistence failures remain execution failures handled by SDD 002.
 16. No raw payload, secret, credential, connection string, or stack trace shall appear in an issue, log, or error summary.
+17. When SDD 005 composes this pipeline, raw capture, terminal validation updates, validation issues, fingerprints, reconciliation issues, and curated writes for one fetched page shall use one caller-owned database transaction. If any phase fails, none of that page's writes shall persist; already committed earlier pages remain intact.
 
 ---
 
@@ -408,8 +410,9 @@ SDD 002 aggregates per-page counts across the run. SDD 004 re-evaluates every re
 
 ### 8.4 Transactions and retries
 
-- SDD 003 commits capture per page. SDD 004 commits validation per bounded batch through the record store.
-- A validation batch failure rolls back that batch only; the captured page remains committed.
+- When used alone, SDD 004 may own the capture and validation transaction for a page. When composed by SDD 005, it shall accept and use the caller-owned page transaction without committing it.
+- In the composed path, a validation batch failure rolls back the complete fetched page, including its capture writes; no capture, validation, reconciliation, issue, fingerprint, or curated residue may remain from that page.
+- Earlier committed pages remain durable after a later-page failure. A retry reprocesses the failed page and must reproduce the same persisted records, statuses, normalized values, issues, and counts without duplicates.
 - SDD 002 retries the job on transient persistence failures. The retry re-captures the page and re-evaluates every returned record; `set_normalized`, `set_validation_status`, and `add_issue` are idempotent.
 - SDD 004 does not retry internally and does not own the job or run lifecycle.
 - A budget exceed propagates to SDD 002 as a permanent failure; SDD 004 leaves already committed batches intact and does not mark the run.
@@ -537,6 +540,7 @@ SDD 004 never converts a validation finding into a job failure and never convert
 - [ ] The rule-set version and section hash are recorded on every evaluated record.
 - [ ] Issues use `VALIDATION`, stable rule codes, deterministic keys, sanitized messages, and bounded excerpts; sensitive fields omit excerpts.
 - [ ] Retrying a page does not duplicate records or issues and reproduces the same statuses and normalized values.
+- [ ] When composed with SDD 005, a fault after a flushed write in a later page rolls back every write from that page while preserving earlier committed pages.
 - [ ] Counts satisfy `received = valid + quarantined`, `warning <= valid`, and non-negative values; `duplicate` and `unresolved` are zero.
 - [ ] The pipeline composes SDD 003's capture and does not recompute record keys, provenance, or the payload bound.
 - [ ] The pipeline writes no curated table and performs no matching, duplicate detection, or reconciliation.

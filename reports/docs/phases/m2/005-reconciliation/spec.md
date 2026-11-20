@@ -2,6 +2,7 @@
 
 **Phase:** M2 — Data Integration & Processing  
 **Status:** Approved — feature specification approved by the project owner 2026-11-16; no implementation authorized  
+**Amendment:** Approved — 2026-11-20 transaction-boundary amendment for Stage 8 falsification.  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M2-D06; M2-D03 for persistence and identity, M2-D04 for validation outcomes, M2-D05 for normalized keys, M2-D02 for the pipeline port  
 **Execution stage:** Stage 6 per §7.2; requires SDDs 002, 003, and 004
@@ -394,12 +395,12 @@ class ReconciliationPipeline:
 
 ### 10.2 Page flow
 
-1. Delegate capture, validation, and normalization to SDD 004's page processing.
-2. Check the execution budget.
-3. Select promoted records and preserve capture order. A fetch page carries one entity type.
-4. Open one store session for the page.
+1. Open one caller-owned store session for the fetched page.
+2. Delegate capture, validation, and normalization to SDD 004 using that session; SDD 004 does not commit it in this composed path.
+3. Check the execution budget.
+4. Select promoted records and preserve capture order. A fetch page carries one entity type.
 5. For each promoted record: compute the fingerprint, detect duplicates and identity/content conflicts, resolve identity and links, write issues and the fingerprint, and upsert the curated row.
-6. Commit the page.
+6. Commit the shared page transaction only after every capture, validation, and reconciliation write succeeds.
 7. Return the counts and SDD 004's warnings.
 
 ### 10.3 Entity-type order
@@ -421,8 +422,8 @@ Invariants: `received = valid + quarantined`, `warning <= valid`, `duplicate <= 
 
 ### 10.5 Transactions and retries
 
-- SDD 004 commits capture and validation per page or batch; SDD 005 commits reconciliation per page.
-- A reconciliation failure rolls back that page only.
+- The composed pipeline owns one database transaction for every fetched page. SDD 004 performs capture and validation within that caller-owned session; SDD 005 performs fingerprints, reconciliation issues, and curated upserts in the same session.
+- A failure after any flushed write rolls back every write for the fetched page, including `source_records`, validation statuses and issues, fingerprints, reconciliation issues, and curated rows. Earlier committed pages remain durable.
 - SDD 002 retries the job on transient persistence failures. The retry re-captures the page, re-validates every record, and re-reconciles every promoted record; upserts and issue writes are idempotent.
 - SDD 005 does not retry internally and does not own the job or run lifecycle.
 - A budget exceed propagates to SDD 002 as a permanent failure; already committed pages remain.
@@ -521,7 +522,7 @@ Error summaries include the run, source, record, entity type, rule code, and a s
 
 - **Determinism:** the same records, source definitions, normalized payloads, and curated state produce the same matches, links, statuses, and issues regardless of process or wall-clock time.
 - **Security:** external content is untrusted and never executed; issues and logs are sanitized; evidence is bounded; no raw payload is exposed.
-- **Reliability:** page reconciliation is atomic; retries are idempotent; a failure cannot leave a partially promoted page.
+- **Reliability:** the complete fetched page is atomic across capture, validation, and reconciliation; retries are idempotent; a failure cannot leave partial raw, validation, issue, fingerprint, or curated state.
 - **Traceability:** every curated row traces to its origin identity, first and last run, latest source record, and job; every issue traces to a run and a source record.
 - **Performance:** duplicate and candidate lookups are indexed and bounded; no full-table scan, fuzzy comparison, or unbounded candidate set; the budget bounds execution.
 - **Observability:** duplicate, unresolved, ambiguous, and conflict outcomes are queryable through issues and curated status.
@@ -571,7 +572,7 @@ Error summaries include the run, source, record, entity type, rule code, and a s
 - [ ] SDD 005 issues use the approved types, codes, `WARNING` severity, deterministic keys, sanitized messages, and bounded evidence.
 - [ ] Counts preserve SDD 004's values and satisfy §10.4's invariants.
 - [ ] Retrying a page reproduces the same curated rows, links, statuses, and issues without duplicates.
-- [ ] Reconciliation commits atomically per page and does not update the run or job.
+- [ ] A fault after a flushed write in a later fetched page rolls back all raw, validation, issue, fingerprint, and curated writes for that page while preserving earlier committed pages; the pipeline does not update the run or job.
 - [ ] The execution budget is checked before reconciliation and between records.
 - [ ] No raw payload, secret, credential, connection string, or stack trace appears in an issue, log, or error summary.
 - [ ] The additive SDD 003 column, index, record field, and store operations are implemented and tested.

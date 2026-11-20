@@ -1,6 +1,7 @@
 # 005 — Reconciliation, Duplicate Detection & Source Authority: Tasks
 
 **Status:** Approved — feature tasks approved by the project owner 2026-11-16; implementation authorization not granted  
+**Amendment:** Approved — 2026-11-20 shared page-transaction tasks.  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stage 6 per `../implementation_plan.md` §7.2; requires SDDs 002, 003, and 004  
 **Governing decisions:** M2-D06; M2-D03 for persistence and identity, M2-D04 for validation outcomes, M2-D05 for normalized keys, M2-D02 for the pipeline port
@@ -148,3 +149,34 @@
 **Tasks:** Approved — 2026-11-16 by the project owner.  
 **Plan:** Approved — 2026-11-16 by the project owner.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.
+
+---
+
+## Amendment Tasks — Shared Page Transaction
+
+### Task A5.1 — Make reconciliation the sole page-transaction owner
+
+- **Objective:** Commit capture, validation, reconciliation, fingerprint, issue, and curated writes as one fetched-page transaction.
+- **Criteria covered:** SDD 005 spec §10.2, §10.5, §14 reliability, and amended acceptance criterion; INV-009 and INV-014.
+- **Scope:** `reconciliation/pipeline.py` and its direct unit-test support. Open the session before validation, pass it to SDD 004, reconcile using that same session, then commit once or roll back once. Preserve the public `IngestionPipeline.process` and worker interfaces.
+- **Dependencies:** Task A4.1.
+- **Done when:** No composed component commits or rolls back the caller-owned session; an exception at any phase rolls back all writes for that fetched page, while prior page commits remain durable.
+- **Required validation:** Reconciliation pipeline unit tests assert one commit on success, one rollback on capture/validation/reconciliation failure, unchanged counts on success, and no run/job writes.
+
+### Task A5.2 — Complete the Stage 8 falsification and convergence test
+
+- **Objective:** Verify the approved fault-and-retry hypothesis against the real worker composition boundary.
+- **Criteria covered:** Stage 8 §522–§542; SDD 004 §14 and SDD 005 amended acceptance criterion.
+- **Scope:** `tests/test_sourcing_falsification_retry.py`, `tests/test_sourcing_acceptance_e2e.py`, and only test fixtures required by those suites.
+- **Dependencies:** Tasks A4.2 and A5.1.
+- **Done when:** The controlled Page 2 fault occurs after a flushed write, leaves zero Page 2 records, validation issues, fingerprints, and curated changes, schedules retry with a sanitized attempt error, and Attempt 2 converges exactly to an uninterrupted baseline with no self-duplicate issues or provenance/count drift.
+- **Required validation:** Run both Stage 8 PostgreSQL tests against the disposable database, then the clean migration sequence and full PostgreSQL-backed suite.
+
+### Task A5.3 — Record Stage 8 verification evidence
+
+- **Objective:** Produce the reproducible gate record only after all acceptance and falsification checks pass.
+- **Criteria covered:** Stage 8 actions 1–6 and hard gate.
+- **Scope:** `reports/docs/phases/m2/verification/stage_8_verification.md` and the Stage 8 execution-plan record after evidence is complete.
+- **Dependencies:** Task A5.2 and all required quality gates.
+- **Done when:** The evidence records commands, database scope, migration result, multi-source acceptance result, injected-fault result, retry-convergence assertions, full quality-gate output, warnings, and residual risks without exposing credentials or raw payloads.
+- **Required validation:** Independently re-run the Stage 8 falsification test after writing the record and verify the recorded results match the actual output.

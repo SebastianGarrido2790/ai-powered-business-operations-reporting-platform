@@ -1,6 +1,7 @@
 # 005 — Reconciliation, Duplicate Detection & Source Authority: Plan
 
 **Status:** Approved — feature plan approved by the project owner 2026-11-16; implementation authorization not granted  
+**Amendment:** Approved — 2026-11-20 shared page-transaction redesign for Stage 8 falsification.  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** Stage 6 per `../implementation_plan.md` §7.2; requires SDDs 002, 003, and 004  
 **Governing decisions:** M2-D06; M2-D03 for persistence and identity, M2-D04 for validation outcomes, M2-D05 for normalized keys, M2-D02 for the pipeline port  
@@ -456,3 +457,26 @@ Two clarifications are fixed here because spec §19 delegates exact signatures a
 **Plan:** Approved — 2026-11-16 by the project owner.  
 **Tasks:** Approved — 2026-11-16 by the project owner.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.
+
+---
+
+## Appendix A — Shared Page Transaction Amendment
+
+**Covers:** spec §10.2, §10.5, §14 reliability, and the amended acceptance criterion.
+
+### A.1 Composition contract
+
+`ReconciliationPipeline.process` opens the one page session before invoking SDD 004. It passes that session through `ValidationNormalizationPipeline.process_page` and `RawCapturePipeline.process`, then performs fingerprint, reconciliation-issue, and curated-entity writes in the same session. Only `ReconciliationPipeline.process` commits or rolls back this transaction.
+
+The `IngestionPipeline.process` signature and SDD 002 handler remain unchanged. Store methods continue to flush and never commit caller-owned sessions. The resulting behavior is all-or-nothing for a fetched page and preserves the durable commit of prior pages.
+
+### A.2 Implementation sequence
+
+1. Add optional caller-session support to raw capture and validation-page persistence, preserving standalone ownership where no session is supplied.
+2. Refactor reconciliation to open the session before validation, thread it through the composed operations, and commit once after reconciliation completes.
+3. Preserve existing deterministic ordering, duplicate lookup rules, count invariants, error classification, sanitized summaries, and bounded budget checks.
+4. Add unit and PostgreSQL regression coverage for rollback after a flushed Page 2 write and retry convergence; update the Stage 8 falsification harness to inject at the runtime pipeline boundary.
+
+### A.3 Deliberate exclusions
+
+No migration, schema change, API route, permissions change, retry-policy change, dependency, or new transaction abstraction is introduced. A distributed transaction or a compensating cleanup job is rejected because all affected persistence is already in the same PostgreSQL database and a single SQLAlchemy session is sufficient.

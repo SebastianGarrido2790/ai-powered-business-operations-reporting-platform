@@ -1,6 +1,7 @@
 # 004 — Validation, Normalization & Quarantine: Plan
 
 **Status:** Approved — feature plan approved by the project owner 2026-11-14; implementation authorization not granted  
+**Amendment:** Approved — 2026-11-20 shared page-transaction redesign for Stage 8 falsification.  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** Stages 4–5 per `../implementation_plan.md` §7.2; requires SDDs 002 and 003  
 **Governing decisions:** M2-D04, M2-D04.1, M2-D05; M2-D03 for persistence and M2-D02 for the pipeline port  
@@ -573,3 +574,41 @@ def set_validation_status(
 **Plan:** Approved — 2026-11-14 by the project owner.  
 **Tasks:** Approved — 2026-11-14 by the project owner.  
 **Implementation authorization:** Not granted. The M2 execution plan and explicit execution authorization remain required.
+
+---
+
+## Appendix B — Shared Page Transaction Amendment
+
+**Covers:** spec §3 requirement 17, §8.4, and the new §14 acceptance criterion.
+
+### B.1 Decision and scope
+
+`ValidationNormalizationPipeline` remains responsible for capture and validation, but it will accept a caller-owned SQLAlchemy `Session` for composed processing. It must neither commit nor roll back that supplied session. Standalone callers retain the current convenience API and own a single transaction for the fetched page.
+
+`RawCapturePipeline` receives the same optional session and uses it for all source-record and capture-issue writes. The validation persistence helper uses that session for all terminal statuses and validation issues. No schema, API, dependency, manifest, permission, configuration, or worker lifecycle change is required.
+
+### B.2 Control flow
+
+```text
+ReconciliationPipeline.process(fetch page)
+  -> open Session
+  -> ValidationNormalizationPipeline.process_page(..., session)
+       -> RawCapturePipeline.process(..., session)
+       -> persist every validation batch with session
+  -> reconcile eligible records with the same session
+  -> commit once
+  -> on any exception: rollback once and re-raise
+```
+
+The pipeline returns detached page outcomes only after the caller's commit succeeds. Earlier fetch pages are independent transactions and remain durable if a later page fails.
+
+### B.3 Tests and evidence
+
+- Extend raw-capture and validation tests for caller-session flushing without an internal commit.
+- Extend reconciliation tests to prove a single commit covers capture, validation, fingerprints, all issue types, and curated rows.
+- Keep the Stage 8 PostgreSQL falsification test as the cross-layer proof: inject after a flushed Page 2 curated write, assert zero Page 2 residue, retry the same job, and compare all persisted state and counts to an uninterrupted baseline.
+- Run formatting, lint, type checks, the focused regression suites, the complete PostgreSQL-backed test suite, and the clean migration sequence before recording Stage 8 evidence.
+
+### B.4 Risks and recovery
+
+The change makes a page transaction longer because capture, validation, and reconciliation share it. The existing execution budget, bounded validation batches, and bounded lookup limits remain the controls. Deployment rollback is code-only: the schema is unchanged; reverting the application leaves the existing database valid, but the Stage 8 gate must remain failed until this amendment's behavior is revalidated.
