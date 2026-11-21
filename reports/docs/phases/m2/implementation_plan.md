@@ -1196,26 +1196,28 @@ The review must reconcile:
 
 ### 8.2 Review register
 
-| Review area | Required evidence |
-|---|---|
-| Connector boundary | All three source types fetch through the approved contract; source-specific logic remains in Sourcing |
-| Source configuration | Named sources validate at startup; secrets are not exposed; invalid configuration fails clearly |
-| File boundary | Upload limits, type checks, path safety, and content hashing are verified |
-| Ingestion execution | Submission creates a durable job/run; the worker executes the Sourcing handler; API and worker remain independent |
-| Module handlers | Sourcing handlers are registered explicitly; no dynamic import or platform-worker coupling |
-| Idempotency | Replayed submission keys return the existing run; retries do not duplicate records, issues, or links |
-| Execution budget | The largest agreed dataset completes within the budget, or the decision is reopened with evidence |
-| Data model | Migrations apply cleanly; raw, staged, normalized, and curated layers are distinguishable |
-| Provenance | Every curated record traces to a source record and ingestion run; source timestamps and validation outcomes are retained |
-| Validation | Structural and business rules produce deterministic outcomes; invalid records are quarantined and visible |
-| Quarantine | Invalid records are not silently discarded or promoted; counts reconcile |
-| Normalization | Dates, currencies, identifiers, and names are canonical; raw values remain available; ambiguous values are flagged |
-| Deduplication | Exact duplicates are detected; potential duplicates are distinguishable; no silent last-write-wins |
-| Reconciliation | Confirmed links are explainable; unresolved and ambiguous links remain visible; source authority is enforced |
-| API | Ingestion, issue, and entity endpoints behave as specified; pagination and errors are consistent |
-| Permissions | `sourcing.ingest` and `sourcing.read` are enforced; unauthorized and unauthenticated requests are rejected |
-| Repeatability | The same fixtures and rule versions produce the same normalized and reconciled results |
-| Scope | No KPI, exception, analytics, AI/ML, orchestration, or speculative infrastructure was introduced |
+| Review area | Required evidence | Result and evidence |
+|---|---|---|
+| Connector boundary | All three source types fetch through the approved contract; source-specific logic remains in Sourcing | **Satisfied** — `core/connectors/contract.py`; four adapters under `sourcing/connectors`; Stage 1 contract/adapter suites; Stage 8 multi-source acceptance |
+| Source configuration | Named sources validate at startup; secrets are not exposed; invalid configuration fails clearly | **Satisfied** — `test_source_config.py`, degraded-health startup check, secret resolution only from environment; Stage 1 record |
+| File boundary | Upload limits, type checks, path safety, and content hashing are verified | **Satisfied** — `test_file_acquisition.py`, `test_sourcing_api_upload.py` (`413`/`415`/`422`, replay cleanup); S7-F13 oversized-workbook guard |
+| Ingestion execution | Submission creates a durable job/run; the worker executes the Sourcing handler; API and worker remain independent | **Satisfied** — `test_ingestion_idempotency.py`, `test_ingestion_e2e.py`, `test_module_job_handlers.py`; Stage 8 acceptance |
+| Module handlers | Sourcing handlers are registered explicitly; no dynamic import or platform-worker coupling | **Satisfied** — `register_job_handlers` composition in `workers/runner.py`; `test_module_job_handlers.py`; ADR-007 note |
+| Idempotency | Replayed submission keys return the existing run; retries do not duplicate records, issues, or links | **Satisfied** — `test_ingestion_idempotency.py`; Stage 5 retry tests; Stage 6 `test_retry_after_failure_converges`; Stage 8 falsification |
+| Execution budget | The largest agreed dataset completes within the budget, or the decision is reopened with evidence | **Satisfied with approved remediation** — 100,000-record qualification failed at 258.2 s/260.6 s; owner-approved batch upsert re-qualified at 69.3 s/72.6 s; `002_budget_qualification.md` |
+| Data model | Migrations apply cleanly; raw, staged, normalized, and curated layers are distinguishable | **Satisfied** — `test_sourcing_migrations.py`, Stage 8 clean `0001→0004→0002→0004`; `0003`/`0004`; ADR-003 note |
+| Provenance | Every curated record traces to a source record and ingestion run; source timestamps and validation outcomes are retained | **Satisfied** — `test_sourcing_entity_store.py`, provenance projections, Stage 8 full-provenance assertions |
+| Validation | Structural and business rules produce deterministic outcomes; invalid records are quarantined and visible | **Satisfied** — 28-rule catalog review, `test_sourcing_validation_rules.py` (95 cases), Stage 8 quarantine and issue assertions |
+| Quarantine | Invalid records are not silently discarded or promoted; counts reconcile | **Satisfied** — `test_sourcing_validation_pipeline.py`, Stage 8 `received = valid + quarantined` and issue listing |
+| Normalization | Dates, currencies, identifiers, and names are canonical; raw values remain available; ambiguous values are flagged | **Satisfied** — `test_sourcing_normalization.py` (19 cases); raw/normalized JSONB retention; ambiguity rules |
+| Deduplication | Exact duplicates are detected; potential duplicates are distinguishable; no silent last-write-wins | **Satisfied** — `test_sourcing_duplicates.py` (11), Stage 6 PostgreSQL intra-page test; S6-F15 fix |
+| Reconciliation | Confirmed links are explainable; unresolved and ambiguous links remain visible; source authority is enforced | **Satisfied** — `test_sourcing_reconciliation_links.py` (19), `..._authority.py` (30), `..._identity.py` (11); S6-F5/F6 accepted limitation |
+| API | Ingestion, issue, and entity endpoints behave as specified; pagination and errors are consistent | **Satisfied** — 13 SDD 006 routes, `test_sourcing_api_*` suites, exact OpenAPI route set; Stage 7 record |
+| Permissions | `sourcing.ingest` and `sourcing.read` are enforced; unauthorized and unauthenticated requests are rejected | **Satisfied** — `test_sourcing_api_permissions.py` (47), `test_sourcing_permissions.py`; `/auth 401` and `/403` matrix |
+| Repeatability | The same fixtures and rule versions produce the same normalized and reconciled results | **Satisfied** — Stage 5/6 retry tests, Stage 8 deterministic re-ingestion and falsification convergence |
+| Scope | No KPI, exception, analytics, AI/ML, orchestration, or speculative infrastructure was introduced | **Satisfied** — Stage 9 scope audit; only `openpyxl`, `tzdata`, `python-multipart` added; no `analytics_sourcing`, n8n, LLM, ML, or broker |
+
+The register is complete: 18 of 18 areas are satisfied, with the execution-budget remediation and the cross-source supplier limitation recorded as approved dispositions rather than open findings.
 
 ### 8.3 Failure and remediation policy
 
@@ -1253,44 +1255,128 @@ No new ADR is required by the decisions as written; they apply existing ADRs. If
 
 ## 9. Decision and Approval Record
 
-| Decision | Selected option | Status | Approval date | Evidence / qualification |
-|---|---|---|---|---|
-| M2-D01 | B — Platform-owned connector contract; Sourcing adapters; named source configuration | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D01 |
-| M2-D01.1 | B — Multipart upload to a controlled landing area | **Approved — Batch 1 (as part of D01)** | 2026-11-13 | Approved as part of D01; §6 M2-D01.1 |
-| M2-D02 | B — Explicit module job-handler registration; `sourcing.ingestion` job | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D02 |
-| M2-D02.1 | D — Required idempotency key plus content-hash duplicate warning | **Approved — Batch 1 (as part of D02)** | 2026-11-13 | Approved as part of D02; §6 M2-D02.1 |
-| M2-D02.2 | A - Bounded execution budget below the claim lease, subject to timed qualification | **Approved - Conditional (Batch 1)** | 2026-11-13 | Project-owner approval; timed qualification required before implementation; §6 M2-D02.2. Qualification remediation approved 2026-11-17: batch write path, budget, lease, and dataset unchanged |
-| M2-D03 | B — Append-only raw/staging records plus curated entities | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D03 |
-| M2-D03.1 | B — Internal UUID plus source-qualified external identity; idempotent upsert | **Approved — Batch 2 (as part of D03)** | 2026-11-14 | Approved as part of D03; §6 M2-D03.1 |
-| M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D04 |
-| M2-D04.1 | B — Versioned code-defined rule catalog | **Approved — Batch 2 (as part of D04)** | 2026-11-14 | Approved as part of D04; §6 M2-D04.1 |
-| M2-D05 | B — Preserve raw values; deterministic canonical normalization | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D05 |
-| M2-D06 | B — Deterministic matching cascade; ambiguous links remain unresolved | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D06 |
-| M2-D07 | B — Focused Sourcing ingestion, issue, and entity API | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D07 |
-| M2-D07.1 | C — New `sourcing.ingest` permission; `sourcing.read` for inspection | **Approved — Batch 3 (as part of D07)** | 2026-11-14 | Approved as part of D07; §6 M2-D07.1 |
-| M2-D08 | Constrained by approved scope — M2 boundaries upheld | **Confirmed (Baseline)** | 2026-11-14 | Approved roadmap and architecture constraints; §6 M2-D08 |
+| Decision | Selected option | Status | Approval date | Evidence / qualification | Implementation / verification |
+|---|---|---|---|---|---|
+| M2-D01 | B — Platform-owned connector contract; Sourcing adapters; named source configuration | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D01 | **Implemented and Verified** — `core/connectors`, four Sourcing adapters, `sources.yaml`; Stage 1 evidence and Stage 8 acceptance |
+| M2-D01.1 | B — Multipart upload to a controlled landing area | **Approved — Batch 1 (as part of D01)** | 2026-11-13 | Approved as part of D01; §6 M2-D01.1 | **Implemented and Verified** — `FileAcquisitionService`, upload routes, size/type/workbook checks; Stage 1 and Stage 7 evidence |
+| M2-D02 | B — Explicit module job-handler registration; `sourcing.ingestion` job | **Approved — Batch 1** | 2026-11-13 | Project-owner approval; §6 M2-D02 | **Implemented and Verified** — `register_job_handlers`, worker composition, handler; Stage 3 evidence and Stage 8 falsification |
+| M2-D02.1 | D — Required idempotency key plus content-hash duplicate warning | **Approved — Batch 1 (as part of D02)** | 2026-11-13 | Approved as part of D02; §6 M2-D02.1 | **Implemented and Verified** — principal-scoped keys, replay `200`, `DUPLICATE_CONTENT`; `test_ingestion_idempotency.py` |
+| M2-D02.2 | A - Bounded execution budget below the claim lease, subject to timed qualification | **Approved - Conditional (Batch 1)** | 2026-11-13 | Project-owner approval; timed qualification required before implementation; §6 M2-D02.2. Qualification remediation approved 2026-11-17: batch write path, budget, lease, and dataset unchanged | **Implemented and Verified** — 240 s budget/60 s margin enforced in handler; re-qualified at 69.3 s/72.6 s; `002_budget_qualification.md` |
+| M2-D03 | B — Append-only raw/staging records plus curated entities | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D03 | **Implemented and Verified** — `sourcing` schema, eight tables, `0003`/`0004`; Stage 2 and Stage 8 migration evidence |
+| M2-D03.1 | B — Internal UUID plus source-qualified external identity; idempotent upsert | **Approved — Batch 2 (as part of D03)** | 2026-11-14 | Approved as part of D03; §6 M2-D03.1 | **Implemented and Verified** — entity store identity/upserts, retry tests; Stage 2 and Stage 6 evidence |
+| M2-D04 | B — Per-record validation, quarantine, and persisted issues | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D04 | **Implemented and Verified** — evaluator, quarantine status, issue persistence; Stage 4/5 and Stage 8 evidence |
+| M2-D04.1 | B — Versioned code-defined rule catalog | **Approved — Batch 2 (as part of D04)** | 2026-11-14 | Approved as part of D04; §6 M2-D04.1 | **Implemented and Verified** — 28-rule catalog `1.0.0`, approved review; `004_rule_catalog_review.md` |
+| M2-D05 | B — Preserve raw values; deterministic canonical normalization | **Approved — Batch 2** | 2026-11-14 | Project-owner approval; §6 M2-D05 | **Implemented and Verified** — normalization primitives and section versions; Stage 4/5 tests and repeatability evidence |
+| M2-D06 | B — Deterministic matching cascade; ambiguous links remain unresolved | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D06 | **Implemented and Verified** — fingerprint/duplicate/identity/link/authority pipeline; Stage 6 evidence; accepted cross-source supplier limitation |
+| M2-D07 | B — Focused Sourcing ingestion, issue, and entity API | **Approved — Batch 3** | 2026-11-14 | Project-owner approval; §6 M2-D07 | **Implemented and Verified** — 13 routes with pagination, filters, errors; Stage 7 evidence and Stage 8 acceptance |
+| M2-D07.1 | C — New `sourcing.ingest` permission; `sourcing.read` for inspection | **Approved — Batch 3 (as part of D07)** | 2026-11-14 | Approved as part of D07; §6 M2-D07.1 | **Implemented and Verified** — manifest `0.3.0`, role grants, 47-case permission matrix; Stage 7 evidence |
+| M2-D08 | Constrained by approved scope — M2 boundaries upheld | **Confirmed (Baseline)** | 2026-11-14 | Approved roadmap and architecture constraints; §6 M2-D08 | **Implemented and Verified** — Stage 9 scope audit: no KPI, analytics, AI/ML, orchestration, or speculative infrastructure; only three approved dependencies |
 
 ### Phase authorization
 
-**Implementation Plan status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14.  
-**Feature SDD status:** Specifications 001–006 approved; plans and tasks 001–006 approved.  
-**Execution Plan status:** Approved — 2026-11-17 by the project owner (`execution_plan.md`).  
-**Execution authorization:** Granted by the project owner 2026-11-17 (M2-D02.2 timed qualification gate remains required at Stage 3 entry before Stage 3 production implementation).  
-**Phase status:** Authorized — awaiting Stage 0 preflight.
+**Implementation Plan status:** Approved — Batches 1–3 and baseline D08 approved 2026-11-13/2026-11-14.
 
-No implementation may begin until the M2 decisions, feature SDDs, plans, tasks, execution plan, and explicit execution authorization are approved.
+**Feature SDD status:** Specifications 001–006 approved; plans and tasks 001–006 approved.
+
+**Execution Plan status:** Approved — 2026-11-17 by the project owner (`execution_plan.md`).
+
+**Execution authorization:** Granted by the project owner 2026-11-17; the M2-D02.2 timed qualification gate passed at Stage 3.
+
+**Phase status:** Stages 0–8 passed and Stage 9 reconciliation is complete; **M2 signed off by the project owner on 2026-11-20** (see §10.6).
+
+Execution was authorized only after the decisions, feature SDDs, plans, tasks, execution plan, and explicit authorization were approved. M2 closes only when the sign-off in §10.6 is recorded.
 
 ---
 
-## 10. Phase Outcome Record (to be completed at Stage 9)
+## 10. Phase Outcome Record
 
-This section is intentionally empty at the planning stage. At phase closure it must record:
+**Reconciled:** 2026-11-20 at Stage 9.
+**Gate status:** complete — **signed off by the project owner on 2026-11-20**.
+**Full reconciliation detail:** [`verification/stage_9_verification.md`](verification/stage_9_verification.md).
 
-- The selected option and outcome for every M2 decision.
-- Primary implementation and test evidence for each decision.
-- The verification status of all six M2 exit criteria.
-- Material findings and their disposition.
-- Accepted limitations, deferred work, and M3 entry conditions.
-- The project-owner sign-off date and any approved deviations.
+### 10.1 Decision outcomes
 
-M2 remains incomplete until the exit criteria and evidence are reconciled and the project owner signs off.
+| Decision | Selected option | Outcome | Primary implementation evidence | Verification evidence | Status |
+|---|---|---|---|---|---|
+| M2-D01 | Platform-owned connector contract; Sourcing adapters; named sources | Implemented as approved | `src/app/core/connectors/`, `src/app/modules/sourcing/connectors/`, `config/sourcing/sources.yaml` | Stage 1 record; Stage 8 acceptance | **Implemented / Verified** |
+| M2-D01.1 | Multipart upload to a controlled landing area | Implemented as approved | `acquisition/files.py`, `api/ingestion_routes.py` | `test_file_acquisition.py`, `test_sourcing_api_upload.py`; Stage 7 record | **Implemented / Verified** |
+| M2-D02 | Explicit handler registration; `sourcing.ingestion` job | Implemented as approved | `workers/runner.py`, `module.py`, `ingestion/handler.py` | `test_module_job_handlers.py`, `test_ingestion_e2e.py`; Stage 3 record | **Implemented / Verified** |
+| M2-D02.1 | Required idempotency key plus `DUPLICATE_CONTENT` warning | Implemented as approved | `ingestion/submission.py` | `test_ingestion_idempotency.py`, `test_ingestion_submission.py` | **Implemented / Verified** |
+| M2-D02.2 | Bounded execution budget below the claim lease | Implemented as approved after owner-authorized remediation | `ingestion/budget.py`, `handler.py`, `record_store.append_source_records` | `002_budget_qualification.md` (69.3 s / 72.6 s vs 240 s) | **Implemented / Verified** |
+| M2-D03 | Append-only raw/staging records plus curated entities | Implemented as approved | `0003_sourcing_ingestion.py`, `0004_sourcing_curated_entities.py`, stores | `test_sourcing_migrations.py`; Stage 2 and Stage 8 records | **Implemented / Verified** |
+| M2-D03.1 | Internal UUID plus source-qualified external identity; idempotent upsert | Implemented as approved | `persistence/entity_store.py`, `models.py` | `test_sourcing_entity_store.py`, retry tests | **Implemented / Verified** |
+| M2-D04 | Per-record validation, quarantine, and persisted issues | Implemented as approved | `validation/evaluator.py`, `validation/pipeline.py`, `record_store` issues | Stage 4/5 records; `test_sourcing_validation_issues.py` | **Implemented / Verified** |
+| M2-D04.1 | Versioned code-defined rule catalog | Implemented as approved | `validation/catalog.py` (`1.0.0`, 28 rules) | `004_rule_catalog_review.md`; rule suites | **Implemented / Verified** |
+| M2-D05 | Preserve raw values; deterministic canonical normalization | Implemented as approved | `validation/normalize.py`, section-version persistence | `test_sourcing_normalization.py` (19 cases); Stage 5 record | **Implemented / Verified** |
+| M2-D06 | Deterministic matching cascade; ambiguous links unresolved | Implemented as approved | `reconciliation/` (fingerprint, duplicates, identity, links, authority, pipeline) | Stage 6 record; duplicate/link/authority suites; Stage 8 falsification | **Implemented / Verified** |
+| M2-D07 | Focused ingestion, issue, and entity API | Implemented as approved | `api/` routers, schemas, projections | Stage 7 record; `test_sourcing_api_*`; Stage 8 acceptance | **Implemented / Verified** |
+| M2-D07.1 | `sourcing.ingest` for initiation; `sourcing.read` for inspection | Implemented as approved | `manifest.yaml` `0.3.0`, permission mapping | `test_sourcing_api_permissions.py` (47), `test_sourcing_permissions.py` | **Implemented / Verified** |
+| M2-D08 | M2 scope exclusions and implementation boundaries | Upheld | Stage 9 scope audit | No KPI/analytics/AI-ML/orchestration code; only three approved dependencies | **Implemented / Verified** |
+
+No decision was silently changed. The only amendment was M2-D02.2's owner-approved batch-write remediation, already recorded in §6, which preserved the approved budget, lease, and dataset.
+
+### 10.2 M2 exit criteria
+
+| # | Exit criterion (`implementation_plan.md` §1.4) | Status | Evidence |
+|---|---|---|---|
+| 1 | CSV, XLSX, PostgreSQL, and simulated REST sources all provide data through the approved connector boundary | **Verified** | Stage 1 adapter and acquisition suites; Stage 8 integrated acceptance executed all four sources through API submission and worker execution |
+| 2 | Source records are consolidated into the agreed sourcing data model | **Verified** | `0003`/`0004` eight-table schema; run/record/entity stores; Stage 8 curated suppliers, requisitions, quotes, purchase orders, and deliveries |
+| 3 | Invalid, duplicated, and ambiguous records are identifiable from persisted data-quality information | **Verified** | Validation/quarantine and `VALIDATION` issues; `DUPLICATE_EXACT`, `DUPLICATE_IDENTITY_CONFLICT`, `DUPLICATE_POTENTIAL`; `RECONCILIATION_*` ambiguity; issue API |
+| 4 | Normalization and validation produce repeatable results from the same inputs and rule versions | **Verified** | `RULESET_VERSION 1.0.0`, section-version hashes; Stage 5/6 retry tests; Stage 8 deterministic re-ingestion and falsification convergence |
+| 5 | Imported records retain sufficient provenance for source-to-record traceability | **Verified** | Curated provenance (`origin_source_id`, `first_ingestion_run_id`, `last_ingestion_run_id`, `latest_source_record_id`, source timestamp, statuses); Stage 8 provenance assertions |
+| 6 | The resulting dataset is sufficiently reliable to support the agreed operational KPIs | **Verified for the M2-to-M3 entry gate** | Deterministic, validated, normalized, traceable dataset; zero unresolved critical/high findings; accepted residual risks are visibility/scale limitations, not data-integrity defects. KPI calculation remains M3 scope by M2-D08 |
+
+### 10.3 Post-Implementation Review
+
+All 18 review areas in §8.2 are complete and satisfied. The register records one satisfied-with-remediation item (execution budget) and one satisfied-with-accepted-limitation item (cross-source supplier consolidation); neither is an open finding. No new architectural boundary was introduced, so no additional ADR is proposed. ADR-001, ADR-002, ADR-003, ADR-005, ADR-007, ADR-009, and ADR-012 were reviewed against the implementation and received consolidated M2 Stage 9 status notes in `system_design.md`.
+
+### 10.4 Findings and accepted residual risks
+
+| Reference | Residual risk | Severity | Disposition |
+|---|---|---|---|
+| S2-F7 | `list_entities` sorts by `updated_at`, which has no dedicated index | Low | **Accepted** — 201-row bounded reads and M2 volumes make it immaterial; revisit when entity volume or latency evidence warrants an index |
+| S6-F5 / S6-F6 | Conservative supplier matching: suppliers resolve by source-qualified external identity only; cross-source supplier rows are not consolidated, and one cross-source business-identifier collision cannot be detected | Medium | **Accepted by owner 2026-11-16** — visible as `DUPLICATE_POTENTIAL_CONTENT` or `RECONCILIATION_IDENTITY_AMBIGUOUS`; deferred until an approved supplier business identifier and corroborating attribute exist |
+| S6-F18 | Unpromoted (identity-ambiguous) records persist no fingerprint, so duplicates involving an ambiguous record are invisible across pages | Medium | **Accepted as a documented spec gap by owner 2026-11-18** — intra-page detection remains active |
+| S6-F22 | `_check_invariants` raises after a page commit as defense in depth | Medium | **Accepted** — unreachable under current validated count relations; operator remediation is a fresh run review |
+| S7-F10 | Uncovered safe-error branches (`api/errors.py` 503/409/generic, some projections/fallbacks) | Low | **Accepted** — tests follow the approved plan matrix; total coverage 94.82% against a configured floor of 70% |
+| S7-F16 | Deferred review nits: event-loop offloading for file IO/parsing, multipart form schema bounds, `not_found` vs `ingestion_not_found` naming, code clean-up | Minor / Nit | **Deferred by owner authorization 2026-11-19**; no correctness, security, or data-integrity impact in M2 |
+| S2-F6 / M2-D03 | Separate database schema grants for production reliance are not implemented | Medium (operational) | **Deferred** — the application uses one role in M2; resolve before production reliance |
+| — | 25 third-party deprecation warnings (Starlette 422, testclient/httpx, Alembic `path_separator`) | Info | **Accepted** — inherited dependencies; no M2 source warning |
+| — | Multi-source acceptance uses the deterministic in-repo ERP stub and the disposable local PostgreSQL service | Info | **Accepted** — no live ERP/CRM or production database is contacted in M2 |
+
+No unresolved **critical** or **high** finding remains. The Stage 6 owner-accepted exceptions (fail-permanent contract errors) and Stage 8 falsification result are closed and recorded in their stage evidence.
+
+### 10.5 Deferred work and M3 entry conditions
+
+**Deferred beyond M2**
+
+- KPI definitions/calculation, exception detection and workflows, alerts, approvals.
+- `analytics_sourcing` read models, Power BI datasets, recurring reporting.
+- Cross-source supplier consolidation (pending an approved supplier identifier).
+- Raw-record and landing-file retention policy; production schema grants and secret-store hardening.
+- Scheduling, freshness monitoring, deletion/tombstone propagation.
+- Fuzzy/probabilistic matching, remediation UI, bulk correction.
+- The S7-F16 engineering nits.
+
+**M3 entry conditions**
+
+1. M2 is explicitly signed off by the project owner.
+2. The M3 scope is approved against the same roadmap and governance process.
+3. M3 KPI definitions consume only curated, provenance-bearing entities and do not write back into `sourcing`.
+4. Any new KPI/read-model persistence is approved as an M3 architectural decision; M2's schema and runtime contracts are not silently extended.
+5. The accepted M2 residual risks above remain visible and are re-evaluated if M3 volume, latency, or cross-source consolidation requirements change.
+
+### 10.6 Phase sign-off
+
+| Item | Record |
+|---|---|
+| Phase | M2 — Data Integration & Processing |
+| Stages 0–8 | All passed with recorded evidence |
+| Stage 9 reconciliation | Complete (this section and `verification/stage_9_verification.md`) |
+| Exit criteria | All six verified |
+| Open critical/high findings | None |
+| Project-owner sign-off | **Signed off — 2026-11-20** |
+| Sign-off date | 2026-11-20 |
+| Approved deviations | M2-D02.2 batch-write remediation (2026-11-17); Stage 6 fail-permanent exceptions; Stage 6 cross-source limitation; Stage 7 test-matrix/coverage decision |
+
+M2 — Data Integration & Processing is **complete and signed off**. The project owner explicitly accepted the residual risks in §10.4 on 2026-11-20. M3 may begin only after its own scope and approvals are recorded.

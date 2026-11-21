@@ -557,7 +557,7 @@ A failed falsification test is a failed stage gate and must not be waived becaus
 
 ---
 
-### Stage 9 — ADR Consolidation & Phase Sign-Off
+### Stage 9 — ADR Consolidation & Phase Sign-Off ✅ **PASSED**
 
 **Goal**
 
@@ -661,61 +661,61 @@ The following evidence must exist before M2 sign-off at Stage 9:
 
 ### Repository and engineering baseline
 
-- [ ] Starting and final commit hashes recorded.
-- [ ] Working tree and branch state verified at every stage gate.
-- [ ] `uv lock --check` integrity verified after each approved dependency addition (`openpyxl`, `tzdata`, `python-multipart`).
-- [ ] `uv run ruff format --check .`, `uv run ruff check .`, and `uv run mypy src tests` pass.
-- [ ] Full automated unit and PostgreSQL integration test suites pass.
+- [ ] Starting and final commit hashes recorded — M2 start `b14952a` and Stage 9 baseline `b5f6483` recorded; final Stage 9 commit hash pending authorization.
+- [x] Working tree and branch state verified at every stage gate — each stage record records `main`/`origin/main` and tree state.
+- [x] `uv lock --check` integrity verified after each approved dependency addition (`openpyxl`, `tzdata`, `python-multipart`) — Stage 1, Stage 4, Stage 7 records; Stage 9 recheck resolved 139 packages.
+- [x] `uv run ruff format --check .`, `uv run ruff check .`, and `uv run mypy src tests` pass — Stage 9: 289 formatted, lint clean, mypy clean in 197 files.
+- [x] Full automated unit and PostgreSQL integration test suites pass — Stage 9: 871 passed, 0 failed, 94.82% coverage.
 
 ### Connectors and file acquisition (Stage 1 / SDD 001)
 
-- [ ] Named source registry validation and degraded-startup health evidence.
-- [ ] File acquisition size, extension, MIME, workbook-safety, SHA-256 hashing, and `sweep(..., exclude_refs=())` evidence.
-- [ ] CSV, XLSX, read-only PostgreSQL, and simulated REST (`httpx.MockTransport`) connector test evidence.
+- [x] Named source registry validation and degraded-startup health evidence — `test_source_config.py`; `stage_1_verification.md` startup/degraded checks.
+- [x] File acquisition size, extension, MIME, workbook-safety, SHA-256 hashing, and `sweep(..., exclude_refs=())` evidence — `test_file_acquisition.py`; `test_sourcing_landing_sweep.py`.
+- [x] CSV, XLSX, read-only PostgreSQL, and simulated REST (`httpx.MockTransport`) connector test evidence — Stage 1 adapter suites; Stage 8 integrated acceptance.
 
 ### Sourcing schema, persistence, and raw capture (Stage 2 / SDD 003)
 
-- [ ] Clean PostgreSQL upgrade/downgrade evidence for `0003_sourcing_ingestion` and `0004_sourcing_curated_entities`.
-- [ ] Deterministic `record_key` and raw-payload truncation evidence.
-- [ ] Run, record, and curated-entity store PostgreSQL integration evidence (including `content_fingerprint`, `IssueView`, and `201`-capped reads).
+- [x] Clean PostgreSQL upgrade/downgrade evidence for `0003_sourcing_ingestion` and `0004_sourcing_curated_entities` — `test_sourcing_migrations.py`; Stage 8 `0001→0004→0002→0004`.
+- [x] Deterministic `record_key` and raw-payload truncation evidence — `test_sourcing_record_key.py`, `test_sourcing_raw_capture.py`.
+- [x] Run, record, and curated-entity store PostgreSQL integration evidence (including `content_fingerprint`, `IssueView`, and `201`-capped reads) — `test_sourcing_run_store.py`, `test_sourcing_record_store.py`, `test_sourcing_entity_store.py`, `test_sourcing_api_reads_pg.py`.
 
 ### Ingestion execution and budget qualification (Stage 3 / SDD 002)
 
-- [ ] Recorded M2-D02.2 timed qualification evidence (`verification/002_budget_qualification.md`) within the 240-second budget.
-- [ ] Explicit `register_job_handlers` worker composition evidence (and absence of handler registration in the API process).
-- [ ] Atomic job/run submission, principal-scoped idempotency replay, and `DUPLICATE_CONTENT` warning evidence.
-- [ ] `sourcing.ingest` vs. `sourcing.read` permission enforcement and `ExecutionBudget` permanent-failure evidence.
+- [x] Recorded M2-D02.2 timed qualification evidence (`verification/002_budget_qualification.md`) within the 240-second budget — re-qualified at 69.3 s / 72.6 s.
+- [x] Explicit `register_job_handlers` worker composition evidence (and absence of handler registration in the API process) — `test_module_job_handlers.py`.
+- [x] Atomic job/run submission, principal-scoped idempotency replay, and `DUPLICATE_CONTENT` warning evidence — `test_ingestion_idempotency.py`, `test_ingestion_submission.py`.
+- [x] `sourcing.ingest` vs. `sourcing.read` permission enforcement and `ExecutionBudget` permanent-failure evidence — `test_sourcing_permissions.py`, `test_ingestion_budget.py`, `test_ingestion_handler.py`.
 
 ### Validation, normalization, and quarantine (Stages 4–5 / SDD 004)
 
-- [ ] Closed 28-rule catalog (`1.0.0`) positive, negative, boundary, and meta-coverage test evidence.
-- [ ] Canonical normalization evidence (text, identifiers, supplier key, dates, UTC timestamps, decimal money, ISO 4217 currencies, quantities, enums).
-- [ ] Atomic `validation.yaml` validation and section-version hash evidence.
-- [ ] `ValidationNormalizationPipeline` batch atomicity, quarantine isolation, and sanitized `VALIDATION` issue evidence.
-- [ ] Recorded business-owner rule-catalog review (`verification/004_rule_catalog_review.md`).
+- [x] Closed 28-rule catalog (`1.0.0`) positive, negative, boundary, and meta-coverage test evidence — `test_sourcing_validation_catalog.py`, `test_sourcing_validation_rules.py`.
+- [x] Canonical normalization evidence (text, identifiers, supplier key, dates, UTC timestamps, decimal money, ISO 4217 currencies, quantities, enums) — `test_sourcing_normalization.py`.
+- [x] Atomic `validation.yaml` validation and section-version hash evidence — `test_sourcing_validation_config.py`.
+- [x] `ValidationNormalizationPipeline` batch atomicity, quarantine isolation, and sanitized `VALIDATION` issue evidence — `test_sourcing_validation_pipeline.py`, `test_sourcing_validation_issues.py`.
+- [x] Recorded business-owner rule-catalog review (`verification/004_rule_catalog_review.md`) — all 28 rules approved 2026-11-18.
 
 ### Duplicate detection, reconciliation, and source authority (Stage 6 / SDD 005)
 
-- [ ] Content-fingerprint persistence and source-scoped duplicate detection (`DUPLICATE_EXACT`, `DUPLICATE_IDENTITY_CONFLICT`, `DUPLICATE_POTENTIAL`) evidence.
-- [ ] Two-step deterministic identity cascade and foreign-key link resolution (`CONFIRMED`, `UNRESOLVED`, `AMBIGUOUS`) evidence.
-- [ ] Field-level source-authority precedence (`REPLACE` vs. `FILL_MISSING`) and `CONFLICT_*` issue evidence.
-- [ ] Per-page transaction rollback and retry-idempotency evidence.
+- [x] Content-fingerprint persistence and source-scoped duplicate detection (`DUPLICATE_EXACT`, `DUPLICATE_IDENTITY_CONFLICT`, `DUPLICATE_POTENTIAL`) evidence — `test_sourcing_duplicates.py`, PostgreSQL intra-page test.
+- [x] Two-step deterministic identity cascade and foreign-key link resolution (`CONFIRMED`, `UNRESOLVED`, `AMBIGUOUS`) evidence — `test_sourcing_reconciliation_identity.py`, `test_sourcing_reconciliation_links.py`.
+- [x] Field-level source-authority precedence (`REPLACE` vs. `FILL_MISSING`) and `CONFLICT_*` issue evidence — `test_sourcing_reconciliation_authority.py`.
+- [x] Per-page transaction rollback and retry-idempotency evidence — `test_mid_page_failure_rolls_back_curated_rows_fingerprints_and_issues`, `test_retry_after_failure_converges`; Stage 8 falsification.
 
 ### Ingestion, data-quality, and entity API (Stage 7 / SDD 006)
 
-- [ ] Multipart upload (`POST /ingestions/files`) success, error mapping (`413`/`415`/`422`), and replay/failure landing-file cleanup evidence.
-- [ ] Run list, issue list, and five entity list/detail endpoint contract, filter, ordering, and `limit + 1` pagination evidence.
-- [ ] `401`/`403` permission matrix and payload/secret non-exposure evidence across all 13 routes.
-- [ ] `on_startup` lifecycle hook and `sweep_landing` non-terminal run protection and overflow-skip evidence.
-- [ ] Sourcing manifest `0.3.0` (`data_quality`, `entities`) evidence.
+- [x] Multipart upload (`POST /ingestions/files`) success, error mapping (`413`/`415`/`422`), and replay/failure landing-file cleanup evidence — `test_sourcing_api_upload.py`.
+- [x] Run list, issue list, and five entity list/detail endpoint contract, filter, ordering, and `limit + 1` pagination evidence — `test_sourcing_api_runs.py`, `test_sourcing_api_issues.py`, `test_sourcing_api_entities.py`, `test_sourcing_api_pagination.py`.
+- [x] `401`/`403` permission matrix and payload/secret non-exposure evidence across all 13 routes — `test_sourcing_api_permissions.py` (47), projection assertions.
+- [x] `on_startup` lifecycle hook and `sweep_landing` non-terminal run protection and overflow-skip evidence — `test_module_lifecycle.py`, `test_sourcing_landing_sweep.py`.
+- [x] Sourcing manifest `0.3.0` (`data_quality`, `entities`) evidence — `test_sourcing_api_manifest.py`.
 
 ### Integrated acceptance, falsification, and closure (Stages 8–9)
 
 - [x] Multi-source end-to-end acceptance evidence (CSV, XLSX, PostgreSQL, REST → worker → curated entities & issues → API) — `verification/stage_8_verification.md`.
 - [x] One-time mid-run fault-injection and worker-retry falsification evidence (`verification/stage_8_verification.md`).
 - [x] Post-falsification full test suite run — 871 passed, 0 failed.
-- [ ] Decision reconciliation (`M2-D01`..`M2-D08`), ADR review, Post-Implementation Review, and §10 Phase Outcome Record completed (`verification/stage_9_verification.md`).
-- [ ] All six M2 exit criteria verified and project-owner phase sign-off recorded.
+- [x] Decision reconciliation (`M2-D01`..`M2-D08`), ADR review, Post-Implementation Review, and §10 Phase Outcome Record completed (`verification/stage_9_verification.md`).
+- [x] All six M2 exit criteria verified and project-owner phase sign-off recorded — signed off 2026-11-20.
 
 ---
 
@@ -734,7 +734,7 @@ The following evidence must exist before M2 sign-off at Stage 9:
 | 6 | Duplicate Detection, Reconciliation & Source Authority | Fingerprinting, duplicate detector, matching cascade, authority modes, `ReconciliationPipeline` | ADR-003, ADR-009 | Reconciliation, authority, and page-rollback tests pass | **Passed** |
 | 7 | Ingestion, Data-Quality & Entity API | `on_startup` hook, `sweep_landing`, 13 routes, `limit + 1` pagination, manifest `0.3.0` | ADR-002, ADR-007 | All 13 route, permission, sweep, and PG read tests pass | **Passed** |
 | 8 | Integrated Acceptance & One-Time Falsification | Multi-source E2E acceptance and mid-run fault-and-retry falsification | None | E2E acceptance, falsification, migrations, review, and full suite pass | **Passed** |
-| 9 | ADR Consolidation & Phase Sign-Off | Reconciled decisions, PIR, §10 Outcome Record, and M2 sign-off | As required by approved changes | All M2 exit criteria verified and signed off | Not started |
+| 9 | ADR Consolidation & Phase Sign-Off | Reconciled decisions, PIR, §10 Outcome Record, and M2 sign-off | As required by approved changes | All M2 exit criteria verified and signed off | **Passed** |
 
 ### 9.2 Stage record
 
@@ -751,7 +751,7 @@ Maintain the following record as execution progresses:
 | 6 | 2026-11-18 | 2026-11-18 | `d83c0e4` (code), `53d5215` (tests), `826ad5c` (docs) — evidence in `verification/stage_6_verification.md` | **Passed** (2026-11-18) — one owner-accepted exception and one owner-authorized plan amendment (see §6 of the evidence record) | S6-F1 (High/Resolved), S6-F2 (High/Resolved), S6-F3–F4 (Low/Accepted), S6-F5–F6 (Med/Accepted risk), S6-F7 (Info/Interpretation accepted), S6-F8–F10 (Low-Info/Accepted), S6-F11 (Low/Accepted), S6-F12–F13 (Info/Expected), S6-F14 (Info/Superseded), S6-F15 (Critical/Resolved), S6-F16 (Critical/Resolved; owner-accepted exception), S6-F17 (High/Resolved by plan amendment), S6-F18 (Med/Accepted spec gap), S6-F19 (High/Resolved; owner-accepted exception), S6-F20 (High/Resolved), S6-F21 (Med/Resolved), S6-F22 (Med/Accepted), S6-F23 (Med/Resolved), S6-F24 (Low/Resolved), S6-F25–F26 (Info/Accepted), S6-F27 (Info/Expected). Judgment calls (d)–(i) resolved 2026-11-18; second opinion declined; cross-source consolidation out of scope (ADR-009) | Project owner acknowledged Stage 6 gate pass with accepted exception; authorized stage record update and push 2026-11-18 |
 | 7 | 2026-11-18 | 2026-11-20 | `8a5b436` (code and tests), `dd300c4` (review fixes) — evidence in `verification/stage_7_verification.md` and `reviews/2026-11-19-main.md` | **Passed** (2026-11-18; closed 2026-11-20) | S7-F1–F7 (Resolved), S7-F8 (Info/Accepted), S7-F9 (Low/Resolved), S7-F10 (Low/Accepted per decision 8), S7-F11 (Info/Accepted), S7-F12 (Info/Resolved by review), S7-F13 (Major/Resolved), S7-F14–F15 (Minor/Resolved), S7-F16 (Minor–Nit/Deferred). Review ran inline on the author model; cross-model reviewer unavailable (OpenRouter free-tier limits) | Project owner authorized Stage 7 commit/push 2026-11-18, review and fix set 2026-11-19, and stage closure, coverage floor, and review-policy updates 2026-11-20 |
 | 8 | 2026-11-20 | 2026-11-20 | Stage 8 implementation and tests in working tree; evidence in `verification/stage_8_verification.md`; baseline approval commit `d64bbca` | **Passed** (2026-11-20) | S8-F1 (P2/Resolved) — initial falsification assertions compared partial state; expanded with Page 1/Page 2 validation issues and full record, issue, entity-value, provenance, and count comparisons | Project owner approved the transaction redesign and amendments, then authorized Stage 8 closure on 2026-11-20 |
-| 9 | — | — | `verification/stage_9_verification.md` | Pending | — | — |
+| 9 | 2026-11-20 | 2026-11-20 | Reconciliation in `verification/stage_9_verification.md`; `implementation_plan.md` §8–§10 updated; baseline `b5f6483` | **Passed** (2026-11-20) | No new code/schema findings; residual risks dispositioned (S2-F7, S6-F5/F6, S6-F18, S6-F22, S7-F10, S7-F16, production grants) | Project owner explicitly signed off M2 and accepted the §10.4 residual risks on 2026-11-20 |
 
 A stage may be marked complete only after its gate has passed and its verification record has been written.
 
@@ -761,15 +761,15 @@ A stage may be marked complete only after its gate has passed and its verificati
 
 | Artifact | Current status | Required next action |
 |---|---|---|
-| M2 Implementation Plan & Decisions (`M2-D01`..`M2-D08`) | Approved (2026-11-13/2026-11-14; `M2-D02.2` conditional on Stage 3 qualification) | Complete D02.2 qualification at Stage 3 entry |
+| M2 Implementation Plan & Decisions (`M2-D01`..`M2-D08`) | Approved; D02.2 qualification passed; Stage 9 reconciliation complete; M2 signed off 2026-11-20 | No further action needed |
 | SDD 001 — Sourcing Connectors | Approved (spec, plan, tasks, and 006 `sweep` amendment) | No further action needed |
 | SDD 002 — Ingestion Execution | Approved (spec, plan, tasks, and 005 amendments) | No further action needed |
 | SDD 003 — Sourcing Data Model | Approved (spec, plan, tasks, and 004/005/006 amendments) | No further action needed |
 | SDD 004 — Validation, Normalization & Quarantine | Approved (spec, plan, tasks) | Business-owner catalog review recorded in Stage 5 |
 | SDD 005 — Reconciliation | Approved (spec, plan, tasks) | No further action needed |
 | SDD 006 — Ingestion & Data-Quality API | Approved (spec, plan, tasks, and platform `on_startup` amendment) | No further action needed |
-| M2 Execution Plan (`execution_plan.md`) | Approved 2026-11-17 | No further action needed |
-| M2 execution authorization | Granted 2026-11-17 | Stage 0 preflight may begin at the project owner's direction |
+| M2 Execution Plan (`execution_plan.md`) | Approved 2026-11-17; Stage 9 passed 2026-11-20 | No further action needed |
+| M2 execution authorization | Granted 2026-11-17; Stages 0–9 passed; M2 signed off 2026-11-20 | Commit/push only under explicit operation-scoped authorization |
 
 **M2 execution is authorized as of 2026-11-17.** The project owner approved this Execution Plan and granted explicit authorization for M2 execution on 2026-11-17.
 
