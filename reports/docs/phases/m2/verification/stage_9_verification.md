@@ -16,7 +16,7 @@
 | Starting HEAD for Stage 9 | `b5f6483` — `feat(sourcing): close Stage 8 acceptance and falsification` |
 | Working tree before Stage 9 edits | Clean; `HEAD == origin/main` |
 | M2 start commit | `b14952a` (recorded in `implementation_plan.md` §2.1) |
-| Final M2 commit | Pending the authorized Stage 9 documentation commit |
+| Final M2 commit | `a516bf3` — `docs(M2): Complete Stage 9 reconciliation and phase sign-off` |
 | Test database | `postgresql://postgres:postgres@127.0.0.1:5433/bopf_test` (disposable; never `operations`) |
 | Stages 0–8 | All passed with records under `verification/` |
 
@@ -187,4 +187,4 @@ No adversarial review was run for Stage 9. This stage changes governance documen
 
 1. ~~Record the sign-off date and owner approval in `implementation_plan.md` §10.6 and §9 phase authorization.~~ **Done 2026-11-20.**
 2. ~~Mark Stage 9 **Passed** in `execution_plan.md` §9.1/§9.2 and tick the remaining acceptance-checklist items in §8.~~ **Done 2026-11-20.**
-3. Commit the Stage 9 documentation and push only under explicit, operation-scoped authorization — **pending owner authorization.**
+3. ~~Commit the Stage 9 documentation and push only under explicit, operation-scoped authorization.~~ **Committed as `a516bf3` and pushed to `origin/main` 2026-11-20 under owner authorization.**
