@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M3 — Business Intelligence  
-**Status:** Batches 1–2 Approved (2026-11-22) — Batch 3 & Baseline Awaiting Project-Owner Review & Decision Approval  
+**Status:** Batches 1–3 Approved (2026-11-22) — Baseline D08 Awaiting Project-Owner Review & Decision Approval  
 **Document type:** Living phase decision record  
 **Previous phase:** M2 — Data Integration & Processing (Complete, signed off 2026-11-20 at `c9b0027`)
 
@@ -378,13 +378,13 @@ Candidates are planning work packages, not implementation authorization. Final b
 | M3-D04 | `analytics_sourcing` read-model architecture & cutoff contract | Worker-refreshed curated projections, `v_*` contract views, snapshot metadata | Yes | **Approved** (Batch 2, 2026-11-22) |
 | M3-D04.1 | Refresh materialization & execution-budget qualification (nested in D04) | Full rebuild vs. MV/incremental + 100k-row timed qualification test | Yes (as part of D04) | **Approved — Conditional** (Batch 2, 2026-11-22; 100k qualification gate) |
 | M3-D04.2 | Least-privilege read-only PostgreSQL role for BI (nested in D04) | `analytics_sourcing` view-only grants, zero access to `sourcing`/`platform` | Yes (as part of D04) | **Approved** (Batch 2, 2026-11-22) |
-| M3-D05 | Recurring & on-demand reporting pipeline, snapshots & artifacts | Async `sourcing.report_generation`, immutable snapshots, FR-REP-08 validation, M5 slot | Yes | Proposed |
-| M3-D05.1 | Report idempotency & versioned re-run semantics (nested in D05) | Caller key deduplication + immutable revision history per period | Yes (as part of D05) | Proposed |
-| M3-D05.2 | Operational risk indicators vs. M4/M6 exception boundary (nested in D05) | Read-only late/overdue/breach/DQ counts without exception workflow tables | Yes (as part of D05) | Proposed |
-| M3-D06 | Power BI deliverable format, contract verification & refresh governance | Text-diffable model/dashboards, CI SQL contract tests, ≤ 8/day refresh policy | Yes | Proposed |
-| M3-D06.1 | Power BI storage mode & workstation verification path (nested in D06) | Import vs. DirectQuery + local Power BI Desktop environment check | Yes (as part of D06) | Proposed *(Qualification option)* |
-| M3-D07 | Business Intelligence & reporting API surface | Focused KPI, scorecard, freshness, refresh, report & validation endpoints | Yes | Proposed |
-| M3-D07.1 | Analytics & reporting permissions & visibility (nested in D07) | `sourcing.report`, manifest `0.4.0`, `sourcing.manage` alignment, draft isolation | Yes (as part of D07) | Proposed |
+| M3-D05 | Recurring & on-demand reporting pipeline, snapshots & artifacts | Async `sourcing.report_generation`, immutable snapshots, FR-REP-08 validation, M5 slot | Yes | **Approved** (Batch 3, 2026-11-22) |
+| M3-D05.1 | Report idempotency & versioned re-run semantics (nested in D05) | Caller key deduplication + immutable revision history per period | Yes (as part of D05) | **Approved** (Batch 3, 2026-11-22) |
+| M3-D05.2 | Operational risk indicators vs. M4/M6 exception boundary (nested in D05) | Read-only late/overdue/breach/DQ counts without exception workflow tables | Yes (as part of D05) | **Approved** (Batch 3, 2026-11-22) |
+| M3-D06 | Power BI deliverable format, contract verification & refresh governance | Text-diffable model/dashboards, CI SQL contract tests, ≤ 8/day refresh policy | Yes | **Approved** (Batch 3, 2026-11-22) |
+| M3-D06.1 | Power BI storage mode & workstation verification path (nested in D06) | Import vs. DirectQuery + local Power BI Desktop environment check | Yes (as part of D06) | **Approved — Conditional** (Batch 3, 2026-11-22; Power BI Desktop environment check) |
+| M3-D07 | Business Intelligence & reporting API surface | Focused KPI, scorecard, freshness, refresh, report & validation endpoints | Yes | **Approved** (Batch 3, 2026-11-22) |
+| M3-D07.1 | Analytics & reporting permissions & visibility (nested in D07) | `sourcing.report`, manifest `0.4.0`, `sourcing.manage` alignment, draft isolation | Yes (as part of D07) | **Approved** (Batch 3, 2026-11-22) |
 | M3-D08 | M3 scope exclusions and implementation boundaries | Enforces M3 boundaries against M4/M5/M6 and speculative infrastructure | **No — constrained baseline** | Proposed (for confirmation) |
 
 > **No-approval-required note (M3-D08):** No approval required — only one viable option exists under the applicable constraints (approved Implementation Roadmap, standing invariants, and ADR-012). Listed for decision-record completeness; any exception requires an explicit scope change.
@@ -395,7 +395,7 @@ Candidates are planning work packages, not implementation authorization. Final b
 |---|---|---|---|
 | 1 — Domain inputs, SLAs & KPI governance | D01, D02 (incl. D02.1), D03 (incl. D03.1) | Fixes module ownership, required operational attributes, SLA applicability, and authoritative KPI formulas before designing storage or views | **Approved (2026-11-22)** |
 | 2 — Analytical read models & access | D04 (incl. D04.1, D04.2) | Fixes `analytics_sourcing` persistence, refresh qualification gate, and read-only BI database isolation | **Approved (2026-11-22)**; D04.1 conditional on 100k refresh gate |
-| 3 — Reporting, Power BI & API | D05 (incl. D05.1, D05.2), D06 (incl. D06.1), D07 (incl. D07.1) | Fixes report lifecycle, operational risk scope, Power BI deliverables, and external API/RBAC surface | Pending |
+| 3 — Reporting, Power BI & API | D05 (incl. D05.1, D05.2), D06 (incl. D06.1), D07 (incl. D07.1) | Fixes report lifecycle, operational risk scope, Power BI deliverables, and external API/RBAC surface | **Approved** (2026-11-22) |
 | Baseline | D08 | Confirms M3 scope exclusions determined by the roadmap; no new architectural choice | Pending |
 
 Batching reduces review fragmentation while preserving explicit approval for every material decision and nested sub-decision.
@@ -406,7 +406,7 @@ Batching reduces review fragmentation while preserving explicit approval for eve
 
 > **Approval state — Batch 1 (2026-11-22):** `M3-D01`, `M3-D02`, `M3-D02.1`, `M3-D03`, and `M3-D03.1` are **approved as recommended**.  
 > **Approval state — Batch 2 (2026-11-22):** `M3-D04`, `M3-D04.1`, and `M3-D04.2` are **approved as recommended**; `M3-D04.1` is **conditional** on the timed 100,000-row refresh qualification gate.  
-> Their alternatives and trade-off text are retained unchanged for traceability. Batch 3 and baseline D08 remain proposed.
+> Their alternatives and trade-off text are retained unchanged for traceability. Batch 3 (D05, D05.1, D05.2, D06, D06.1, D07, D07.1) is approved; baseline D08 remains pending confirmation.
 
 ### M3-D01 — Reporting & analytics boundary (Platform Core vs. Sourcing)
 
@@ -961,7 +961,7 @@ Approval of this document does not itself authorize writing application code. It
 
 The next steps are:
 
-1. **Record decision outcomes:** Batches 1–2 are recorded as approved (2026-11-22). Capture project-owner approval, revisions, or rejections for Batch 3 and confirm baseline D08 (including the qualification condition on D06.1).
+1. **Record decision outcomes:** Batches 1–3 are recorded as approved (2026-11-22). Capture project-owner approval, revisions, or rejections for baseline D08 (including the qualification condition on D06.1).
 2. **Confirm candidate dispositions:** Accept, merge, split, or reject Candidates `001`–`007` based on approved decisions.
 3. **Draft right-sized feature SDDs:** Create concise `spec.md` documents only for confirmed packages, focusing strictly on required contracts, formulas, persistence, security boundaries, and acceptance criteria.
 4. **Obtain SDD & KPI/SLA catalog sign-off:** Review and approve feature specs alongside the OD-03 KPI & SLA catalog review record.
@@ -1057,18 +1057,18 @@ At M3 closure:
 | M3-D04 | B | **Approved** | 2026-11-22 | Batch 2 approval | — |
 | M3-D04.1 | D (A + 100k qualification) | **Approved — Conditional** | 2026-11-22 | Batch 2 approval; timed 100k-row refresh qualification gate | — |
 | M3-D04.2 | B | **Approved** | 2026-11-22 | Batch 2 approval; PostgreSQL BI role isolation suite required | — |
-| M3-D05 | Pending (Rec: B) | Proposed | — | — | — |
-| M3-D05.1 | Pending (Rec: C) | Proposed | — | — | — |
-| M3-D05.2 | Pending (Rec: B) | Proposed | — | — | — |
-| M3-D06 | Pending (Rec: B) | Proposed | — | CI SQL schema-contract tests | — |
-| M3-D06.1 | Pending (Rec: C — A + workstation check) | Proposed | — | Pre-SDD-006 Power BI Desktop check | — |
-| M3-D07 | Pending (Rec: B) | Proposed | — | — | — |
-| M3-D07.1 | Pending (Rec: B) | Proposed | — | RBAC & draft-isolation matrix | — |
+| M3-D05 | B | **Approved** | 2026-11-22 | Batch 3 approval | — |
+| M3-D05.1 | C | **Approved** | 2026-11-22 | Batch 3 approval | — |
+| M3-D05.2 | B | **Approved** | 2026-11-22 | Batch 3 approval | — |
+| M3-D06 | B | **Approved** | 2026-11-22 | Batch 3 approval; CI SQL schema-contract tests | — |
+| M3-D06.1 | C | **Approved — Conditional** | 2026-11-22 | Batch 3 approval; Pre-SDD-006 Power BI Desktop check | — |
+| M3-D07 | B | **Approved** | 2026-11-22 | Batch 3 approval | — |
+| M3-D07.1 | B | **Approved** | 2026-11-22 | Batch 3 approval; RBAC & draft-isolation matrix | — |
 | M3-D08 | Constrained baseline | Proposed (No approval required) | — | Approved roadmap & invariants | — |
 
 ### Phase authorization
 
-- **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–2 approved (D01, D02, D02.1, D03, D03.1, D04, D04.1, D04.2); Batch 3 and D08 pending.**
+- **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–3 approved (D01, D02, D02.1, D03, D03.1, D04, D04.1, D04.2, D05, D05.1, D05.2, D06, D06.1, D07, D07.1); baseline D08 pending confirmation.**
 - **Feature SDD status:** Not started (Candidates `001`–`003` input decisions approved; SDD drafting awaits Batch 3 review and candidate confirmation).
 - **Execution Plan status:** Not started (blocked on SDD approval).
 - **Execution authorization:** Not granted.
@@ -1079,7 +1079,7 @@ At M3 closure:
 
 M3 cannot transition to **Signed Off** until every state below is satisfied in order (never treating **Decided**, **Implemented**, **Verified**, and **Signed Off** as interchangeable):
 
-1. **Decided:** All approval-required decisions (`M3-D01`–`M3-D07.1`) are approved and baseline `M3-D08` is confirmed. *Current state: Batches 1–2 (`M3-D01`–`D04.2`) approved (D04.1 conditional); Batch 3 and D08 pending.*
+1. **Decided:** All approval-required decisions (`M3-D01`–`M3-D07.1`) are approved and baseline `M3-D08` is confirmed. *Current state: Batches 1–3 (`M3-D01`–`D07.1`) approved (D04.1 and D06.1 conditional); baseline D08 pending confirmation.*
 2. **Implemented:** All approved SDD packages, migrations (`0005`, `0006`), tests, and Power BI assets are built within approved scope.
 3. **Verified:** All stage gates pass, qualification gates (`D04.1`, `D06.1`) and OD-03 KPI/SLA catalog review are recorded, all 18 PIR items are satisfied or explicitly dispositioned, accepted ADRs are updated with M3 status notes, and all 6 M3 exit criteria have reproducible evidence.
 4. **Signed Off:** The project owner explicitly signs off M3 and records M4/M5 entry readiness.
