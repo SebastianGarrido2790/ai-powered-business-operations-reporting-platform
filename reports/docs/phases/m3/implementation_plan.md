@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M3 — Business Intelligence  
-**Status:** Batch 1 Approved (2026-11-22) — Batches 2–3 Awaiting Project-Owner Review & Decision Approval  
+**Status:** Batches 1–2 Approved (2026-11-22) — Batch 3 & Baseline Awaiting Project-Owner Review & Decision Approval  
 **Document type:** Living phase decision record  
 **Previous phase:** M2 — Data Integration & Processing (Complete, signed off 2026-11-20 at `c9b0027`)
 
@@ -375,9 +375,9 @@ Candidates are planning work packages, not implementation authorization. Final b
 | M3-D02.1 | Applicable SLA definition & governance (nested in D02) | Declarative SLA registry & `NOT_APPLICABLE` semantics | Yes (as part of D02) | **Approved** (Batch 1, 2026-11-22) |
 | M3-D03 | Deterministic KPI catalog & business-owner governance | Versioned KPI formulas, ownership, OD-03 sign-off gate | Yes | **Approved** (Batch 1, 2026-11-22) |
 | M3-D03.1 | Eligibility, multi-currency & unresolved-record semantics (nested in D03) | Numerator/denominator transparency, currency partitioning, supplier grain | Yes (as part of D03) | **Approved** (Batch 1, 2026-11-22) |
-| M3-D04 | `analytics_sourcing` read-model architecture & cutoff contract | Worker-refreshed curated projections, `v_*` contract views, snapshot metadata | Yes | Proposed |
-| M3-D04.1 | Refresh materialization & execution-budget qualification (nested in D04) | Full rebuild vs. MV/incremental + 100k-row timed qualification test | Yes (as part of D04) | Proposed *(Qualification option)* |
-| M3-D04.2 | Least-privilege read-only PostgreSQL role for BI (nested in D04) | `analytics_sourcing` view-only grants, zero access to `sourcing`/`platform` | Yes (as part of D04) | Proposed |
+| M3-D04 | `analytics_sourcing` read-model architecture & cutoff contract | Worker-refreshed curated projections, `v_*` contract views, snapshot metadata | Yes | **Approved** (Batch 2, 2026-11-22) |
+| M3-D04.1 | Refresh materialization & execution-budget qualification (nested in D04) | Full rebuild vs. MV/incremental + 100k-row timed qualification test | Yes (as part of D04) | **Approved — Conditional** (Batch 2, 2026-11-22; 100k qualification gate) |
+| M3-D04.2 | Least-privilege read-only PostgreSQL role for BI (nested in D04) | `analytics_sourcing` view-only grants, zero access to `sourcing`/`platform` | Yes (as part of D04) | **Approved** (Batch 2, 2026-11-22) |
 | M3-D05 | Recurring & on-demand reporting pipeline, snapshots & artifacts | Async `sourcing.report_generation`, immutable snapshots, FR-REP-08 validation, M5 slot | Yes | Proposed |
 | M3-D05.1 | Report idempotency & versioned re-run semantics (nested in D05) | Caller key deduplication + immutable revision history per period | Yes (as part of D05) | Proposed |
 | M3-D05.2 | Operational risk indicators vs. M4/M6 exception boundary (nested in D05) | Read-only late/overdue/breach/DQ counts without exception workflow tables | Yes (as part of D05) | Proposed |
@@ -394,7 +394,7 @@ Candidates are planning work packages, not implementation authorization. Final b
 | Batch | Decisions | Why this order | Status |
 |---|---|---|---|
 | 1 — Domain inputs, SLAs & KPI governance | D01, D02 (incl. D02.1), D03 (incl. D03.1) | Fixes module ownership, required operational attributes, SLA applicability, and authoritative KPI formulas before designing storage or views | **Approved (2026-11-22)** |
-| 2 — Analytical read models & access | D04 (incl. D04.1, D04.2) | Fixes `analytics_sourcing` persistence, refresh qualification gate, and read-only BI database isolation | Pending |
+| 2 — Analytical read models & access | D04 (incl. D04.1, D04.2) | Fixes `analytics_sourcing` persistence, refresh qualification gate, and read-only BI database isolation | **Approved (2026-11-22)**; D04.1 conditional on 100k refresh gate |
 | 3 — Reporting, Power BI & API | D05 (incl. D05.1, D05.2), D06 (incl. D06.1), D07 (incl. D07.1) | Fixes report lifecycle, operational risk scope, Power BI deliverables, and external API/RBAC surface | Pending |
 | Baseline | D08 | Confirms M3 scope exclusions determined by the roadmap; no new architectural choice | Pending |
 
@@ -404,7 +404,9 @@ Batching reduces review fragmentation while preserving explicit approval for eve
 
 ## 6. Decisions
 
-> **Approval state — Batch 1 (2026-11-22):** `M3-D01`, `M3-D02`, `M3-D02.1`, `M3-D03`, and `M3-D03.1` are **approved as recommended**. Their alternatives and trade-off text are retained unchanged for traceability. Batches 2–3 remain proposed.
+> **Approval state — Batch 1 (2026-11-22):** `M3-D01`, `M3-D02`, `M3-D02.1`, `M3-D03`, and `M3-D03.1` are **approved as recommended**.  
+> **Approval state — Batch 2 (2026-11-22):** `M3-D04`, `M3-D04.1`, and `M3-D04.2` are **approved as recommended**; `M3-D04.1` is **conditional** on the timed 100,000-row refresh qualification gate.  
+> Their alternatives and trade-off text are retained unchanged for traceability. Batch 3 and baseline D08 remain proposed.
 
 ### M3-D01 — Reporting & analytics boundary (Platform Core vs. Sourcing)
 
@@ -630,7 +632,7 @@ Refresh executes via a registered Sourcing worker handler `sourcing.analytics_re
 
 **Approval required:** Yes.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 2, 2026-11-22 (Option B).** No qualification condition; refresh materialization is governed separately by D04.1.
 
 **Consequences**
 - All BI visuals and API KPI reads observe one atomic, cutoff-consistent analytical state.
@@ -659,7 +661,7 @@ Execute the timed 100,000-row qualification test before marking `003-analytics-r
 
 **Approval required:** Yes, as part of D04.
 
-**Decision status:** Proposed (Conditional Qualification).
+**Decision status:** **✅ Approved — Conditional, Batch 2, 2026-11-22 (Option D: Option A baseline + timed 100k-row qualification).** Lock-in of the full-rebuild strategy requires the qualification gate in `003_refresh_qualification.md`; failure reopens the decision to Options B or C.
 
 #### Nested decision M3-D04.2 — Least-privilege read-only PostgreSQL role for BI consumption
 
@@ -682,7 +684,7 @@ Migration `0006` idempotently ensures the non-login group role `bopf_bi_reader` 
 
 **Approval required:** Yes, as part of D04.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 2, 2026-11-22 (Option B), as part of D04.** No qualification condition.
 
 ---
 
@@ -959,7 +961,7 @@ Approval of this document does not itself authorize writing application code. It
 
 The next steps are:
 
-1. **Record decision outcomes:** Batch 1 is recorded as approved (2026-11-22). Capture project-owner approval, revisions, or rejections for Batches 2–3 and confirm baseline D08 (including qualification conditions on D04.1 and D06.1).
+1. **Record decision outcomes:** Batches 1–2 are recorded as approved (2026-11-22). Capture project-owner approval, revisions, or rejections for Batch 3 and confirm baseline D08 (including the qualification condition on D06.1).
 2. **Confirm candidate dispositions:** Accept, merge, split, or reject Candidates `001`–`007` based on approved decisions.
 3. **Draft right-sized feature SDDs:** Create concise `spec.md` documents only for confirmed packages, focusing strictly on required contracts, formulas, persistence, security boundaries, and acceptance criteria.
 4. **Obtain SDD & KPI/SLA catalog sign-off:** Review and approve feature specs alongside the OD-03 KPI & SLA catalog review record.
@@ -1052,9 +1054,9 @@ At M3 closure:
 | M3-D02.1 | B | **Approved** | 2026-11-22 | Batch 1 approval (as part of D02) | — |
 | M3-D03 | B | **Approved** | 2026-11-22 | Batch 1 approval; OD-03 KPI & SLA catalog review still required | — |
 | M3-D03.1 | B | **Approved** | 2026-11-22 | Batch 1 approval (as part of D03) | — |
-| M3-D04 | Pending (Rec: B) | Proposed | — | — | — |
-| M3-D04.1 | Pending (Rec: D — A + 100k qualification) | Proposed | — | Timed 100k-row refresh qualification | — |
-| M3-D04.2 | Pending (Rec: B) | Proposed | — | PostgreSQL BI role isolation suite | — |
+| M3-D04 | B | **Approved** | 2026-11-22 | Batch 2 approval | — |
+| M3-D04.1 | D (A + 100k qualification) | **Approved — Conditional** | 2026-11-22 | Batch 2 approval; timed 100k-row refresh qualification gate | — |
+| M3-D04.2 | B | **Approved** | 2026-11-22 | Batch 2 approval; PostgreSQL BI role isolation suite required | — |
 | M3-D05 | Pending (Rec: B) | Proposed | — | — | — |
 | M3-D05.1 | Pending (Rec: C) | Proposed | — | — | — |
 | M3-D05.2 | Pending (Rec: B) | Proposed | — | — | — |
@@ -1066,8 +1068,8 @@ At M3 closure:
 
 ### Phase authorization
 
-- **Implementation Plan status:** Proposed (2026-11-22) — **Batch 1 approved (D01, D02, D02.1, D03, D03.1); Batches 2–3 pending.**
-- **Feature SDD status:** Not started (Candidate `001` and `002` input decisions approved; SDD drafting awaits overall review).
+- **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–2 approved (D01, D02, D02.1, D03, D03.1, D04, D04.1, D04.2); Batch 3 and D08 pending.**
+- **Feature SDD status:** Not started (Candidates `001`–`003` input decisions approved; SDD drafting awaits Batch 3 review and candidate confirmation).
 - **Execution Plan status:** Not started (blocked on SDD approval).
 - **Execution authorization:** Not granted.
 
@@ -1077,7 +1079,7 @@ At M3 closure:
 
 M3 cannot transition to **Signed Off** until every state below is satisfied in order (never treating **Decided**, **Implemented**, **Verified**, and **Signed Off** as interchangeable):
 
-1. **Decided:** All approval-required decisions (`M3-D01`–`M3-D07.1`) are approved and baseline `M3-D08` is confirmed. *Current state: Batch 1 (`M3-D01`, `D02`, `D02.1`, `D03`, `D03.1`) approved; Batches 2–3 and D08 pending.*
+1. **Decided:** All approval-required decisions (`M3-D01`–`M3-D07.1`) are approved and baseline `M3-D08` is confirmed. *Current state: Batches 1–2 (`M3-D01`–`D04.2`) approved (D04.1 conditional); Batch 3 and D08 pending.*
 2. **Implemented:** All approved SDD packages, migrations (`0005`, `0006`), tests, and Power BI assets are built within approved scope.
 3. **Verified:** All stage gates pass, qualification gates (`D04.1`, `D06.1`) and OD-03 KPI/SLA catalog review are recorded, all 18 PIR items are satisfied or explicitly dispositioned, accepted ADRs are updated with M3 status notes, and all 6 M3 exit criteria have reproducible evidence.
 4. **Signed Off:** The project owner explicitly signs off M3 and records M4/M5 entry readiness.
