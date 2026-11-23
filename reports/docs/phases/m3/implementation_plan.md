@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M3 — Business Intelligence  
-**Status:** Batches 1–3 Approved (2026-11-22) — Baseline D08 Acknowledged (2026-11-22) — All Decisions Complete  
+**Status:** Batches 1–3 Approved (2026-11-22) — Baseline D08 Acknowledged (2026-11-22) — All Candidates Approved (2026-11-22) — All Decisions Complete  
 **Document type:** Living phase decision record  
 **Previous phase:** M2 — Data Integration & Processing (Complete, signed off 2026-11-20 at `c9b0027`)
 
@@ -329,17 +329,17 @@ Consistent with PRD §11.3 (reference MVP scenario), M3 acceptance uses syntheti
 
 ## 4. Candidate Feature Register
 
-Candidates are planning work packages, not implementation authorization. Final boundaries and SDD depth are confirmed after decision approval.
+Candidates are planning work packages, not implementation authorization. All seven candidates (`001`–`007`) were approved on 2026-11-22 alongside the M3 decision batches; SDD boundaries are confirmed and await feature spec drafting.
 
 | Candidate ID | Candidate feature | Requirement / need served | Decisions | Dependencies | Primary acceptance evidence | SDD depth | Disposition |
 |---|---|---|---|---|---|---|---|
-| `001-sourcing-analytics-inputs-and-slas` | Curated input enrichment & declarative SLA registry | FR-KPI-02, FR-KPI-04; Roadmap §M3 (tracking, applicable SLAs) | D02, D02.1 | M2 complete | Backward-compatible `0005` migration adds nullable operational attributes; `validation.yaml` updated; `config/sourcing/slas.yaml` validates at startup; missing SLA yields `NOT_APPLICABLE`; all 871 M2 tests remain green | Substantive data & config spec | Candidate |
-| `002-sourcing-kpi-and-sla-engine` | Deterministic KPI catalog, SLA evaluator & operational risk indicators | FR-KPI-01..07, MVP-05 (KPI half); OD-03 | D03, D03.1, D05.2 | 001 | Closed `KPI_CATALOG_VERSION` with pure unit-tested formulas; exact numerator/denominator/exclusion counts; multi-currency grouping; SLA breach evaluation; owner catalog review record | Substantive domain & calculation spec | Candidate |
-| `003-analytics-read-models-and-refresh` | `analytics_sourcing` schema, refresh job & BI read-only role | FR-KPI-05, FR-KPI-07, NFR-SEC-02/04; ADR-010 | D04, D04.1, D04.2 | 001, 002 | `0006` migration creates `analytics_sourcing` projections & `v_*` views; `sourcing.analytics_refresh` worker job stamps `data_cutoff_at`; 100k-row qualification passes; BI role integration tests prove read-only isolation | Substantive persistence & execution spec | Candidate |
-| `004-reporting-foundation-and-generation` | Core reporting contract & async Sourcing report generation | PF-10, MVP-07, FR-REP-01..05, FR-REP-08 | D01, D05, D05.1, D05.2 | 002, 003 | Minimal `core/reporting/` contract; immutable report runs & snapshots for 4 report types; idempotency + versioned re-runs; nullable M5 narrative slot; `DRAFT`→`PUBLISHED` executive validation state | Substantive behavioral & data spec | Candidate |
-| `005-bi-and-reporting-api` | Sourcing BI, freshness & reporting API with permissions | System Design §10.2; FR-KPI-05, FR-REP-02..05, FR-REP-08 | D07, D07.1 | 003, 004 | Focused KPI, scorecard, freshness, refresh, report, and validation routes; manifest `0.4.0`; RBAC matrix verified (`sourcing.read`, `sourcing.report`, `sourcing.manage`); `executive_viewer` draft isolation | Lightweight API contract spec | Candidate |
-| `006-powerbi-semantic-model-and-dashboards` | Version-controlled Power BI model, contract tests & refresh spec | Roadmap §M3 (dashboards, exit criterion 6); Charter §8.C; Blueprint §8 | D06, D06.1 | 003 | Text-diffable semantic model & 3 dashboard definitions under `powerbi/sourcing/`; automated pytest SQL contract tests verifying every view/column/type; documented refresh cadence (≤ 8/day) & stakeholder validation checklist | Lightweight BI contract spec | Candidate |
-| `007-bi-synthetic-dataset-and-acceptance` | Multi-month synthetic BI dataset & end-to-end acceptance harness | M3 exit criteria 1–6; NFR-DAT-05 | All M3 decisions | 001–006 | Deterministic multi-month fixture exercising all KPIs, SLAs, currencies, warnings, and unlinked records; E2E reconciliation test proving API/report/BI-view numbers match curated ground truth | Distributed acceptance tasks (or lightweight spec if needed) | Candidate (proposed as distributed tasks) |
+| `001-sourcing-analytics-inputs-and-slas` | Curated input enrichment & declarative SLA registry | FR-KPI-02, FR-KPI-04; Roadmap §M3 (tracking, applicable SLAs) | D02, D02.1 | M2 complete | Backward-compatible `0005` migration adds nullable operational attributes; `validation.yaml` updated; `config/sourcing/slas.yaml` validates at startup; missing SLA yields `NOT_APPLICABLE`; all 871 M2 tests remain green | Substantive data & config spec | **Approved** (2026-11-22) |
+| `002-sourcing-kpi-and-sla-engine` | Deterministic KPI catalog, SLA evaluator & operational risk indicators | FR-KPI-01..07, MVP-05 (KPI half); OD-03 | D03, D03.1, D05.2 | 001 | Closed `KPI_CATALOG_VERSION` with pure unit-tested formulas; exact numerator/denominator/exclusion counts; multi-currency grouping; SLA breach evaluation; owner catalog review record | Substantive domain & calculation spec | **Approved** (2026-11-22) |
+| `003-analytics-read-models-and-refresh` | `analytics_sourcing` schema, refresh job & BI read-only role | FR-KPI-05, FR-KPI-07, NFR-SEC-02/04; ADR-010 | D04, D04.1, D04.2 | 001, 002 | `0006` migration creates `analytics_sourcing` projections & `v_*` views; `sourcing.analytics_refresh` worker job stamps `data_cutoff_at`; 100k-row qualification passes; BI role integration tests prove read-only isolation | Substantive persistence & execution spec | **Approved** (2026-11-22) |
+| `004-reporting-foundation-and-generation` | Core reporting contract & async Sourcing report generation | PF-10, MVP-07, FR-REP-01..05, FR-REP-08 | D01, D05, D05.1, D05.2 | 002, 003 | Minimal `core/reporting/` contract; immutable report runs & snapshots for 4 report types; idempotency + versioned re-runs; nullable M5 narrative slot; `DRAFT`→`PUBLISHED` executive validation state | Substantive behavioral & data spec | **Approved** (2026-11-22) |
+| `005-bi-and-reporting-api` | Sourcing BI, freshness & reporting API with permissions | System Design §10.2; FR-KPI-05, FR-REP-02..05, FR-REP-08 | D07, D07.1 | 003, 004 | Focused KPI, scorecard, freshness, refresh, report, and validation routes; manifest `0.4.0`; RBAC matrix verified (`sourcing.read`, `sourcing.report`, `sourcing.manage`); `executive_viewer` draft isolation | Lightweight API contract spec | **Approved** (2026-11-22) |
+| `006-powerbi-semantic-model-and-dashboards` | Version-controlled Power BI model, contract tests & refresh spec | Roadmap §M3 (dashboards, exit criterion 6); Charter §8.C; Blueprint §8 | D06, D06.1 | 003 | Text-diffable semantic model & 3 dashboard definitions under `powerbi/sourcing/`; automated pytest SQL contract tests verifying every view/column/type; documented refresh cadence (≤ 8/day) & stakeholder validation checklist | Lightweight BI contract spec | **Approved** (2026-11-22) |
+| `007-bi-synthetic-dataset-and-acceptance` | Multi-month synthetic BI dataset & end-to-end acceptance harness | M3 exit criteria 1–6; NFR-DAT-05 | All M3 decisions | 001–006 | Deterministic multi-month fixture exercising all KPIs, SLAs, currencies, warnings, and unlinked records; E2E reconciliation test proving API/report/BI-view numbers match curated ground truth | Distributed acceptance tasks (or lightweight spec if needed) | **Approved — distributed tasks** (2026-11-22) |
 
 ### 4.1 Candidate boundary rules
 
@@ -722,7 +722,7 @@ Each persisted report record retains: `report_id`, `job_id`, `report_type`, `per
 
 **Approval required:** Yes.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 3, 2026-11-22 (Option B).**
 
 **Consequences**
 - Historical reports are immutable and fully reproducible from their snapshot metadata.
@@ -750,7 +750,7 @@ Mirror M2-D02.1's proven submission idempotency contract (`(submitted_by, idempo
 
 **Approval required:** Yes, as part of D05.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 3, 2026-11-22 (Option C).**
 
 #### Nested decision M3-D05.2 — Operational risk indicators in M3 reports vs. M4/M6 exception boundary
 
@@ -773,7 +773,7 @@ Expose read-only operational risk summaries in `analytics_sourcing.v_operational
 
 **Approval required:** Yes, as part of D05.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 3, 2026-11-22 (Option B).**
 
 ---
 
@@ -805,9 +805,9 @@ Deliver under `powerbi/sourcing/`:
 2. A machine-readable `contract.yaml` (or parsed TMDL table/column manifest) asserted by automated pytest PostgreSQL tests running under `bopf_bi_reader`, ensuring zero schema drift between `0006` migrations and the BI layer.
 3. A documented refresh & freshness specification (`powerbi/sourcing/README.md`): scheduled refresh cadence capped at ≤ 4×/day (safe margin under Power BI Pro's 8/day limit), no event-driven refresh triggers, and explicit display of `data_cutoff_at` from `v_data_freshness` on every dashboard page.
 
-**Approval required:** Yes.
+**Approval required:** Yes, as part of D06.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 3, 2026-11-22 (Option B).**
 
 **Consequences**
 - CI catches any breaking change to `analytics_sourcing.v_*` before merge.
@@ -835,7 +835,7 @@ Confirm local Power BI Desktop readiness before finalizing SDD 006 so the verifi
 
 **Approval required:** Yes, as part of D06.
 
-**Decision status:** Proposed (Environment Qualification).
+**Decision status:** **✅ Approved — Conditional, Batch 3, 2026-11-22 (Option C: Import mode default + workstation check).**
 
 ---
 
@@ -879,7 +879,7 @@ Add the following Sourcing endpoints under `/api/v1/sourcing`:
 
 **Approval required:** Yes.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 3, 2026-11-22 (Option B).**
 
 **Consequences**
 - Full API parity with M2 conventions (domain resource IDs + `job_id`, `Location` header, `201`/`200` idempotency, bounded pagination, uniform error envelope).
@@ -913,7 +913,7 @@ Update `src/app/modules/sourcing/manifest.yaml` to version `0.4.0` with capabili
 
 **Approval required:** Yes, as part of D07.
 
-**Decision status:** Proposed.
+**Decision status:** **✅ Approved — Batch 3, 2026-11-22 (Option B).**
 
 ---
 
@@ -962,7 +962,7 @@ Approval of this document does not itself authorize writing application code. It
 The next steps are:
 
 1. **Record decision outcomes:** Batches 1–3 are recorded as approved (2026-11-22). Capture project-owner approval, revisions, or rejections for baseline D08 (acknowledged, no qualification condition required).
-2. **Confirm candidate dispositions:** Accept, merge, split, or reject Candidates `001`–`007` based on approved decisions.
+2. **Confirm candidate dispositions:** All candidates `001`–`007` are approved (2026-11-22); accept/merge/split/reject per approved decisions.
 3. **Draft right-sized feature SDDs:** Create concise `spec.md` documents only for confirmed packages, focusing strictly on required contracts, formulas, persistence, security boundaries, and acceptance criteria.
 4. **Obtain SDD & KPI/SLA catalog sign-off:** Review and approve feature specs alongside the OD-03 KPI & SLA catalog review record.
 5. **Draft feature plans and tasks:** Produce `plan.md` and `tasks.md` only after each respective `spec.md` is approved.
@@ -1069,7 +1069,7 @@ At M3 closure:
 ### Phase authorization
 
 - **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–3 approved; baseline D08 acknowledged (2026-11-22). All decisions complete.**
-- **Feature SDD status:** Not started (Candidates `001`–`003` input decisions approved; SDD drafting awaits Batch 3 review and candidate confirmation).
+- **Feature SDD status:** Not started — Candidates `001`–`007` approved (2026-11-22); SDD drafting not yet started.
 - **Execution Plan status:** Not started (blocked on SDD approval).
 - **Execution authorization:** Not granted.
 
