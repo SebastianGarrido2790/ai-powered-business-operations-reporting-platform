@@ -1069,7 +1069,7 @@ At M3 closure:
 ### Phase authorization
 
 - **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–3 approved; baseline D08 acknowledged (2026-11-22). All decisions complete.**
-- **Feature SDD status:** In progress — `001`–`003` spec/plan/tasks approved and pushed (2026-11-22/23); `004`–`007` not started.
+- **Feature SDD status:** In progress — `001`–`004` spec/plan/tasks approved and pushed (2026-11-22/24); `005`–`007` not started.
 - **Execution Plan status:** Not started (blocked on SDD approval).
 - **Execution authorization:** Not granted.
 
