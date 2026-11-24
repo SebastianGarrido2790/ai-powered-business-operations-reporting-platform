@@ -1,7 +1,7 @@
 # 003 — Analytics Read Models & Refresh
 
 **Phase:** M3 — Analytics, Reporting & BI  
-**Status:** Proposed — awaiting project-owner approval (2026-11-23); no implementation authorized  
+**Status:** Approved — feature specification approved by the project owner 2026-11-23; no implementation authorized  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M3-D04, M3-D04.1, M3-D04.2; consumes M3-D02/M3-D03 outputs from SDD 001 and 002  
 **Execution stage:** Stage 3 per implementation plan §7.2
@@ -323,6 +323,6 @@ Evidence goes to `reports/docs/phases/m3/verification/003_refresh_qualification.
 ## 15. Approval
 
 **Feature scope:** Accepted in the M3 decision record (M3-D04, M3-D04.1, M3-D04.2).  
-**Feature SDD:** Proposed — 2026-11-23; awaiting project-owner approval.  
-**Feature plan and tasks:** Not started; requires SDD approval.  
+**Feature SDD:** Approved — 2026-11-23 by the project owner.  
+**Feature plan and tasks:** Approved — 2026-11-23 by the project owner; see [`plan.md`](plan.md) and [`tasks.md`](tasks.md).  
 **Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
