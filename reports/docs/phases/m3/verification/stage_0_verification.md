@@ -69,14 +69,12 @@
 
 | Check | Result |
 |---|---|
-| `PBIDesktop.exe` on `PATH` | Not found |
-| Standard install directories | Not present |
-| Appx package (`Microsoft.*PowerBI*`) | Not installed |
-| Uninstall registry entries | None |
-| `.pbip`/TMDL authoring | Cannot be exercised without Desktop |
-| PostgreSQL connector from Desktop | Cannot be exercised without Desktop |
+| `PBIDesktop.exe` / Appx package | Found — `Microsoft.MicrosoftPowerBIDesktop` 2.160.1151.0, Store install |
+| Install location | `C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.160.1151.0_...` |
+| `.pbip`/TMDL authoring | Available — Desktop 2.160+ supports PBIP, TMDL, and PBIR |
+| PostgreSQL connector from Desktop | Available — can connect to `127.0.0.1:5433` under `bopf_bi_reader` |
 
-**Outcome: accepted limitation.** Power BI Desktop is unavailable on this workstation. Per approved `M3-D06.1` Option C, the Import-mode default and text-based artifacts remain authoritative, and the Stage 6 gate will use the approved fallback: `contract.yaml` plus TMDL/PBIR verification against live PostgreSQL under `bopf_bi_reader`, and figure reconciliation against the SDD 005 API and SDD 004 report. Visual desktop opening is deferred until workstation access is available and is recorded as an accepted environment limitation, not a failure.
+**Outcome: confirmed.** Power BI Desktop is installed and available on this workstation. `M3-D06.1` is satisfied in full — the Stage 6 gate will exercise the primary path: visual desktop opening of the authored `.pbip` model, TMDL/PBIR verification against live PostgreSQL under `bopf_bi_reader`, and figure reconciliation against the SDD 005 API and SDD 004 report. The text-based artifacts and `contract.yaml` remain authoritative; the Desktop check is the final visual confirmation rather than a fallback.
 
 ---
 
@@ -88,7 +86,7 @@
 | S0-F2 | The long-lived `operations` database had no Alembic revision applied. | Info | Resolved — existing migrations `0001`–`0004` applied to reach the expected `0004` baseline. No application code or migration changed. |
 | S0-F3 | Ruff 0.17.4 formats Python code blocks in Markdown; three approved M3 documents contained unformatted snippets. | Low | Resolved — `ruff format` applied to `001/plan.md`, `002/plan.md`, and `004/spec.md`. Changes are whitespace and one signature wrap only; no normative text changed. |
 | S0-F4 | SDD `001/plan.md` and `001/tasks.md` still carried "Proposed" status lines despite the approval commit `2b884eb`. | Low | Resolved — status lines corrected to Approved (2026-11-22); no contract or task content changed. |
-| S0-F5 | Power BI Desktop is not installed. | Info | Accepted limitation under `M3-D06.1` Option C; Stage 6 fallback evidence path applies. |
+| S0-F5 | Power BI Desktop was not installed at Stage 0 start. | Info | Resolved — Power BI Desktop 2.160.1151.0 now installed (Store package `Microsoft.MicrosoftPowerBIDesktop`); D06.1 outcome changed from accepted limitation to confirmed. Primary path available for Stage 6 visual check. |
 | S0-F6 | The PostgreSQL suite failed once when `BOPF_TEST_DATABASE_URL` pointed at a database named `bopf_m3_stage0`: the M2 Stage 8 acceptance test hardcodes `bopf_test` for its legacy PostgreSQL source, so that source connected to a non-existent database and the job failed. | Low | Resolved — the disposable database was recreated as `bopf_test` and the full suite passed (871/871). No code change. Recorded as an environment coupling to keep in mind for Stage 7 database naming. |
 
 No finding blocks Stage 1.
@@ -104,7 +102,7 @@ No finding blocks Stage 1.
 | Full suite passes against PostgreSQL 16 | Satisfied | 871 passed, 0 skipped, 94.82% coverage against disposable `bopf_test` |
 | Database is at `0004` with `platform` and `sourcing`; no `analytics_sourcing` | Satisfied | `alembic_version` and `pg_namespace` queries |
 | Approved decisions, SDDs, and Execution Plan are present and consistent | Satisfied | §3 and the corrected `001` status lines |
-| D06.1 outcome recorded | Satisfied | Accepted limitation recorded in §4 |
+| D06.1 outcome recorded | Satisfied | Confirmed — Power BI Desktop 2.160.1151.0 installed and available on workstation; primary path available for Stage 6 |
 | Secret hygiene | Satisfied | `.env` ignored; no tracked credential values |
 | Stage 0 evidence recorded | Satisfied | This document |
 
