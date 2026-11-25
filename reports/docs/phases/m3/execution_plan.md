@@ -2,7 +2,7 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M3 — Business Intelligence  
-**Status:** Proposed — awaiting project-owner approval (2026-11-25); no implementation authorized  
+**Status:** Approved — M3 Execution Plan approved by the project owner 2026-11-25; no implementation authorized  
 **Previous phase:** M2 — Data Integration & Processing (signed off 2026-11-17)  
 **Decision baseline:** M3-D01 through M3-D07.1 approved; M3-D08 acknowledged (2026-11-22)  
 **SDD baseline:** Packages `001`–`007` approved (specs, plans where applicable, and tasks) as of 2026-11-24  
@@ -519,5 +519,5 @@ None. Reconciliation and sign-off stage.
 | 7 | Integrated Acceptance & One-Time Falsification | Six-month dataset, oracle, E2E suite, falsification | — | Exit criteria 1–6 evidenced; falsification detected | Not started |
 | 8 | ADR Consolidation & Phase Sign-Off | PIR completion, ADR notes, phase sign-off | — | All gates, findings, and exit criteria closed | Not started |
 
-**Execution Plan status:** Proposed (2026-11-25) — awaiting project-owner approval.  
-**Execution authorization:** Not granted. No implementation may begin before this plan is approved and explicit authorization is issued.
+**Execution Plan status:** Approved (2026-11-25) — awaiting explicit execution authorization.  
+**Execution authorization:** Not granted. No implementation may begin before explicit M3 execution authorization is issued.
