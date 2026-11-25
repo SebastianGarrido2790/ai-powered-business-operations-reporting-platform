@@ -1,7 +1,7 @@
 # 007 — Integrated Acceptance & Synthetic BI Dataset
 
 **Phase:** M3 — Analytics, Reporting & BI  
-**Status:** Proposed — awaiting project-owner approval (2026-11-24); no implementation authorized  
+**Status:** Approved — feature specification approved by the project owner 2026-11-24; no implementation authorized  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** all M3 decisions; consumes SDD 001–006  
 **Execution stage:** Stage 7 per implementation plan §7.2  
@@ -184,6 +184,6 @@ The suite runs only when `BOPF_TEST_DATABASE_URL` is set and uses disposable mig
 ## 11. Approval
 
 **Feature scope:** Accepted in the M3 decision record (candidate `007`).  
-**Feature SDD:** Proposed — 2026-11-24; awaiting project-owner approval.  
-**Feature tasks:** Not started; requires SDD approval.  
+**Feature SDD:** Approved — 2026-11-24 by the project owner.  
+**Feature tasks:** Approved — 2026-11-24 by the project owner; see [`tasks.md`](tasks.md).  
 **Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
