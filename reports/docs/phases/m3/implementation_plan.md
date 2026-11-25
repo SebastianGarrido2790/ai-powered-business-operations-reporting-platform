@@ -1070,7 +1070,7 @@ At M3 closure:
 
 - **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–3 approved; baseline D08 acknowledged (2026-11-22). All decisions complete.**
 - **Feature SDD status:** Complete — `001`–`007` specs, plans (where applicable), and tasks approved and pushed (2026-11-22/24); ready for the M3 execution plan.
-- **Execution Plan status:** Not started (blocked on SDD approval).
+- **Execution Plan status:** Proposed (2026-11-25) — awaiting project-owner approval.
 - **Execution authorization:** Not granted.
 
 ---
@@ -1080,6 +1080,6 @@ At M3 closure:
 M3 cannot transition to **Signed Off** until every state below is satisfied in order (never treating **Decided**, **Implemented**, **Verified**, and **Signed Off** as interchangeable):
 
 1. **Decided:** All approval-required decisions (`M3-D01`–`M3-D07.1`) are approved and baseline `M3-D08` is acknowledged. *Current state: Batches 1–3 (`M3-D01`–`D07.1`) approved (D04.1 and D06.1 conditional); baseline D08 acknowledged (2026-11-22).*
-2. **Implemented:** All approved SDD packages, migrations (`0005`, `0006`), tests, and Power BI assets are built within approved scope.
+2. **Implemented:** All approved SDD packages, migrations (`0005`, `0006`, `0007`), tests, and Power BI assets are built within approved scope.
 3. **Verified:** All stage gates pass, qualification gates (`D04.1`, `D06.1`) and OD-03 KPI/SLA catalog review are recorded, all 18 PIR items are satisfied or explicitly dispositioned, accepted ADRs are updated with M3 status notes, and all 6 M3 exit criteria have reproducible evidence.
 4. **Signed Off:** The project owner explicitly signs off M3 and records M4/M5 entry readiness.
