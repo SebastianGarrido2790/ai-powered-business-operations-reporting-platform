@@ -1,6 +1,6 @@
 # 001 — Sourcing Analytics Inputs & Declarative SLA Registry: Plan
 
-**Status:** Proposed — awaiting project-owner approval (2026-11-22); no implementation authorized  
+**Status:** Approved — feature plan approved by the project owner 2026-11-22; no implementation authorized  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** Stage 1 per `../implementation_plan.md` §7  
 **Governing decisions:** M3-D02, M3-D02.1; M2-D03.1 and M2-D05 for curated identity and normalized values; M2-D04.1 for configuration-driven contracts  
@@ -103,16 +103,20 @@ class SlaMetric(StrEnum):
     MAX_LEAD_TIME_DAYS = "MAX_LEAD_TIME_DAYS"
     MAX_QUOTE_RESPONSE_DAYS = "MAX_QUOTE_RESPONSE_DAYS"
 
+
 class SupplierSlaScope(BaseModel):
     type: Literal["supplier"]
     origin_source_id: str
     supplier_external_id: str
 
+
 class CategorySlaScope(BaseModel):
     type: Literal["category"]
     category: str
 
+
 SlaScope = Annotated[SupplierSlaScope | CategorySlaScope, Field(discriminator="type")]
+
 
 class SlaRule(BaseModel):
     sla_id: str
@@ -123,6 +127,7 @@ class SlaRule(BaseModel):
     effective_to: date | None = None
     owner: str
 
+
 class SlaCatalog(BaseModel):
     version: Literal[1]
     catalog_version: str
@@ -131,8 +136,12 @@ class SlaCatalog(BaseModel):
     resolved_version: str
 
     def resolve(
-        self, *, as_of: date, metric: SlaMetric,
-        origin_source_id: str, supplier_external_id: str | None,
+        self,
+        *,
+        as_of: date,
+        metric: SlaMetric,
+        origin_source_id: str,
+        supplier_external_id: str | None,
         category: str | None,
     ) -> SlaRule | None: ...
 ```
@@ -248,6 +257,6 @@ Tests build SLA YAML in `tmp_path` from a shared base-catalog builder in `tests/
 ## 4. Approval
 
 **Feature spec:** Approved — 2026-11-22 by the project owner.  
-**Feature plan:** Proposed — 2026-11-22; awaiting project-owner approval.  
-**Feature tasks:** Proposed — see [`tasks.md`](tasks.md).  
+**Feature plan:** Approved — 2026-11-22 by the project owner.  
+**Feature tasks:** Approved — 2026-11-22 by the project owner; see [`tasks.md`](tasks.md).  
 **Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.

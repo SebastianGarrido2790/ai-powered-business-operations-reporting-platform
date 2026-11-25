@@ -84,10 +84,12 @@ class ReportCadence(StrEnum):
     MONTHLY = "monthly"
     ON_DEMAND = "on_demand"
 
+
 class PublicationStatus(StrEnum):
     DRAFT = "DRAFT"
     VALIDATED = "VALIDATED"
     PUBLISHED = "PUBLISHED"
+
 
 @dataclass(frozen=True)
 class ReportingPeriod:
@@ -95,12 +97,14 @@ class ReportingPeriod:
     period_end: date
     cadence: ReportCadence
 
+
 @dataclass(frozen=True)
 class DataSnapshotRef:
     snapshot_id: UUID
     data_cutoff_at: datetime
     kpi_catalog_version: str
     sla_catalog_version: str | None = None
+
 
 @dataclass(frozen=True)
 class KpiDescriptor:
@@ -110,6 +114,7 @@ class KpiDescriptor:
     unit: str
     formula_summary: str
     catalog_version: str
+
 
 @dataclass(frozen=True)
 class ArtifactReference:

@@ -57,9 +57,11 @@ Rationale for a new package rather than extending `validation/` or `reconciliati
 ```python
 KPI_CATALOG_VERSION = "1.0.0"
 
+
 class KpiCode(StrEnum):
     OTD_RATE = "OTD_RATE"
     ...
+
 
 @dataclass(frozen=True)
 class KpiDefinition:
@@ -68,10 +70,11 @@ class KpiDefinition:
     owner: str
     unit: Literal["rate", "days", "count", "money", "ratio"]
     grain: Literal["global", "supplier", "supplier_currency"]
-    population: str          # concise eligibility statement
-    formula: str             # documented calculation method (FR-KPI-06)
+    population: str  # concise eligibility statement
+    formula: str  # documented calculation method (FR-KPI-06)
 
-KPI_DEFINITIONS: Final[tuple[KpiDefinition, ...]] = (...)
+
+KPI_DEFINITIONS: Final[tuple[KpiDefinition, ...]] = ...
 KPI_BY_CODE: Final[Mapping[KpiCode, KpiDefinition]] = MappingProxyType(...)
 ```
 

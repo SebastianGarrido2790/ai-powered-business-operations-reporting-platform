@@ -266,5 +266,5 @@ A rule is active when `effective_from <= as_of` and (`effective_to` is null or `
 
 **Feature scope:** Accepted in the M3 decision record (M3-D02, M3-D02.1).  
 **Feature SDD:** Approved — 2026-11-22 by the project owner.  
-**Feature plan and tasks:** Proposed — 2026-11-22; see [`plan.md`](plan.md) and [`tasks.md`](tasks.md).  
+**Feature plan and tasks:** Approved — 2026-11-22 by the project owner; see [`plan.md`](plan.md) and [`tasks.md`](tasks.md).  
 **Implementation authorization:** Not granted. Explicit execution authorization is required before implementation may begin.

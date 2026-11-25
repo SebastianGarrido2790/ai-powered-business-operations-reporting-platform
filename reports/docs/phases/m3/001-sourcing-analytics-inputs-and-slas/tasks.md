@@ -1,6 +1,6 @@
 # 001 — Sourcing Analytics Inputs & Declarative SLA Registry: Tasks
 
-**Status:** Proposed — awaiting project-owner approval (2026-11-22); no implementation authorized  
+**Status:** Approved — feature tasks approved by the project owner 2026-11-22; no implementation authorized  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stage 1 per `../implementation_plan.md` §7  
 **Governing decisions:** M3-D02, M3-D02.1; M2-D03.1, M2-D04.1, M2-D05
@@ -99,6 +99,6 @@
 
 ## Approval
 
-**Tasks:** Proposed — 2026-11-22; awaiting project-owner approval.  
-**Plan:** Proposed — 2026-11-22; awaiting project-owner approval.  
+**Tasks:** Approved — 2026-11-22 by the project owner.  
+**Plan:** Approved — 2026-11-22 by the project owner.  
 **Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
