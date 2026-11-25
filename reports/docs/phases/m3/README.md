@@ -1,6 +1,6 @@
 # M3 SDD & Execution Package
 
-**Status:** Proposed — awaiting M3 execution authorization; Stage 0 passed; implementation not yet authorized
+**Status:** Approved — M3 implementation authorized by the project owner 2026-11-25; Stage 0 passed; execution in progress starting Stage 1
 
 ## Package contents
 
@@ -39,11 +39,12 @@ Candidate acceptance and approval of M3-D01–M3-D08 do not automatically approv
 
 ## Execution authorization
 
-- Stage 0 passed on 2026-11-25 (commit `d498e15`). The gate evidence is in `verification/stage_0_verification.md`. Execution authorization for Stage 0 has been issued.
-- Stage 1 (`001` — Curated Input Enrichment & SLA Registry) is **unblocked** and ready to begin once the project owner explicitly authorizes Stage 1 execution. No production code, migration, configuration, or test has been modified by Stage 0. Stages 2–8 remain pending.
-- Explicit M3 execution authorization is required before any stage implementation begins (per AGENTS.md §1 Operating Protocol: "Obtain human authorization before consequential decisions or non-trivial implementation when not already explicitly authorized").
+- **M3 implementation authorized** by the project owner on 2026-11-25 (execution plan status updated, commits `6f1e481` and `090e187`).
+- Stage 0 passed on 2026-11-25 (commit `d498e15`). Gate evidence: `verification/stage_0_verification.md`.
+- Stage 1 (`001` — Curated Input Enrichment & SLA Registry) is **authorized** and ready to begin. No production code, migration, configuration, or test has been modified by Stage 0. Stages 2–8 remain pending.
+- D06.1 Power BI Desktop check confirmed installed (2.160.1151.0, Store package `Microsoft.MicrosoftPowerBIDesktop`) on 2026-11-25; primary visual path available for Stage 6.
 
-Completion record: M3 Execution Plan approved 2026-11-25; Stage 0 passed 2026-11-25; D06.1 Power BI Desktop confirmed installed 2026-11-25 (2.160.1151.0, Store package `Microsoft.MicrosoftPowerBIDesktop`); all seven feature SDDs approved 2026-11-22/24. Explicit authorization pending for Stage 1 onward.
+Completion record: M3 Execution Plan approved and implementation authorized 2026-11-25; Stage 0 passed 2026-11-25; all seven feature SDDs approved 2026-11-22/24. Stage 1 is the active next stage.
 
 ## Authority
 
