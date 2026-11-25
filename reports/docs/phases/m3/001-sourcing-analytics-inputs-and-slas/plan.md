@@ -1,6 +1,6 @@
 # 001 — Sourcing Analytics Inputs & Declarative SLA Registry: Plan
 
-**Status:** Approved — feature plan approved by the project owner 2026-11-22; no implementation authorized  
+**Status:** Approved — feature plan approved by the project owner 2026-11-22; implementation authorized 2026-11-25  
 **Parent:** [`spec.md`](spec.md)  
 **Phase stage:** Stage 1 per `../implementation_plan.md` §7  
 **Governing decisions:** M3-D02, M3-D02.1; M2-D03.1 and M2-D05 for curated identity and normalized values; M2-D04.1 for configuration-driven contracts  
@@ -259,4 +259,4 @@ Tests build SLA YAML in `tmp_path` from a shared base-catalog builder in `tests/
 **Feature spec:** Approved — 2026-11-22 by the project owner.  
 **Feature plan:** Approved — 2026-11-22 by the project owner.  
 **Feature tasks:** Approved — 2026-11-22 by the project owner; see [`tasks.md`](tasks.md).  
-**Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
+**Implementation authorization:** Granted - project owner authorized M3 implementation on 2026-11-25.

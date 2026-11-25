@@ -1,7 +1,7 @@
 # 002 — Sourcing KPI & SLA Engine
 
 **Phase:** M3 — Analytics, Reporting & BI  
-**Status:** Approved — feature specification approved by the project owner 2026-11-23; no implementation authorized  
+**Status:** Approved — feature specification approved by the project owner 2026-11-23; implementation authorized 2026-11-25  
 **Parent decision record:** `../implementation_plan.md`  
 **Governing decisions:** M3-D03, M3-D03.1, M3-D05.2; M3-D02/M3-D02.1 inputs from SDD 001  
 **Execution stage:** Stage 2 per implementation plan §7
@@ -358,4 +358,4 @@ SDD 003 may denormalize these values into analytical tables; it must not re-deri
 **Feature SDD:** Approved — 2026-11-23 by the project owner.  
 **OD-03 KPI & SLA Catalog Review:** Required before M3 acceptance.  
 **Feature plan and tasks:** Approved — 2026-11-23 by the project owner; see [`plan.md`](plan.md) and [`tasks.md`](tasks.md).  
-**Implementation authorization:** Not granted. Explicit execution authorization is required before implementation may begin.
+**Implementation authorization:** Granted - project owner authorized M3 implementation on 2026-11-25.

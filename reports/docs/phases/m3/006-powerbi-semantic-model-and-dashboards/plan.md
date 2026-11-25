@@ -1,6 +1,6 @@
 # 006 — Power BI Semantic Model & Dashboards: Plan
 
-**Status:** Approved — feature plan approved by the project owner 2026-11-24; no implementation authorized  
+**Status:** Approved — feature plan approved by the project owner 2026-11-24; implementation authorized 2026-11-25  
 **Parent:** [`spec.md`](spec.md) · [`tasks.md`](tasks.md)  
 **Phase stage:** Stage 6 per `../implementation_plan.md` §7.2  
 **Governing decisions:** M3-D06, M3-D06.1; consumes SDD 003, reconciles against SDD 005  
@@ -149,4 +149,4 @@ If Desktop is unavailable, step 3 uses API/report output and the SQL in `contrac
 **Feature scope:** Accepted in the M3 decision record (M3-D06, M3-D06.1).  
 **Feature SDD:** Approved — 2026-11-24 by the project owner.  
 **Feature plan and tasks:** Approved — 2026-11-24 by the project owner; see [`tasks.md`](tasks.md).  
-**Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
+**Implementation authorization:** Granted - project owner authorized M3 implementation on 2026-11-25.

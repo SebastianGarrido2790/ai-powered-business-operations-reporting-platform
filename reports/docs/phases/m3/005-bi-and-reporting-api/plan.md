@@ -1,6 +1,6 @@
 # 005 — Business Intelligence & Reporting API: Plan
 
-**Status:** Approved — feature plan approved by the project owner 2026-11-24; no implementation authorized  
+**Status:** Approved — feature plan approved by the project owner 2026-11-24; implementation authorized 2026-11-25  
 **Parent:** [`spec.md`](spec.md) · [`tasks.md`](tasks.md)  
 **Phase stage:** Stage 5 per `../implementation_plan.md` §7.2  
 **Governing decisions:** M3-D07, M3-D07.1; consumes SDD 003 & SDD 004  
@@ -142,4 +142,4 @@ Extend `SourcingServices`:
 **Feature scope:** Accepted in the M3 decision record (M3-D07, M3-D07.1).  
 **Feature SDD:** Approved — 2026-11-24 by the project owner.  
 **Feature plan and tasks:** Approved — 2026-11-24 by the project owner; see [`tasks.md`](tasks.md).  
-**Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
+**Implementation authorization:** Granted - project owner authorized M3 implementation on 2026-11-25.

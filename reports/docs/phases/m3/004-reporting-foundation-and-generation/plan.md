@@ -1,6 +1,6 @@
 # 004 — Reporting Foundation & Report Generation: Plan
 
-**Status:** Approved — feature plan approved by the project owner 2026-11-24; no implementation authorized  
+**Status:** Approved — feature plan approved by the project owner 2026-11-24; implementation authorized 2026-11-25  
 **Parent:** [`spec.md`](spec.md) · [`tasks.md`](tasks.md)  
 **Phase stage:** Stage 4 per `../implementation_plan.md` §7.2  
 **Governing decisions:** M3-D01, M3-D05, M3-D05.1, M3-D05.2; consumes SDD 002 & SDD 003  
@@ -159,4 +159,4 @@ src/app/modules/sourcing/reporting/
 **Feature scope:** Accepted in the M3 decision record (M3-D01, M3-D05, M3-D05.1, M3-D05.2).  
 **Feature SDD:** Approved — 2026-11-24 by the project owner.  
 **Feature plan and tasks:** Approved — 2026-11-24 by the project owner; see [`tasks.md`](tasks.md).  
-**Implementation authorization:** Not granted. The M3 execution plan and explicit execution authorization remain required.
+**Implementation authorization:** Granted - project owner authorized M3 implementation on 2026-11-25.
