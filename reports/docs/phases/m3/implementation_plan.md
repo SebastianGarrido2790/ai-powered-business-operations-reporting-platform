@@ -1068,10 +1068,10 @@ At M3 closure:
 
 ### Phase authorization
 
-- **Implementation Plan status:** Proposed (2026-11-22) — **Batches 1–3 approved; baseline D08 acknowledged (2026-11-22). All decisions complete.**
+- **Implementation Plan status:** Approved (2026-11-22) — **Batches 1–3 approved; baseline D08 acknowledged (2026-11-22). All decisions complete.**
 - **Feature SDD status:** Complete — `001`–`007` specs, plans (where applicable), and tasks approved and pushed (2026-11-22/24).
 - **Execution Plan status:** Approved (2026-11-25) — `m3/execution_plan.md` approved by the project owner.
-- **Execution authorization:** Not granted. No implementation may begin before explicit M3 execution authorization is issued.
+- **Execution authorization:** Granted — project owner authorized M3 implementation on 2026-11-25.
 
 ---
 
