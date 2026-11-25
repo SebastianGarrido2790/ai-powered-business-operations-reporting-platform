@@ -2,11 +2,11 @@
 
 **Project:** Business Operations Platform Foundation (BOPF)  
 **Phase:** M3 — Business Intelligence  
-**Status:** Approved — M3 Execution Plan approved by the project owner 2026-11-25; no implementation authorized  
-**Previous phase:** M2 — Data Integration & Processing (signed off 2026-11-17)  
-**Decision baseline:** M3-D01 through M3-D07.1 approved; M3-D08 acknowledged (2026-11-22)  
-**SDD baseline:** Packages `001`–`007` approved (specs, plans where applicable, and tasks) as of 2026-11-24  
-**Execution authorization:** Not granted
+**Status:** Approved — M3 Execution Plan approved by the project owner 2026-11-25; implementation authorized
+**Previous phase:** M2 — Data Integration & Processing (signed off 2026-11-17)
+**Decision baseline:** M3-D01 through M3-D07.1 approved; M3-D08 acknowledged (2026-11-22)
+**SDD baseline:** Packages `001`–`007` approved (specs, plans where applicable, and tasks) as of 2026-11-24
+**Execution authorization:** Granted — project owner authorized M3 implementation on 2026-11-25
 
 ---
 
@@ -55,7 +55,7 @@ The operating protocol is: **Analyze → Challenge → Recommend → Human decis
 | Tooling | Python 3.11+, `uv`, `uv.lock` integrity, Ruff, Mypy, Pytest, Docker, Compose, Git | Pending Stage 0 verification |
 | Database | PostgreSQL 16 reachable; Alembic head `0004_sourcing_curated_entities`; `sourcing` schema present; no `analytics_sourcing` | Pending Stage 0 verification |
 | Open governance gates | OD-03 KPI/SLA catalog review; `M3-D04.1` qualification; `M3-D06.1` workstation check | Tracked; gates defined below |
-| Human authorization | Explicit project-owner authorization for M3 execution | Not granted |
+| Human authorization | Explicit project-owner authorization for M3 execution | Granted (2026-11-25) |
 
 ### 2.2 Pre-implementation sequence
 
@@ -520,4 +520,4 @@ None. Reconciliation and sign-off stage.
 | 8 | ADR Consolidation & Phase Sign-Off | PIR completion, ADR notes, phase sign-off | — | All gates, findings, and exit criteria closed | Not started |
 
 **Execution Plan status:** Approved (2026-11-25) — awaiting explicit execution authorization.  
-**Execution authorization:** Not granted. No implementation may begin before explicit M3 execution authorization is issued.
+**Execution authorization:** Granted — project owner authorized M3 implementation on 2026-11-25; no implementation may begin before execution authorization is issued.
