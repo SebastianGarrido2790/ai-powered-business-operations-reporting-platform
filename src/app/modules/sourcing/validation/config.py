@@ -35,6 +35,7 @@ _TYPE_FOR_KIND: Final[Mapping[str, str]] = {
     "timestamp": "timestamp",
     "money": "decimal",
     "quantity": "decimal",
+    "integer": "integer",
     "external_record_id": "string",
 }
 

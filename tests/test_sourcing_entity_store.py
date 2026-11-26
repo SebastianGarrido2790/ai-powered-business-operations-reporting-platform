@@ -165,7 +165,12 @@ def test_insert_persists_origin_identity_and_provenance(
 
     entity = entity_store.get_entity("supplier", entity_id)
     assert entity is not None
-    assert entity.values == {"name": "Acme", "normalized_name_key": "acme"}
+    assert entity.values == {
+        "name": "Acme",
+        "normalized_name_key": "acme",
+        "country": None,
+        "category": None,
+    }
     assert entity.provenance.origin_source_id == SOURCE_ID
     assert entity.provenance.origin_external_record_id == "sup-1"
     assert entity.provenance.first_ingestion_run_id == run.id
@@ -175,6 +180,66 @@ def test_insert_persists_origin_identity_and_provenance(
     assert entity.provenance.reconciliation_status == "UNRESOLVED"
     assert entity_store.find_by_source_identity("supplier", SOURCE_ID, "sup-1") == entity
     assert entity_store.get_entity("supplier", uuid.uuid4()) is None
+
+
+def test_analytics_attribute_columns_round_trip_and_update(
+    entity_store: PostgresSourcingEntityStore,
+    sourcing_engine: Engine,
+    new_run: Callable[[], IngestionRun],
+    new_record: Callable[[IngestionRun], SourceRecord],
+) -> None:
+    """The six nullable analytics attributes persist, snapshot, and update."""
+    run = new_run()
+    record = new_record(run)
+    provenance = _provenance(run, record)
+
+    supplier_id = _upsert(
+        entity_store,
+        sourcing_engine,
+        "supplier",
+        SourceEntityIdentity(source_id=SOURCE_ID, external_record_id="sup-analytics"),
+        {
+            "name": "Acme",
+            "normalized_name_key": "acme",
+            "country": "DEU",
+            "category": "ELECTRONICS",
+        },
+        provenance,
+    )
+    quote_id = _upsert(
+        entity_store,
+        sourcing_engine,
+        "quote",
+        SourceEntityIdentity(source_id=SOURCE_ID, external_record_id="quote-analytics"),
+        {
+            "quote_number": "Q-1",
+            "quoted_on": date(2026, 5, 1),
+            "lead_time_days": 5,
+        },
+        provenance,
+    )
+
+    supplier = entity_store.get_entity("supplier", supplier_id)
+    quote = entity_store.get_entity("quote", quote_id)
+    assert supplier is not None
+    assert quote is not None
+    assert supplier.values["country"] == "DEU"
+    assert supplier.values["category"] == "ELECTRONICS"
+    assert quote.values["quoted_on"] == date(2026, 5, 1)
+    assert quote.values["lead_time_days"] == 5
+
+    _upsert(
+        entity_store,
+        sourcing_engine,
+        "quote",
+        SourceEntityIdentity(source_id=SOURCE_ID, external_record_id="quote-analytics"),
+        {"lead_time_days": 6},
+        provenance,
+    )
+
+    updated = entity_store.get_entity("quote", quote_id)
+    assert updated is not None
+    assert updated.values["lead_time_days"] == 6
 
 
 def test_replace_updates_fields_and_keeps_the_first_run(
@@ -295,7 +360,12 @@ def test_null_values_never_clear_stored_fields(
 
     entity = entity_store.get_entity("supplier", entity_id)
     assert entity is not None
-    assert entity.values == {"name": "Acme", "normalized_name_key": "acme"}
+    assert entity.values == {
+        "name": "Acme",
+        "normalized_name_key": "acme",
+        "country": None,
+        "category": None,
+    }
 
 
 def test_origin_identity_is_unique_and_not_writable(

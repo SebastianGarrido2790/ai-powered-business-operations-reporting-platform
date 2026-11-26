@@ -12,7 +12,8 @@ from sqlalchemy import Engine, create_engine, text
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
 MIGRATIONS_DIR = PROJECT_ROOT / "database" / "migrations"
-REVISION_HEAD = "0004_sourcing_curated_entities"
+REVISION_HEAD = "0005_sourcing_analytics_attributes"
+REVISION_0004 = "0004_sourcing_curated_entities"
 REVISION_0002 = "0002_platform_jobs_and_metadata"
 
 requires_database = pytest.mark.skipif(
@@ -116,11 +117,14 @@ CURATED_BUSINESS_COLUMNS = {
     "suppliers": {
         "name": ("character varying", "NO"),
         "normalized_name_key": ("character varying", "NO"),
+        "country": ("character varying", "YES"),
+        "category": ("character varying", "YES"),
     },
     "requisitions": {
         "requisition_number": ("character varying", "YES"),
         "requested_on": ("date", "YES"),
         "needed_by": ("date", "YES"),
+        "status": ("character varying", "YES"),
         "supplier_id": ("uuid", "YES"),
     },
     "quotes": {
@@ -130,6 +134,8 @@ CURATED_BUSINESS_COLUMNS = {
         "amount": ("numeric", "YES"),
         "currency": ("character varying", "YES"),
         "valid_until": ("date", "YES"),
+        "quoted_on": ("date", "YES"),
+        "lead_time_days": ("integer", "YES"),
     },
     "purchase_orders": {
         "purchase_order_number": ("character varying", "YES"),
@@ -139,6 +145,7 @@ CURATED_BUSINESS_COLUMNS = {
         "committed_delivery_date": ("date", "YES"),
         "total_amount": ("numeric", "YES"),
         "currency": ("character varying", "YES"),
+        "status": ("character varying", "YES"),
     },
     "deliveries": {
         "delivery_number": ("character varying", "YES"),
@@ -255,9 +262,16 @@ def _curated_constraints(table: str) -> set[str]:
     if table == "quotes":
         constraints.add("fk_quotes_requisition_id_requisitions")
         constraints.add("ck_quotes_currency")
+        constraints.add("ck_quotes_lead_time_days")
     if table == "purchase_orders":
         constraints.add("fk_purchase_orders_requisition_id_requisitions")
         constraints.add("ck_purchase_orders_currency")
+        constraints.add("ck_purchase_orders_status")
+    if table == "suppliers":
+        constraints.add("ck_suppliers_country")
+        constraints.add("ck_suppliers_category")
+    if table == "requisitions":
+        constraints.add("ck_requisitions_status")
     if table == "deliveries":
         constraints.add("fk_deliveries_purchase_order_id_purchase_orders")
     return constraints
@@ -436,6 +450,50 @@ def test_migrations_do_not_change_platform_or_analytics(engine: Engine) -> None:
 
     assert {str(row[0]) for row in platform_tables} == PLATFORM_TABLES
     assert analytics == []
+
+
+def test_0005_downgrade_removes_only_the_analytics_columns(engine: Engine) -> None:
+    """The additive revision reverses cleanly and re-applies without data rewrites."""
+    url = os.environ["BOPF_TEST_DATABASE_URL"]
+    config = _alembic_config(url)
+
+    command.downgrade(config, REVISION_0004)
+
+    suppliers = _columns(engine, "suppliers")
+    quotes = _columns(engine, "quotes")
+    assert "country" not in suppliers
+    assert "category" not in suppliers
+    assert "quoted_on" not in quotes
+    assert "lead_time_days" not in quotes
+    assert "status" not in _columns(engine, "requisitions")
+    assert "status" not in _columns(engine, "purchase_orders")
+
+    command.upgrade(config, "head")
+    assert _columns(engine, "suppliers") == {
+        **CURATED_SHARED_COLUMNS,
+        **CURATED_BUSINESS_COLUMNS["suppliers"],
+    }
+
+
+def test_revision_identifier_fits_the_widened_version_table(engine: Engine) -> None:
+    """The descriptive revision id is stamped in a widened version column."""
+    url = os.environ["BOPF_TEST_DATABASE_URL"]
+    command.upgrade(_alembic_config(url), "head")
+
+    width = _query(
+        engine,
+        """
+        SELECT character_maximum_length
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'alembic_version'
+          AND column_name = 'version_num'
+        """,
+    )[0][0]
+    revision = _query(engine, "SELECT version_num FROM public.alembic_version")[0][0]
+
+    assert width == 64
+    assert revision == REVISION_HEAD
 
 
 def test_downgrade_to_platform_head_removes_the_sourcing_schema(engine: Engine) -> None:

@@ -83,6 +83,10 @@ class SourcingSettings(BaseSettings):
         default=Path("config/sourcing/validation.yaml"),
         description="Path to non-secret validation schemas and mappings YAML file",
     )
+    sla_file: Path = Field(
+        default=Path("config/sourcing/slas.yaml"),
+        description="Path to non-secret declarative SLA catalog YAML file",
+    )
     validation_batch_size: int = Field(
         default=500,
         ge=1,

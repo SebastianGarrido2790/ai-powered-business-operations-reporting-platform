@@ -20,12 +20,20 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 #: Canonical payload fields per entity, in canonical order.
 CANONICAL_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
-    "supplier": ("name", "normalized_name_key"),
-    "requisition": ("requisition_number", "requested_on", "needed_by", "supplier_code"),
+    "supplier": ("name", "normalized_name_key", "country", "category"),
+    "requisition": (
+        "requisition_number",
+        "requested_on",
+        "needed_by",
+        "status",
+        "supplier_code",
+    ),
     "quote": (
         "quote_number",
         "supplier_code",
         "requisition_number",
+        "quoted_on",
+        "lead_time_days",
         "amount",
         "currency",
         "valid_until",
@@ -36,6 +44,7 @@ CANONICAL_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
         "requisition_number",
         "ordered_on",
         "committed_delivery_date",
+        "status",
         "total_amount",
         "currency",
     ),
@@ -51,17 +60,20 @@ CANONICAL_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
 #: Field kind per entity. A target can be an identifier in its owning entity and
 #: a reference in another, so the kind is entity-scoped.
 ENTITY_FIELD_KINDS: Final[Mapping[str, Mapping[str, str]]] = {
-    "supplier": {"name": "text"},
+    "supplier": {"name": "text", "country": "text", "category": "text"},
     "requisition": {
         "requisition_number": "identifier",
         "requested_on": "date",
         "needed_by": "date",
+        "status": "text",
         "supplier_code": "reference",
     },
     "quote": {
         "quote_number": "identifier",
         "supplier_code": "reference",
         "requisition_number": "reference",
+        "quoted_on": "date",
+        "lead_time_days": "integer",
         "amount": "money",
         "currency": "currency",
         "valid_until": "date",
@@ -72,6 +84,7 @@ ENTITY_FIELD_KINDS: Final[Mapping[str, Mapping[str, str]]] = {
         "requisition_number": "reference",
         "ordered_on": "date",
         "committed_delivery_date": "date",
+        "status": "text",
         "total_amount": "money",
         "currency": "currency",
     },
@@ -102,10 +115,16 @@ CANONICAL_MAX_LENGTHS: Final[Mapping[str, int]] = {
     "purchase_order_number": 100,
     "delivery_number": 100,
     "supplier_code": 255,
+    "country": 3,
+    "category": 100,
+    "status": 32,
     "currency": 3,
     "unit": 32,
     "external_record_id": 255,
 }
+
+#: Text targets that are canonicalized to uppercase after `normalize_text`.
+UPPERCASE_TEXT_TARGETS: Final[frozenset[str]] = frozenset({"country", "category"})
 
 #: Business identifier per entity; suppliers have none and rely on the external id.
 BUSINESS_IDENTIFIER_FIELDS: Final[Mapping[str, str]] = {
@@ -322,8 +341,8 @@ def field_kind(entity_type: str, target: str) -> str | None:
 
 def max_length_for(entity_type: str, target: str) -> int | None:
     """Return the maximum length cap for a target, or `None` when unbounded."""
-    if target == "external_record_id":
-        return CANONICAL_MAX_LENGTHS["external_record_id"]
+    if target in CANONICAL_MAX_LENGTHS:
+        return CANONICAL_MAX_LENGTHS[target]
     kind = ENTITY_FIELD_KINDS.get(entity_type, {}).get(target)
     if kind is None:
         return None

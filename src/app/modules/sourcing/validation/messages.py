@@ -37,6 +37,7 @@ TEMPLATES: Final[Mapping[str, str]] = {
     "NORM_QUANTITY_RANGE": "Field '{field}' is outside the supported quantity range.",
     "BUSINESS_MISSING_IDENTITY": "The record has no external or business identifier.",
     "BUSINESS_DATE_ORDER": "Dates are out of order: '{earlier}' precedes '{later}'.",
+    "BUSINESS_LEAD_TIME_NEGATIVE": "Field '{field}' must not be negative.",
     "BUSINESS_AMOUNT_NEGATIVE": "Field '{field}' must not be negative.",
     "BUSINESS_CURRENCY_MISSING": "An amount is present without a currency.",
     "BUSINESS_AMOUNT_ZERO": "Field '{field}' is zero.",

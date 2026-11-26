@@ -1,0 +1,24 @@
+version: 1
+catalog_version: "1.0.0"
+
+# Declarative SLA registry. This file intentionally contains no business
+# targets: the OD-03-reviewed rules are supplied by SDD 002. The loader rejects
+# the whole file atomically when any rule is malformed or inconsistent.
+#
+# Each rule:
+#   sla_id:          Stable identifier, ^[A-Z0-9][A-Z0-9_-]*$
+#   scope:           One of
+#                      {type: supplier, origin_source_id, supplier_external_id}
+#                      {type: category, category}  # category must be uppercase
+#   metric:          OTD_RATE | MAX_LEAD_TIME_DAYS | MAX_QUOTE_RESPONSE_DAYS
+#   target:          Quoted decimal string; OTD_RATE in (0, 1], maximum metrics
+#                    integral and non-negative
+#   effective_from:  ISO date, inclusive
+#   effective_to:    Optional ISO date, inclusive; must not precede effective_from
+#   owner:           Non-empty responsibility label, at most 255 characters
+#
+# Supplier scope requires an origin source that exists and owns supplier data.
+# Rules for the same scope and metric must not overlap. Supplier rules take
+# precedence over category rules; an unmatched metric, scope, or date resolves
+# to NOT_APPLICABLE rather than a default target.
+slas: []

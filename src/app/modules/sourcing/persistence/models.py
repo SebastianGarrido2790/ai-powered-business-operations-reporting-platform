@@ -320,6 +320,14 @@ class SupplierModel(_CuratedColumns, SourcingBase):
             "reconciliation_status IN ('UNRESOLVED', 'CONFIRMED', 'AMBIGUOUS')",
             name="ck_suppliers_reconciliation_status",
         ),
+        CheckConstraint(
+            "country IS NULL OR country ~ '^[A-Z]{3}$'",
+            name="ck_suppliers_country",
+        ),
+        CheckConstraint(
+            "category IS NULL OR category <> ''",
+            name="ck_suppliers_category",
+        ),
         Index(
             "uq_suppliers_origin_identity",
             "origin_source_id",
@@ -334,6 +342,8 @@ class SupplierModel(_CuratedColumns, SourcingBase):
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     normalized_name_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    country: Mapped[str | None] = mapped_column(String(3))
+    category: Mapped[str | None] = mapped_column(String(100))
 
 
 class RequisitionModel(_CuratedColumns, SourcingBase):
@@ -353,6 +363,10 @@ class RequisitionModel(_CuratedColumns, SourcingBase):
             "reconciliation_status IN ('UNRESOLVED', 'CONFIRMED', 'AMBIGUOUS')",
             name="ck_requisitions_reconciliation_status",
         ),
+        CheckConstraint(
+            "status IS NULL OR status IN ('OPEN', 'APPROVED', 'CONVERTED', 'CLOSED', 'CANCELLED')",
+            name="ck_requisitions_status",
+        ),
         Index(
             "uq_requisitions_origin_identity",
             "origin_source_id",
@@ -369,6 +383,7 @@ class RequisitionModel(_CuratedColumns, SourcingBase):
     requisition_number: Mapped[str | None] = mapped_column(String(100))
     requested_on: Mapped[date | None] = mapped_column(Date)
     needed_by: Mapped[date | None] = mapped_column(Date)
+    status: Mapped[str | None] = mapped_column(String(32))
     supplier_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("sourcing.suppliers.id", ondelete="RESTRICT"),
@@ -396,6 +411,10 @@ class QuoteModel(_CuratedColumns, SourcingBase):
             "currency IS NULL OR currency ~ '^[A-Z]{3}$'",
             name="ck_quotes_currency",
         ),
+        CheckConstraint(
+            "lead_time_days IS NULL OR lead_time_days >= 0",
+            name="ck_quotes_lead_time_days",
+        ),
         Index(
             "uq_quotes_origin_identity",
             "origin_source_id",
@@ -422,6 +441,8 @@ class QuoteModel(_CuratedColumns, SourcingBase):
     amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     currency: Mapped[str | None] = mapped_column(String(3))
     valid_until: Mapped[date | None] = mapped_column(Date)
+    quoted_on: Mapped[date | None] = mapped_column(Date)
+    lead_time_days: Mapped[int | None] = mapped_column(Integer)
 
 
 class PurchaseOrderModel(_CuratedColumns, SourcingBase):
@@ -444,6 +465,11 @@ class PurchaseOrderModel(_CuratedColumns, SourcingBase):
         CheckConstraint(
             "currency IS NULL OR currency ~ '^[A-Z]{3}$'",
             name="ck_purchase_orders_currency",
+        ),
+        CheckConstraint(
+            "status IS NULL OR status IN "
+            "('OPEN', 'PARTIALLY_DELIVERED', 'DELIVERED', 'CLOSED', 'CANCELLED')",
+            name="ck_purchase_orders_status",
         ),
         Index(
             "uq_purchase_orders_origin_identity",
@@ -473,6 +499,7 @@ class PurchaseOrderModel(_CuratedColumns, SourcingBase):
     committed_delivery_date: Mapped[date | None] = mapped_column(Date)
     total_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     currency: Mapped[str | None] = mapped_column(String(3))
+    status: Mapped[str | None] = mapped_column(String(32))
 
 
 class DeliveryModel(_CuratedColumns, SourcingBase):

@@ -70,6 +70,15 @@ sources:
           type: string
           required: true
           max_length: 255
+        country:
+          target: country
+          type: string
+          max_length: 3
+          pattern: "^[A-Za-z]{3}$"
+        category:
+          target: category
+          type: string
+          max_length: 100
 
     requisition:
       source_timestamp: required
@@ -95,6 +104,31 @@ sources:
           max_length: 255
           case: upper
           pattern: "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        requested_on:
+          target: requested_on
+          type: date
+          formats:
+            - "%Y-%m-%d"
+        needed_by:
+          target: needed_by
+          type: date
+          formats:
+            - "%Y-%m-%d"
+        status:
+          target: status
+          type: enum
+          max_length: 32
+          enum:
+            OPEN: OPEN
+            open: OPEN
+            APPROVED: APPROVED
+            approved: APPROVED
+            CONVERTED: CONVERTED
+            converted: CONVERTED
+            CLOSED: CLOSED
+            closed: CLOSED
+            CANCELLED: CANCELLED
+            cancelled: CANCELLED
 
     quote:
       source_timestamp: required
@@ -126,6 +160,19 @@ sources:
         currency:
           target: currency
           type: string
+        quoted_on:
+          target: quoted_on
+          type: date
+          formats:
+            - "%Y-%m-%d"
+        valid_until:
+          target: valid_until
+          type: date
+          formats:
+            - "%Y-%m-%d"
+        lead_time_days:
+          target: lead_time_days
+          type: integer
 
     purchase_order:
       source_timestamp: required
@@ -158,6 +205,31 @@ sources:
         currency:
           target: currency
           type: string
+        ordered_on:
+          target: ordered_on
+          type: date
+          formats:
+            - "%Y-%m-%d"
+        committed_delivery_date:
+          target: committed_delivery_date
+          type: date
+          formats:
+            - "%Y-%m-%d"
+        status:
+          target: status
+          type: enum
+          max_length: 32
+          enum:
+            OPEN: OPEN
+            open: OPEN
+            PARTIALLY_DELIVERED: PARTIALLY_DELIVERED
+            partially_delivered: PARTIALLY_DELIVERED
+            DELIVERED: DELIVERED
+            delivered: DELIVERED
+            CLOSED: CLOSED
+            closed: CLOSED
+            CANCELLED: CANCELLED
+            cancelled: CANCELLED
 
     delivery:
       source_timestamp: required
@@ -181,3 +253,11 @@ sources:
           type: date
           formats:
             - "%Y-%m-%d"
+        quantity:
+          target: quantity
+          type: decimal
+          unit_field: unit
+        unit:
+          target: unit
+          type: string
+          max_length: 32

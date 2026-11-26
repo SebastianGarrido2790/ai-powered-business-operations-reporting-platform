@@ -1,7 +1,7 @@
 """Catalog integrity and change-control tests for SDD 004 Phase 1.
 
 Governed by:
-- SDD 004 §4.2: the closed 28-code catalog, stages, severities, applicability.
+- SDD 004 §4.2: the closed 29-code catalog, stages, severities, applicability.
 - SDD 004 §4.3: stable codes, no reuse, versioned changes.
 - SDD 004 §1.8: one fixed message template per code.
 """
@@ -24,6 +24,7 @@ ALL: Final[frozenset[str]] = frozenset(
     {"supplier", "requisition", "quote", "purchase_order", "delivery"}
 )
 MONEY: Final[frozenset[str]] = frozenset({"quote", "purchase_order"})
+QUOTE: Final[frozenset[str]] = frozenset({"quote"})
 DELIVERY: Final[frozenset[str]] = frozenset({"delivery"})
 DATE_ORDER: Final[frozenset[str]] = frozenset({"requisition", "purchase_order"})
 
@@ -49,6 +50,7 @@ EXPECTED: Final[Mapping[str, tuple[RuleStage, RuleSeverity, frozenset[str]]]] = 
     "NORM_QUANTITY_RANGE": (RuleStage.NORMALIZATION, RuleSeverity.ERROR, ALL),
     "BUSINESS_MISSING_IDENTITY": (RuleStage.BUSINESS, RuleSeverity.ERROR, ALL),
     "BUSINESS_DATE_ORDER": (RuleStage.BUSINESS, RuleSeverity.ERROR, DATE_ORDER),
+    "BUSINESS_LEAD_TIME_NEGATIVE": (RuleStage.BUSINESS, RuleSeverity.ERROR, QUOTE),
     "BUSINESS_AMOUNT_NEGATIVE": (RuleStage.BUSINESS, RuleSeverity.ERROR, MONEY),
     "BUSINESS_CURRENCY_MISSING": (RuleStage.BUSINESS, RuleSeverity.ERROR, MONEY),
     "BUSINESS_AMOUNT_ZERO": (RuleStage.BUSINESS, RuleSeverity.WARNING, MONEY),
@@ -80,6 +82,7 @@ EXPECTED_ORDER: Final[tuple[str, ...]] = (
     "NORM_QUANTITY_RANGE",
     "BUSINESS_MISSING_IDENTITY",
     "BUSINESS_DATE_ORDER",
+    "BUSINESS_LEAD_TIME_NEGATIVE",
     "BUSINESS_AMOUNT_NEGATIVE",
     "BUSINESS_CURRENCY_MISSING",
     "BUSINESS_AMOUNT_ZERO",
@@ -93,8 +96,8 @@ _CODE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
 
 def test_catalog_has_exactly_the_approved_codes() -> None:
-    """The catalog is closed and matches the approved 28 codes exactly."""
-    assert len(RULES) == 28
+    """The catalog is closed and matches the approved 29 codes exactly."""
+    assert len(RULES) == 29
     assert {rule.code for rule in RULES} == set(EXPECTED)
 
 
@@ -125,7 +128,7 @@ def test_stage_severity_and_applicability_match_the_specification() -> None:
 
 def test_lookup_integrity_and_version_format() -> None:
     """Lookup returns the same objects and the rule-set version is approved."""
-    assert RULESET_VERSION == "1.0.0"
+    assert RULESET_VERSION == "1.1.0"
     assert re.fullmatch(r"^\d+\.\d+\.\d+$", RULESET_VERSION)
     for rule in RULES:
         assert RULES_BY_CODE[rule.code] is rule

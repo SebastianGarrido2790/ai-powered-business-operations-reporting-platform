@@ -57,11 +57,12 @@ _MODEL_BY_TYPE: Mapping[str, type[Any]] = {
 }
 
 _BUSINESS_FIELDS: Mapping[str, tuple[str, ...]] = {
-    "supplier": ("name", "normalized_name_key"),
+    "supplier": ("name", "normalized_name_key", "country", "category"),
     "requisition": (
         "requisition_number",
         "requested_on",
         "needed_by",
+        "status",
         "supplier_id",
     ),
     "quote": (
@@ -71,6 +72,8 @@ _BUSINESS_FIELDS: Mapping[str, tuple[str, ...]] = {
         "amount",
         "currency",
         "valid_until",
+        "quoted_on",
+        "lead_time_days",
     ),
     "purchase_order": (
         "purchase_order_number",
@@ -80,6 +83,7 @@ _BUSINESS_FIELDS: Mapping[str, tuple[str, ...]] = {
         "committed_delivery_date",
         "total_amount",
         "currency",
+        "status",
     ),
     "delivery": (
         "delivery_number",

@@ -1,6 +1,6 @@
 # 001 — Sourcing Analytics Inputs & Declarative SLA Registry: Tasks
 
-**Status:** Approved — feature tasks approved by the project owner 2026-11-22; implementation authorized 2026-11-25  
+**Status:** Approved — feature tasks approved by the project owner 2026-11-22; implementation authorized 2026-11-25; implemented and verified 2026-11-26 (uncommitted, Stage 1 gate passed)  
 **Parent:** [`spec.md`](spec.md) · [`plan.md`](plan.md)  
 **Phase stage:** Stage 1 per `../implementation_plan.md` §7  
 **Governing decisions:** M3-D02, M3-D02.1; M2-D03.1, M2-D04.1, M2-D05

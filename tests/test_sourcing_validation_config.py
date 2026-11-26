@@ -435,14 +435,88 @@ def test_required_source_timestamp_is_allowed_when_the_source_declares_it(
     assert loaded.sources["src_a"]["supplier"].source_timestamp == "required"
 
 
+def test_analytics_attribute_mappings_load_and_remain_closed(tmp_path: Path) -> None:
+    """New optional mappings load, enums stay closed, and integer targets are valid."""
+    config = _base_config()
+    supplier = _fields(config, "supplier")
+    supplier["country"] = {
+        "target": "country",
+        "type": "string",
+        "max_length": 3,
+        "pattern": "^[A-Za-z]{3}$",
+    }
+    supplier["category"] = {"target": "category", "type": "string", "max_length": 100}
+    _fields(config, "quote")["lead_time_days"] = {
+        "target": "lead_time_days",
+        "type": "integer",
+    }
+    config["sources"]["src_a"]["requisition"] = {
+        "source_timestamp": "optional",
+        "decimal": {"separator": ".", "thousands": None},
+        "timezone": None,
+        "fields": {
+            "status": {
+                "target": "status",
+                "type": "enum",
+                "max_length": 32,
+                "enum": {"OPEN": "OPEN", "open": "OPEN"},
+            }
+        },
+    }
+    registry = SourceRegistry(
+        [
+            SourceDefinition(
+                source_id="src_a",
+                connector_type=ConnectorType.CSV,
+                authoritative_entities=["supplier", "quote", "requisition", "delivery"],
+                external_id_field="supplier_code",
+            )
+        ]
+    )
+
+    loaded = load_validation_config(
+        _write(tmp_path / "analytics.yaml", config),
+        registry,
+    )
+    supplier_schema = loaded.sources["src_a"]["supplier"]
+    quote_schema = loaded.sources["src_a"]["quote"]
+    requisition_schema = loaded.sources["src_a"]["requisition"]
+
+    assert supplier_schema.fields["country"].max_length == 3
+    assert supplier_schema.fields["category"].max_length == 100
+    assert quote_schema.fields["lead_time_days"].type == "integer"
+    assert requisition_schema.fields["status"].enum == {"OPEN": "OPEN", "open": "OPEN"}
+
+    unknown = evaluate_record(
+        record("requisition", {"status": "unknown"}),
+        requisition_schema,
+    )
+    assert unknown.status == "QUARANTINED"
+    assert [issue.rule_code for issue in unknown.issues] == ["STRUCT_UNKNOWN_ENUM"]
+
+    valid = evaluate_record(
+        record("requisition", {"status": "open"}),
+        requisition_schema,
+    )
+    assert valid.status == "VALID"
+    assert valid.normalized_payload == {"status": "OPEN"}
+
+    quote_valid = evaluate_record(
+        record("quote", {"lead_time_days": 2}),
+        quote_schema,
+    )
+    assert quote_valid.status == "VALID"
+    assert quote_valid.normalized_payload == {"lead_time_days": 2}
+
+
 def test_section_version_is_stable_and_isolated(tmp_path: Path) -> None:
     """Hashes are stable per section and change only for the affected entity."""
     base = _base_config()
     first = _load(_write(tmp_path / "first.yaml", base))
     quote_version = section_version(first.sources["src_a"]["quote"])
     supplier_version = section_version(first.sources["src_a"]["supplier"])
-    assert quote_version.startswith("1.0.0+")
-    assert len(quote_version) == len("1.0.0+") + 12
+    assert quote_version.startswith("1.1.0+")
+    assert len(quote_version) == len("1.1.0+") + 12
     assert len(quote_version) <= 32
 
     unchanged = _load(_write(tmp_path / "unchanged.yaml", base))

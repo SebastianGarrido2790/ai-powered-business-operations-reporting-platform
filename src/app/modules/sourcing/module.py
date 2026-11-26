@@ -30,6 +30,7 @@ from app.modules.sourcing.connectors.registry import build_connector
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
+    from app.modules.sourcing.config.slas import SlaCatalog
     from app.modules.sourcing.persistence import SourcingEntityStore, SourcingRecordStore
     from app.modules.sourcing.reconciliation.pipeline import ReconciliationPipeline
     from app.modules.sourcing.validation import ValidationConfig
@@ -68,9 +69,12 @@ class SourcingModuleContract(BusinessModuleContract):
         self._source_config_diagnostic: str | None = None
         self._validation_config: ValidationConfig | None = None
         self._validation_diagnostic: str | None = None
+        self._sla_catalog: SlaCatalog | None = None
+        self._sla_diagnostic: str | None = None
         self._landing_store: FileAcquisitionService | None = None
         self._load_source_configuration()
         self._load_validation_configuration()
+        self._load_sla_configuration()
 
     def _load_source_configuration(self) -> None:
         """Load and validate named source configuration without raising at startup."""
@@ -109,6 +113,26 @@ class SourcingModuleContract(BusinessModuleContract):
         self._validation_config = config
         self._validation_diagnostic = None
 
+    def _load_sla_configuration(self) -> None:
+        """Load the declarative SLA catalog after sources and validation, never raising."""
+        from app.modules.sourcing.config.slas import SlaConfigError, load_sla_catalog
+
+        if self._source_registry is None or self._settings is None:
+            self._sla_diagnostic = "SOURCE_CONFIG_INVALID"
+            return
+
+        try:
+            catalog = load_sla_catalog(self._settings.sla_file, self._source_registry)
+        except SlaConfigError as exc:
+            self._sla_diagnostic = exc.code
+            return
+        except Exception:  # pragma: no cover - defensive startup guard
+            self._sla_diagnostic = "SLA_CONFIG_INVALID"
+            return
+
+        self._sla_catalog = catalog
+        self._sla_diagnostic = None
+
     @property
     def manifest(self) -> ModuleManifest:
         """Return the validated Sourcing manifest."""
@@ -125,7 +149,9 @@ class SourcingModuleContract(BusinessModuleContract):
         status: dict[str, Any] = {
             "status": (
                 "ok"
-                if self._source_registry is not None and self._validation_config is not None
+                if self._source_registry is not None
+                and self._validation_config is not None
+                and self._sla_catalog is not None
                 else "degraded"
             ),
             "module": self._manifest.id,
@@ -151,6 +177,14 @@ class SourcingModuleContract(BusinessModuleContract):
             status["validation_diagnostic"] = (
                 self._validation_diagnostic or "VALIDATION_CONFIG_INVALID"
             )
+
+        if self._sla_catalog is not None:
+            status["sla"] = "ok"
+            status["sla_rules"] = len(self._sla_catalog.rules)
+            status["sla_catalog_version"] = self._sla_catalog.resolved_version
+        else:
+            status["sla"] = "degraded"
+            status["sla_diagnostic"] = self._sla_diagnostic or "SLA_CONFIG_INVALID"
         return status
 
     async def on_startup(self, app: FastAPI) -> None:
@@ -227,6 +261,11 @@ class SourcingModuleContract(BusinessModuleContract):
     def validation_config(self) -> "ValidationConfig | None":
         """Return the resolved validation configuration, or None when degraded."""
         return self._validation_config
+
+    @property
+    def sla_catalog(self) -> "SlaCatalog | None":
+        """Return the loaded SLA catalog, or None when degraded."""
+        return self._sla_catalog
 
     @property
     def landing_store(self) -> FileAcquisitionService | None:

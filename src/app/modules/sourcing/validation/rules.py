@@ -192,6 +192,16 @@ def business_date_order(ctx: RuleContext) -> Sequence[RuleFinding]:
     return ()
 
 
+def business_lead_time_negative(ctx: RuleContext) -> Sequence[RuleFinding]:
+    """A quote lead time in days is negative."""
+    if ctx.entity_type != "quote":
+        return ()
+    value = ctx.normalized.get("lead_time_days")
+    if isinstance(value, int) and not isinstance(value, bool) and value < 0:
+        return (RuleFinding("lead_time_days", str(value)),)
+    return ()
+
+
 def business_amount_negative(ctx: RuleContext) -> Sequence[RuleFinding]:
     """A quote or purchase-order amount is negative."""
     field = MONEY_FIELD_BY_ENTITY.get(ctx.entity_type)

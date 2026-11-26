@@ -33,6 +33,7 @@ from app.modules.sourcing.validation.errors import SourcingValidationContractErr
 from app.modules.sourcing.validation.messages import render_message, sanitize_excerpt
 from app.modules.sourcing.validation.normalize import (
     CANONICAL_FIELDS,
+    UPPERCASE_TEXT_TARGETS,
     canonical_decimal,
     field_kind,
     normalize_identifier,
@@ -184,7 +185,10 @@ def _parse_field(ctx: RuleContext, declaration: FieldDeclaration, raw: Any) -> P
             return ParsedField(raw, normalize_identifier(raw, "preserve"), None)
         if kind in ("identifier", "reference"):
             return ParsedField(raw, normalize_identifier(raw, declaration.case), None)
-        return ParsedField(raw, normalize_text(raw), None)
+        normalized = normalize_text(raw)
+        if declaration.target in UPPERCASE_TEXT_TARGETS:
+            normalized = normalized.upper()
+        return ParsedField(raw, normalized, None)
 
     if declaration.type == "enum":
         value, failure = parse_enum(raw, declaration.enum or {})

@@ -215,7 +215,7 @@ def test_alembic_upgrade_produces_expected_schema_state() -> None:
             "jobs",
             "module_registrations",
         ]
-        assert revision == "0004_sourcing_curated_entities"
+        assert revision == "0005_sourcing_analytics_attributes"
 
         # Repeatability: a clean re-upgrade must succeed without manual repair.
         command.downgrade(alembic_config, "base")
@@ -228,6 +228,6 @@ def test_alembic_upgrade_produces_expected_schema_state() -> None:
             "jobs",
             "module_registrations",
         ]
-        assert revision == "0004_sourcing_curated_entities"
+        assert revision == "0005_sourcing_analytics_attributes"
     finally:
         engine.dispose()

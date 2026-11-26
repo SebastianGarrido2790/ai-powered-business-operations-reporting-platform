@@ -18,12 +18,13 @@ from typing import Final
 from app.modules.sourcing.validation import rules
 from app.modules.sourcing.validation.types import RuleContext, RuleFinding
 
-RULESET_VERSION: Final[str] = "1.0.0"
+RULESET_VERSION: Final[str] = "1.1.0"
 
 _ALL: Final[frozenset[str]] = frozenset(
     {"supplier", "requisition", "quote", "purchase_order", "delivery"}
 )
 _MONEY: Final[frozenset[str]] = frozenset({"quote", "purchase_order"})
+_QUOTE: Final[frozenset[str]] = frozenset({"quote"})
 _DELIVERY: Final[frozenset[str]] = frozenset({"delivery"})
 _DATE_ORDER: Final[frozenset[str]] = frozenset({"requisition", "purchase_order"})
 
@@ -245,6 +246,15 @@ RULES: Final[tuple[Rule, ...]] = (
         field_name=None,
         description="A required date precedes its ordering anchor.",
         evaluate=rules.business_date_order,
+    ),
+    Rule(
+        code="BUSINESS_LEAD_TIME_NEGATIVE",
+        stage=RuleStage.BUSINESS,
+        severity=RuleSeverity.ERROR,
+        entity_types=_QUOTE,
+        field_name="lead_time_days",
+        description="A quote lead time is negative.",
+        evaluate=rules.business_lead_time_negative,
     ),
     Rule(
         code="BUSINESS_AMOUNT_NEGATIVE",

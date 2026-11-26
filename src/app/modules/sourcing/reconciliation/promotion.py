@@ -27,9 +27,16 @@ from app.modules.sourcing.reconciliation.errors import SourcingReconciliationCon
 _DATE_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
     "supplier": (),
     "requisition": ("requested_on", "needed_by"),
-    "quote": ("valid_until",),
+    "quote": ("valid_until", "quoted_on"),
     "purchase_order": ("ordered_on", "committed_delivery_date"),
     "delivery": ("delivered_on",),
+}
+_INTEGER_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
+    "supplier": (),
+    "requisition": (),
+    "quote": ("lead_time_days",),
+    "purchase_order": (),
+    "delivery": (),
 }
 _DECIMAL_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
     "supplier": (),
@@ -39,10 +46,10 @@ _DECIMAL_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
     "delivery": ("quantity",),
 }
 _TEXT_FIELDS: Final[Mapping[str, tuple[str, ...]]] = {
-    "supplier": ("name", "normalized_name_key"),
-    "requisition": ("requisition_number",),
+    "supplier": ("name", "normalized_name_key", "country", "category"),
+    "requisition": ("requisition_number", "status"),
     "quote": ("quote_number", "currency"),
-    "purchase_order": ("purchase_order_number", "currency"),
+    "purchase_order": ("purchase_order_number", "currency", "status"),
     "delivery": ("delivery_number", "unit"),
 }
 
@@ -96,6 +103,13 @@ def build_values(
             raise SourcingReconciliationContractError(
                 f"Curated {entity_type} column '{field}' cannot be parsed as a decimal."
             ) from None
+    for field in _INTEGER_FIELDS[entity_type]:
+        value = payload.get(field)
+        if value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise _invalid(entity_type, field)
+        values[field] = value
     for link, entity_id in confirmed.items():
         values[link] = entity_id
     return values

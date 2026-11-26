@@ -136,6 +136,9 @@ def test_module_manifest_and_routes_match_approved_surface(
         "validation",
         "sources",
         "ruleset_version",
+        "sla",
+        "sla_rules",
+        "sla_catalog_version",
     }
     serialized = json.dumps(health)
     assert "reconcil" not in serialized.lower()

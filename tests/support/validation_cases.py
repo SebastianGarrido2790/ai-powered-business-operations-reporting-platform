@@ -208,6 +208,8 @@ _DATE_ORDER_SCHEMA = schema(
     }
 )
 
+_LEAD_TIME_SCHEMA = schema({"lead_time_days": field("lead_time_days", "integer")})
+
 _IDENTITY_SUPPLIER = _supplier_name(required=False)
 _IDENTITY_REQUISITION = _requisition_number()
 
@@ -525,6 +527,27 @@ RULE_CASES: tuple[RuleCase, ...] = (
         "boundary",
         _DATE_ORDER_SCHEMA,
         _requisition_dates("2026-02-01", "2026-02-01"),
+        False,
+    ),
+    RuleCase(
+        "BUSINESS_LEAD_TIME_NEGATIVE",
+        "positive",
+        _LEAD_TIME_SCHEMA,
+        record("quote", {"lead_time_days": 3}),
+        False,
+    ),
+    RuleCase(
+        "BUSINESS_LEAD_TIME_NEGATIVE",
+        "negative",
+        _LEAD_TIME_SCHEMA,
+        record("quote", {"lead_time_days": -1}),
+        True,
+    ),
+    RuleCase(
+        "BUSINESS_LEAD_TIME_NEGATIVE",
+        "boundary",
+        _LEAD_TIME_SCHEMA,
+        record("quote", {"lead_time_days": 0}),
         False,
     ),
     RuleCase("BUSINESS_AMOUNT_NEGATIVE", "positive", _money_schema(), _quote("1.00", "USD"), False),

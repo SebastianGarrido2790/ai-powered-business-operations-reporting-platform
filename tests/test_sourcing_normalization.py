@@ -327,6 +327,80 @@ def test_delivery_payload_uses_fixed_four_place_quantity_and_preserves_unit() ->
     }
 
 
+def test_supplier_country_and_category_are_uppercased_after_text_normalization() -> None:
+    """The two new text targets canonicalize to uppercase without guessing."""
+    outcome = evaluate_record(
+        record("supplier", {"country": " deu ", "category": " electronics "}),
+        schema(
+            {
+                "country": field("country", "string", max_length=3, pattern="^[A-Za-z]{3}$"),
+                "category": field("category", "string", max_length=100),
+            }
+        ),
+    )
+
+    assert outcome.status == "VALID"
+    assert outcome.normalized_payload == {"country": "DEU", "category": "ELECTRONICS"}
+
+
+def test_requisition_status_maps_through_the_declared_enum() -> None:
+    """Status text maps only through its declared closed enum."""
+    outcome = evaluate_record(
+        record("requisition", {"status": "approved"}),
+        schema(
+            {
+                "status": field(
+                    "status",
+                    "enum",
+                    max_length=32,
+                    enum={"approved": "APPROVED", "APPROVED": "APPROVED"},
+                )
+            }
+        ),
+    )
+
+    assert outcome.status == "VALID"
+    assert outcome.normalized_payload == {"status": "APPROVED"}
+
+
+def test_quote_quoted_on_and_lead_time_normalize_without_conversion() -> None:
+    """Quote analytics inputs keep the canonical ISO date and integer day count."""
+    outcome = evaluate_record(
+        record("quote", {"quoted_on": "2026-05-01", "lead_time_days": 4}),
+        schema(
+            {
+                "quoted_on": field("quoted_on", "date", formats=("%Y-%m-%d",)),
+                "lead_time_days": field("lead_time_days", "integer"),
+            }
+        ),
+    )
+
+    assert outcome.status == "VALID"
+    assert outcome.normalized_payload == {
+        "quoted_on": "2026-05-01",
+        "lead_time_days": 4,
+    }
+
+
+def test_integer_target_rejects_strings_and_booleans_structurally() -> None:
+    """Integer declarations accept only true integers; bool is not an integer."""
+    declaration = schema({"lead_time_days": field("lead_time_days", "integer")})
+
+    string_outcome = evaluate_record(
+        record("quote", {"lead_time_days": "4"}),
+        declaration,
+    )
+    bool_outcome = evaluate_record(
+        record("quote", {"lead_time_days": True}),
+        declaration,
+    )
+
+    assert string_outcome.status == "QUARANTINED"
+    assert bool_outcome.status == "QUARANTINED"
+    assert [issue.rule_code for issue in string_outcome.issues] == ["STRUCT_INVALID_TYPE"]
+    assert [issue.rule_code for issue in bool_outcome.issues] == ["STRUCT_INVALID_TYPE"]
+
+
 def test_absent_optional_fields_are_omitted_not_nulled_or_defaulted() -> None:
     """Optional absence omits the field; no default or null is substituted."""
     outcome = evaluate_record(

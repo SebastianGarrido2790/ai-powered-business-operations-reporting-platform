@@ -264,7 +264,7 @@ def test_pipeline_persists_statuses_payloads_versions_and_issues(
         "normalized_name_key": "acme",
     }
     assert stored["S-1"].normalization_version is not None
-    assert stored["S-1"].normalization_version.startswith("1.0.0+")
+    assert stored["S-1"].normalization_version.startswith("1.1.0+")
     assert stored["S-1"].raw_payload == {"supplier_code": "S-1", "name": "Acme"}
     assert stored["S-2"].validation_status == WARNING
     assert stored["S-3"].validation_status == QUARANTINED

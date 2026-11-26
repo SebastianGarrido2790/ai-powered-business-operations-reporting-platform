@@ -12,7 +12,7 @@ from sqlalchemy import Engine, create_engine, text
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = PROJECT_ROOT / "alembic.ini"
 MIGRATIONS_DIR = PROJECT_ROOT / "database" / "migrations"
-REVISION_HEAD = "0004_sourcing_curated_entities"
+REVISION_HEAD = "0005_sourcing_analytics_attributes"
 EXPECTED_TABLES = {
     "idempotency_keys",
     "job_attempts",
